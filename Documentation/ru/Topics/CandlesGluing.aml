@@ -1,0 +1,91 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<topic id="f71010d3-135c-4fe9-a573-abf0245b3f5d" revisionNumber="1">
+	<developerWalkthroughDocument xmlns="http://ddue.schemas.microsoft.com/authoring/2003/5" xmlns:xlink="http://www.w3.org/1999/xlink">
+
+	<introduction>
+		<para>Для того чтобы склеить исторические свечи с реал-тайм, надо инициализировать соответствующие 
+		хранилище торговых объектов <codeEntityReference qualifyHint="false">T:StockSharp.Algo.Storages.Csv.CsvEntityRegistry</codeEntityReference> и 
+		хранилище маркет-данных <codeEntityReference qualifyHint="false">T:StockSharp.Algo.Storages.StorageRegistry</codeEntityReference>.</para>
+		<para>Рассмотрим склеивание на примере <codeEntityReference qualifyHint="false">T:StockSharp.Algo.Candles.TimeFrameCandle</codeEntityReference> 
+		с использованием тиковых данных, сохраненных с помощью <token>hydra</token>:</para>
+        <code language="C#">
+        <![CDATA[
+private QuikTrader _trader;
+
+private Security security;
+private CandleManager _candleManager;
+private CandleSeries _series;
+readonly TimeSpan _timeFrame = TimeSpan.FromMinutes(5);
+
+//объявляем хранилище торговых объектов CsvEntityRegistry и хранилище маркет-данных StorageRegistry
+private readonly CsvEntityRegistry _csvEntityRegistry;
+private readonly StorageRegistry _storageRegistry;
+
+// Путь к данным истории
+private const string _historyPath = @"e:\DataServer\";
+
+...
+public MainWindow()
+		{
+			InitializeComponent();     
+            ....   
+            _csvEntityRegistry = new CsvEntityRegistry(_historyPath);
+            _storageRegistry = new StorageRegistry
+            {
+            	DefaultDrive = new LocalMarketDataDrive(_historyPath),
+            };
+		}
+
+...
+
+_candleManager = new CandleManager(_trader);
+_candleManager.Processing += ProcessingCandles;
+
+...
+//Инициализируем  StorageAdapter
+_trader.InitializeStorage(csvEntityRegistry, storageRegistry);
+//Устанавливаем количество дней для загрузки данных.
+_trader.StorageAdapter.DaysLoad = TimeSpan.FromDays(3);
+
+_series = new CandleSeries(typeof(TimeFrameCandle), security, _timeFrame)
+{
+	BuildCandlesMode = BuildCandlesModes.Build
+};    
+_candleManager.Start(_series);
+		]]>
+		</code>
+		
+		<para>После этого, в обработчик события Processing - ProcessingCandles, начнут поступать свечи начиная с первой исторической и по текущую реал-тайм:</para>
+
+        <code language="C#">
+        <![CDATA[
+        
+private void ProcessingCandles(CandleSeries series, Candle candle)
+{
+	...
+}
+		]]>
+		</code>
+<para>Если изначально создаётся <codeEntityReference qualifyHint="false">T:StockSharp.Algo.Connector</codeEntityReference>, 
+то в инициализации StorageAdapter нет необходимости, достаточно передать хранилище торговых объектов <codeEntityReference qualifyHint="false">T:StockSharp.Algo.Storages.Csv.CsvEntityRegistry</codeEntityReference> и 
+хранилище маркет-данных <codeEntityReference qualifyHint="false">T:StockSharp.Algo.Storages.StorageRegistry</codeEntityReference> 
+в конструктор <codeEntityReference qualifyHint="false">T:StockSharp.Algo.Connector</codeEntityReference> </para>
+
+        <code language="C#">
+        <![CDATA[
+...
+_csvEntityRegistry = new CsvEntityRegistry(_historyPath);
+_storageRegistry = new StorageRegistry
+{
+   DefaultDrive = new LocalMarketDataDrive(_historyPath),
+};
+Connector = new Connector(_csvEntityRegistry, _storageRegistry);
+Connector.StorageAdapter.DaysLoad = TimeSpan.FromDays(3);
+...
+		]]>
+		</code>
+
+	</introduction>
+
+	</developerWalkthroughDocument>
+</topic>

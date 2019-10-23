@@ -1,0 +1,14 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<topic id="5bd2fb14-4391-4782-8031-55a8391d302c" revisionNumber="1">
+  <developerConceptualDocument xmlns="http://ddue.schemas.microsoft.com/authoring/2003/5" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <introduction>
+    	<para>
+     		Для написания торговых роботов под торговую платформу <token>Coincheck</token> необходимо использовать
+			<codeEntityReference qualifyHint="false">T:StockSharp.Coincheck.CoincheckTrader</codeEntityReference>.
+		</para>
+     </introduction>
+     <relatedTopics>
+    	<link xlink:href="968f8291-33eb-4edb-8217-2e029b0cc887"/>
+    </relatedTopics>
+  </developerConceptualDocument>
+</topic>

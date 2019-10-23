@@ -1,0 +1,14 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<topic id="d941f537-602b-400f-91d4-d4b2b37b9767" revisionNumber="1">
+  <developerConceptualDocument xmlns="http://ddue.schemas.microsoft.com/authoring/2003/5" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <introduction>
+    	<para>
+     		Для написания торговых роботов под торговую платформу <token>Gdax</token> необходимо использовать
+			<codeEntityReference qualifyHint="false">T:StockSharp.Gdax.GdaxTrader</codeEntityReference>.
+		</para>
+     </introduction>
+     <relatedTopics>
+    	<link xlink:href="cddf98a2-3ec9-4e49-9757-8b0de893fb15"/>
+    </relatedTopics>
+  </developerConceptualDocument>
+</topic>

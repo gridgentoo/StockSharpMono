@@ -1,0 +1,14 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<topic id="f49aab57-c1fd-4558-9241-5b42a2e619d7" revisionNumber="1">
+  <developerConceptualDocument xmlns="http://ddue.schemas.microsoft.com/authoring/2003/5" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <introduction>
+    	<para>
+     		Для написания торговых роботов под торговую платформу <token>Bitfinex</token> необходимо использовать
+			<codeEntityReference qualifyHint="false">T:StockSharp.Bitfinex.BitfinexTrader</codeEntityReference>.
+		</para>
+     </introduction>
+     <relatedTopics>
+    	<link xlink:href="9d24ba61-6eef-4462-8913-2efb28cef633"/>
+    </relatedTopics>
+  </developerConceptualDocument>
+</topic>
