@@ -24,6 +24,7 @@ namespace StockSharp.Algo.Storages
 	using Ecng.Serialization;
 
 	using StockSharp.Algo.Candles;
+	using StockSharp.Algo.Candles.Compression;
 	using StockSharp.BusinessEntities;
 	using StockSharp.Localization;
 	using StockSharp.Logging;
@@ -57,8 +58,12 @@ namespace StockSharp.Algo.Storages
 	public class StorageMessageAdapter : BufferMessageAdapter
 	{
 		private readonly IStorageRegistry _storageRegistry;
-		private readonly IEntityRegistry _entityRegistry;
 		private readonly SnapshotRegistry _snapshotRegistry;
+		private readonly ISecurityStorage _securityStorage;
+		private readonly IPositionStorage _positionStorage;
+		private readonly CandleBuilderProvider _candleBuilderProvider;
+
+		private IExchangeInfoProvider ExchangeInfoProvider => _storageRegistry.ExchangeInfoProvider;
 
 		private readonly SynchronizedSet<long> _fullyProcessedSubscriptions = new SynchronizedSet<long>();
 		private readonly SynchronizedDictionary<long, long> _orderIds = new SynchronizedDictionary<long, long>();
@@ -73,12 +78,29 @@ namespace StockSharp.Algo.Storages
 		/// <param name="entityRegistry">The storage of trade objects.</param>
 		/// <param name="storageRegistry">The storage of market data.</param>
 		/// <param name="snapshotRegistry">Snapshot storage registry.</param>
-		public StorageMessageAdapter(IMessageAdapter innerAdapter, IEntityRegistry entityRegistry, IStorageRegistry storageRegistry, SnapshotRegistry snapshotRegistry)
+		/// <param name="candleBuilderProvider">Candle builders provider.</param>
+		public StorageMessageAdapter(IMessageAdapter innerAdapter, IEntityRegistry entityRegistry, IStorageRegistry storageRegistry, SnapshotRegistry snapshotRegistry, CandleBuilderProvider candleBuilderProvider)
+			: this(innerAdapter, entityRegistry.Securities, entityRegistry.PositionStorage, storageRegistry, snapshotRegistry, candleBuilderProvider)
+		{
+		}
+
+		/// <summary>
+		/// Initializes a new instance of the <see cref="StorageMessageAdapter"/>.
+		/// </summary>
+		/// <param name="innerAdapter">The adapter, to which messages will be directed.</param>
+		/// <param name="securityStorage">Securities meta info storage.</param>
+		/// <param name="positionStorage">Position storage.</param>
+		/// <param name="storageRegistry">The storage of market data.</param>
+		/// <param name="snapshotRegistry">Snapshot storage registry.</param>
+		/// <param name="candleBuilderProvider">Candle builders provider.</param>
+		public StorageMessageAdapter(IMessageAdapter innerAdapter, ISecurityStorage securityStorage, IPositionStorage positionStorage, IStorageRegistry storageRegistry, SnapshotRegistry snapshotRegistry, CandleBuilderProvider candleBuilderProvider)
 			: base(innerAdapter)
 		{
-			_entityRegistry = entityRegistry ?? throw new ArgumentNullException(nameof(entityRegistry));
+			_securityStorage = securityStorage ?? throw new ArgumentNullException(nameof(securityStorage));
+			_positionStorage = positionStorage ?? throw new ArgumentNullException(nameof(positionStorage));
 			_storageRegistry = storageRegistry ?? throw new ArgumentNullException(nameof(storageRegistry));
 			_snapshotRegistry = snapshotRegistry ?? throw new ArgumentNullException(nameof(snapshotRegistry));
+			_candleBuilderProvider = candleBuilderProvider ?? throw new ArgumentNullException(nameof(candleBuilderProvider));
 
 			var isProcessing = false;
 			var sync = new SyncObject();
@@ -370,10 +392,10 @@ namespace StockSharp.Algo.Storages
 			}
 		}
 
-		/// <summary>
-		/// Support lookup messages.
-		/// </summary>
-		public bool SupportLookupMessages { get; set; } = true;
+		///// <summary>
+		///// Support lookup messages.
+		///// </summary>
+		//public bool SupportLookupMessages { get; set; } = true;
 
 		/// <summary>
 		/// Cache buildable from smaller time-frames candles.
@@ -401,35 +423,12 @@ namespace StockSharp.Algo.Storages
 		}
 
 		/// <inheritdoc />
-		public override IEnumerable<TimeSpan> TimeFrames
-		{
-			get
-			{
-				if (DriveInternal == null)
-					return Enumerable.Empty<TimeSpan>();
-				
-				return DriveInternal
-				       .AvailableSecurities
-				       .SelectMany(GetTimeFrames)
-				       .Distinct()
-				       .OrderBy()
-				       .ToArray();
-			}
-		}
-
-		/// <inheritdoc />
-		public override IEnumerable<TimeSpan> GetTimeFrames(SecurityId securityId)
+		public override IEnumerable<object> GetCandleArgs(Type candleType, SecurityId securityId, DateTimeOffset? from, DateTimeOffset? to)
 		{
 			if (DriveInternal == null)
-				return Enumerable.Empty<TimeSpan>();
+				return Enumerable.Empty<object>();
 
-			return DriveInternal
-			       .GetAvailableDataTypes(securityId, Format)
-			       .Where(t => t.MessageType == typeof(TimeFrameCandleMessage))
-			       .Select(t => (TimeSpan)t.Arg)
-			       .Distinct()
-			       .OrderBy()
-			       .ToArray();
+			return DriveInternal.GetCandleArgs(Format, candleType, securityId, from, to);
 		}
 
 		private ISnapshotStorage GetSnapshotStorage(Type messageType, object arg)
@@ -465,7 +464,7 @@ namespace StockSharp.Algo.Storages
 
 		private Security GetSecurity(SecurityId securityId)
 		{
-			var security = _entityRegistry.Securities.ReadBySecurityId(securityId) ?? TryCreateSecurity(securityId);
+			var security = _securityStorage.LookupById(securityId) ?? TryCreateSecurity(securityId);
 
 			if (security == null)
 				throw new InvalidOperationException(LocalizedStrings.Str704Params.Put(securityId));
@@ -482,10 +481,10 @@ namespace StockSharp.Algo.Storages
 			//var requiredSecurities = new List<SecurityId>();
 			//var availableSecurities = DriveInternal.AvailableSecurities.ToHashSet();
 
-			foreach (var board in _entityRegistry.ExchangeBoards)
+			foreach (var board in ExchangeInfoProvider.Boards)
 				RaiseStorageMessage(board.ToMessage());
 
-			foreach (var security in _entityRegistry.Securities)
+			foreach (var security in _securityStorage.LookupAll())
 			{
 				var msg = security.ToMessage();
 
@@ -497,23 +496,20 @@ namespace StockSharp.Algo.Storages
 				RaiseStorageMessage(msg);
 			}
 
-			foreach (var portfolio in _entityRegistry.Portfolios)
+			foreach (var portfolio in _positionStorage.Portfolios)
 			{
 				RaiseStorageMessage(portfolio.ToMessage());
 				RaiseStorageMessage(portfolio.ToChangeMessage());
 			}
 
-			foreach (var position in _entityRegistry.Positions)
+			foreach (var position in _positionStorage.Positions)
 			{
 				RaiseStorageMessage(position.ToChangeMessage());
 			}
 		}
 
-		/// <summary>
-		/// Send message.
-		/// </summary>
-		/// <param name="message">Message.</param>
-		public override void SendInMessage(Message message)
+		/// <inheritdoc />
+		protected override void OnSendInMessage(Message message)
 		{
 			switch (message.Type)
 			{
@@ -533,6 +529,10 @@ namespace StockSharp.Algo.Storages
 					ProcessSecurityLookup((SecurityLookupMessage)message);
 					break;
 
+				case MessageTypes.BoardLookup:
+					ProcessBoardLookup((BoardLookupMessage)message);
+					break;
+
 				case MessageTypes.PortfolioLookup:
 					ProcessPortfolioLookup((PortfolioLookupMessage)message);
 					break;
@@ -546,57 +546,85 @@ namespace StockSharp.Algo.Storages
 					break;
 
 				default:
-					base.SendInMessage(message);
+					base.OnSendInMessage(message);
 					break;
 			}
 		}
 
 		private void ProcessSecurityLookup(SecurityLookupMessage msg)
 		{
-			if (!SupportLookupMessages || msg.IsBack || (msg.Adapter != null && msg.Adapter != this))
+			if (msg == null)
+				throw new ArgumentNullException(nameof(msg));
+
+			if (/*!SupportLookupMessages || */msg.IsBack || (msg.Adapter != null && msg.Adapter != this))
 			{
-				base.SendInMessage(msg);
+				base.OnSendInMessage(msg);
 				return;
 			}
 
-			foreach (var board in _entityRegistry.ExchangeBoards)
-				RaiseStorageMessage(board.ToMessage());
+			foreach (var security in _securityStorage.Lookup(msg))
+				RaiseStorageMessage(security.ToMessage(originalTransactionId: msg.TransactionId));
 
-			foreach (var security in _entityRegistry.Securities)
-				RaiseStorageMessage(security.ToMessage());
+			base.OnSendInMessage(msg);
+		}
 
-			base.SendInMessage(msg);
+		private void ProcessBoardLookup(BoardLookupMessage msg)
+		{
+			if (msg == null)
+				throw new ArgumentNullException(nameof(msg));
+
+			if (/*!SupportLookupMessages || */msg.IsBack || (msg.Adapter != null && msg.Adapter != this))
+			{
+				base.OnSendInMessage(msg);
+				return;
+			}
+
+			foreach (var board in ExchangeInfoProvider.LookupBoards(msg.Like))
+				RaiseStorageMessage(board.ToMessage(msg.TransactionId));
+
+			base.OnSendInMessage(msg);
 		}
 
 		private void ProcessPortfolioLookup(PortfolioLookupMessage msg)
 		{
-			if (!SupportLookupMessages || msg.IsBack || (msg.Adapter != null && msg.Adapter != this))
+			if (msg == null)
+				throw new ArgumentNullException(nameof(msg));
+
+			if (/*!SupportLookupMessages || */msg.IsBack || !msg.IsSubscribe || (msg.Adapter != null && msg.Adapter != this))
 			{
-				base.SendInMessage(msg);
+				base.OnSendInMessage(msg);
 				return;
 			}
 
-			foreach (var portfolio in _entityRegistry.Portfolios)
+			foreach (var portfolio in _positionStorage.Portfolios.Filter(msg))
 			{
-				RaiseStorageMessage(portfolio.ToMessage());
+				RaiseStorageMessage(portfolio.ToMessage(msg.TransactionId));
 				RaiseStorageMessage(portfolio.ToChangeMessage());
 			}
 
-			foreach (var position in _entityRegistry.Positions)
+			foreach (var position in _positionStorage.Positions.Filter(msg))
 			{
-				RaiseStorageMessage(position.ToChangeMessage());
+				RaiseStorageMessage(position.ToChangeMessage(msg.TransactionId));
 			}
 
-			base.SendInMessage(msg);
+			if (msg.IsHistory)
+				RaiseNewOutMessage(new PortfolioLookupResultMessage { OriginalTransactionId = msg.TransactionId });
+			else
+				base.OnSendInMessage(msg);
 		}
 
 		private void ProcessOrderStatus(OrderStatusMessage msg)
 		{
-			_orderStatusIds.Add(msg.TransactionId);
+			if (msg == null)
+				throw new ArgumentNullException(nameof(msg));
 
-			if (!SupportLookupMessages || msg.IsBack || (msg.Adapter != null && msg.Adapter != this))
+			var transId = msg.TransactionId;
+
+			_orderStatusIds.Add(transId);
+
+			if (/*!SupportLookupMessages || */msg.IsBack || !msg.IsSubscribe || (msg.Adapter != null && msg.Adapter != this))
 			{
-				base.SendInMessage(msg);
+				base.OnSendInMessage(msg);
 				return;
 			}
 
@@ -616,7 +644,8 @@ namespace StockSharp.Algo.Storages
 						else if (!snapshot.OrderStringId.IsEmpty())
 							_orderStringIds.TryAdd(snapshot.OrderStringId, snapshot.TransactionId);
 
-						snapshot.OriginalTransactionId = msg.TransactionId;
+						snapshot.OriginalTransactionId = transId;
+						snapshot.SubscriptionId = transId;
 						RaiseStorageMessage(snapshot);
 					}
 				}
@@ -633,20 +662,32 @@ namespace StockSharp.Algo.Storages
 				}
 			}
 
-			base.SendInMessage(msg);
+			if (msg.IsHistory)
+			{
+
+			}
+			else
+				base.OnSendInMessage(msg);
 		}
 
 		private void ProcessOrderCancel(OrderCancelMessage msg)
 		{
-			_cancellationTransactions.Add(msg.TransactionId, msg.OrderTransactionId);
-			base.SendInMessage(msg);
+			if (msg == null)
+				throw new ArgumentNullException(nameof(msg));
+
+			// can be looped back from offline
+			_cancellationTransactions.TryAdd(msg.TransactionId, msg.OrderTransactionId);
+			base.OnSendInMessage(msg);
 		}
 
 		private void ProcessMarketDataRequest(MarketDataMessage msg)
 		{
+			if (msg == null)
+				throw new ArgumentNullException(nameof(msg));
+
 			if (msg.IsBack || (msg.From == null && DaysLoad == TimeSpan.Zero))
 			{
-				base.SendInMessage(msg);
+				base.OnSendInMessage(msg);
 				return;
 			}
 
@@ -670,12 +711,17 @@ namespace StockSharp.Algo.Storages
 
 					Subscribe(msg);
 
-					var clone = (MarketDataMessage)msg.Clone();
-
 					if (lastTime != null)
-						clone.From = lastTime;
+					{
+						if (!(msg.DataType == MarketDataTypes.MarketDepth && msg.From == null && msg.To == null))
+						{
+							var clone = (MarketDataMessage)msg.Clone();
+							clone.From = lastTime;
+							msg = clone;
+						}
+					}
 
-					base.SendInMessage(clone.ValidateBounds());	
+					base.OnSendInMessage(msg.ValidateBounds());	
 				}
 				else
 				{
@@ -685,7 +731,7 @@ namespace StockSharp.Algo.Storages
 						RaiseStorageMessage(new MarketDataFinishedMessage { OriginalTransactionId = transactionId });
 					}
 					else
-						base.SendInMessage(msg);
+						base.OnSendInMessage(msg);
 				}
 			}
 			else
@@ -700,7 +746,7 @@ namespace StockSharp.Algo.Storages
 					});
 				}
 				else
-					base.SendInMessage(msg);
+					base.OnSendInMessage(msg);
 			}
 		}
 
@@ -718,6 +764,8 @@ namespace StockSharp.Algo.Storages
 						if (level1Msg != null)
 						{
 							lastTime = level1Msg.ServerTime;
+
+							level1Msg.SubscriptionId = transactionId;
 							RaiseStorageMessage(level1Msg);
 						}
 					}
@@ -734,6 +782,8 @@ namespace StockSharp.Algo.Storages
 						if (quotesMsg != null)
 						{
 							lastTime = quotesMsg.ServerTime;
+
+							quotesMsg.SubscriptionId = transactionId;
 							RaiseStorageMessage(quotesMsg);
 						}
 					}
@@ -754,8 +804,12 @@ namespace StockSharp.Algo.Storages
 					lastTime = LoadMessages(_storageRegistry.GetNewsMessageStorage(Drive, Format), from, to, DaysLoad, m => SetTransactionId(m, transactionId));
 					break;
 
+				case MarketDataTypes.Board:
+					lastTime = LoadMessages(_storageRegistry.GetBoardStateMessageStorage(Drive, Format), from, to, DaysLoad, m => SetTransactionId(m, transactionId));
+					break;
+
 				case MarketDataTypes.CandleTimeFrame:
-					var tf = (TimeSpan)msg.Arg;
+					var tf = msg.GetTimeFrame();
 
 					if (msg.IsCalcVolumeProfile)
 					{
@@ -788,8 +842,6 @@ namespace StockSharp.Algo.Storages
 
 						if (range != null)
 						{
-							var exchangeInfoProvider = _storageRegistry.ExchangeInfoProvider;
-
 							var mdMsg = (MarketDataMessage)msg.Clone();
 							mdMsg.From = mdMsg.To = null;
 
@@ -799,7 +851,7 @@ namespace StockSharp.Algo.Storages
 								case MarketDataTypes.Trades:
 									lastTime = LoadMessages(((IMarketDataStorage<ExecutionMessage>)storage)
 										.Load(range.Item1.Date, range.Item2.Date.EndOfDay())
-										.ToCandles(mdMsg, exchangeInfoProvider: exchangeInfoProvider), range.Item1, m => SetTransactionId(m, transactionId));
+										.ToCandles(mdMsg, candleBuilderProvider: _candleBuilderProvider), range.Item1, m => SetTransactionId(m, transactionId));
 
 									break;
 
@@ -811,7 +863,7 @@ namespace StockSharp.Algo.Storages
 										case Level1Fields.LastTradePrice:
 											lastTime = LoadMessages(((IMarketDataStorage<ExecutionMessage>)storage)
 											    .Load(range.Item1.Date, range.Item2.Date.EndOfDay())
-											    .ToCandles(mdMsg, exchangeInfoProvider: exchangeInfoProvider), range.Item1, m => SetTransactionId(m, transactionId));
+											    .ToCandles(mdMsg, candleBuilderProvider: _candleBuilderProvider), range.Item1, m => SetTransactionId(m, transactionId));
 
 											break;
 											
@@ -835,7 +887,7 @@ namespace StockSharp.Algo.Storages
 											lastTime = LoadMessages(((IMarketDataStorage<Level1ChangeMessage>)storage)
 												.Load(range.Item1.Date, range.Item2.Date.EndOfDay())
 												.ToTicks()
-												.ToCandles(mdMsg, exchangeInfoProvider: exchangeInfoProvider), range.Item1, m => SetTransactionId(m, transactionId));
+												.ToCandles(mdMsg, candleBuilderProvider: _candleBuilderProvider), range.Item1, m => SetTransactionId(m, transactionId));
 											break;
 
 										case Level1Fields.BestBidPrice:
@@ -844,7 +896,7 @@ namespace StockSharp.Algo.Storages
 											lastTime = LoadMessages(((IMarketDataStorage<Level1ChangeMessage>)storage)
 											    .Load(range.Item1.Date, range.Item2.Date.EndOfDay())
 											    .ToOrderBooks()
-											    .ToCandles(mdMsg, msg.BuildField.Value, exchangeInfoProvider: exchangeInfoProvider), range.Item1, m => SetTransactionId(m, transactionId));
+											    .ToCandles(mdMsg, msg.BuildField.Value, candleBuilderProvider: _candleBuilderProvider), range.Item1, m => SetTransactionId(m, transactionId));
 											break;
 									}
 									
@@ -853,7 +905,7 @@ namespace StockSharp.Algo.Storages
 								case MarketDataTypes.MarketDepth:
 									lastTime = LoadMessages(((IMarketDataStorage<QuoteChangeMessage>)storage)
 										.Load(range.Item1.Date, range.Item2.Date.EndOfDay())
-										.ToCandles(mdMsg, msg.BuildField ?? Level1Fields.SpreadMiddle, exchangeInfoProvider: exchangeInfoProvider), range.Item1, m => SetTransactionId(m, transactionId));
+										.ToCandles(mdMsg, msg.BuildField ?? Level1Fields.SpreadMiddle, candleBuilderProvider: _candleBuilderProvider), range.Item1, m => SetTransactionId(m, transactionId));
 									break;
 
 								default:
@@ -902,8 +954,8 @@ namespace StockSharp.Algo.Storages
 					lastTime = LoadMessages(GetStorage<VolumeCandleMessage>(msg.SecurityId, msg.Arg), from, to, DaysLoad, m => SetTransactionId(m, transactionId));
 					break;
 
-				default:
-					throw new ArgumentOutOfRangeException(nameof(msg), msg.DataType, LocalizedStrings.Str721);
+				//default:
+				//	throw new ArgumentOutOfRangeException(nameof(msg), msg.DataType, LocalizedStrings.Str721);
 			}
 
 			return lastTime;
@@ -952,10 +1004,7 @@ namespace StockSharp.Algo.Storages
 			return lastTime;
 		}
 
-		/// <summary>
-		/// Process <see cref="MessageAdapterWrapper.InnerAdapter"/> output message.
-		/// </summary>
-		/// <param name="message">The message.</param>
+		/// <inheritdoc />
 		protected override void OnInnerAdapterNewOutMessage(Message message)
 		{
 			switch (message.Type)
@@ -963,20 +1012,20 @@ namespace StockSharp.Algo.Storages
 				case MessageTypes.Security:
 				{
 					var secMsg = (SecurityMessage)message;
-					var security = _entityRegistry.Securities.ReadBySecurityId(secMsg.SecurityId);
+					var security = _securityStorage.LookupById(secMsg.SecurityId);
 
 					if (security == null)
 						security = secMsg.ToSecurity(_storageRegistry.ExchangeInfoProvider);
 					else
 						security.ApplyChanges(secMsg, _storageRegistry.ExchangeInfoProvider, OverrideSecurityData);
 
-					_entityRegistry.Securities.Save(security, OverrideSecurityData);
+					_securityStorage.Save(security, OverrideSecurityData);
 					break;
 				}
 				case MessageTypes.Board:
 				{
 					var boardMsg = (BoardMessage)message;
-					var board = _entityRegistry.ExchangeBoards.ReadById(boardMsg.Code);
+					var board = ExchangeInfoProvider.GetExchangeBoard(boardMsg.Code);
 
 					if (board == null)
 					{
@@ -989,33 +1038,31 @@ namespace StockSharp.Algo.Storages
 									Name = boardMsg.ExchangeCode
 								});
 
-							return boardMsg.ToBoard(new ExchangeBoard
+							return new ExchangeBoard
 							{
 								Code = code,
 								Exchange = exchange
-							});
+							};
 						});
 					}
-					else
-					{
-						// TODO apply changes
-					}
 
-					_entityRegistry.Exchanges.Save(board.Exchange);
-					_entityRegistry.ExchangeBoards.Save(board);
+					board.ApplyChanges(boardMsg);
+
+					ExchangeInfoProvider.Save(board.Exchange);
+					ExchangeInfoProvider.Save(board);
 					break;
 				}
 
 				case MessageTypes.Portfolio:
 				{
 					var portfolioMsg = (PortfolioMessage)message;
-					var portfolio = _entityRegistry.Portfolios.ReadById(portfolioMsg.PortfolioName) ?? new Portfolio
+					var portfolio = _positionStorage.GetPortfolio(portfolioMsg.PortfolioName) ?? new Portfolio
 					{
 						Name = portfolioMsg.PortfolioName
 					};
 
 					portfolioMsg.ToPortfolio(portfolio, _storageRegistry.ExchangeInfoProvider);
-					_entityRegistry.Portfolios.Save(portfolio);
+					_positionStorage.Save(portfolio);
 
 					break;
 				}
@@ -1023,13 +1070,13 @@ namespace StockSharp.Algo.Storages
 				case MessageTypes.PortfolioChange:
 				{
 					var portfolioMsg = (PortfolioChangeMessage)message;
-					var portfolio = _entityRegistry.Portfolios.ReadById(portfolioMsg.PortfolioName) ?? new Portfolio
+					var portfolio = _positionStorage.GetPortfolio(portfolioMsg.PortfolioName) ?? new Portfolio
 					{
 						Name = portfolioMsg.PortfolioName
 					};
 
 					portfolio.ApplyChanges(portfolioMsg, _storageRegistry.ExchangeInfoProvider);
-					_entityRegistry.Portfolios.Save(portfolio);
+					_positionStorage.Save(portfolio);
 
 					break;
 				}
@@ -1074,7 +1121,7 @@ namespace StockSharp.Algo.Storages
 						position.Description = positionMsg.Description;
 
 					position.ApplyChanges(positionMsg);
-					_entityRegistry.Positions.Save(position);
+					_positionStorage.Save(position);
 
 					break;
 				}
@@ -1085,19 +1132,15 @@ namespace StockSharp.Algo.Storages
 
 		private Position GetPosition(SecurityId securityId, string portfolioName)
 		{
-			var security = !securityId.SecurityCode.IsEmpty() && !securityId.BoardCode.IsEmpty() ? _entityRegistry.Securities.ReadBySecurityId(securityId) : _entityRegistry.Securities.Lookup(new Security
+			var security = (!securityId.SecurityCode.IsEmpty() && !securityId.BoardCode.IsEmpty() ? _securityStorage.LookupById(securityId) : _securityStorage.Lookup(new Security
 			{
 				Code = securityId.SecurityCode,
-				Type = securityId.SecurityType
-			}).FirstOrDefault();
-
-			if (security == null)
-				security = TryCreateSecurity(securityId);
+			}).FirstOrDefault()) ?? TryCreateSecurity(securityId);
 
 			if (security == null)
 				return null;
 
-			var portfolio = _entityRegistry.Portfolios.ReadById(portfolioName);
+			var portfolio = _positionStorage.GetPortfolio(portfolioName);
 
 			if (portfolio == null)
 			{
@@ -1106,10 +1149,10 @@ namespace StockSharp.Algo.Storages
 					Name = portfolioName
 				};
 
-				_entityRegistry.Portfolios.Add(portfolio);
+				_positionStorage.Save(portfolio);
 			}
 
-			return _entityRegistry.Positions.ReadBySecurityAndPortfolio(security, portfolio) ?? new Position
+			return _positionStorage.GetPosition(portfolio, security) ?? new Position
 			{
 				Security = security,
 				Portfolio = portfolio
@@ -1129,7 +1172,7 @@ namespace StockSharp.Algo.Storages
 				//ExtensionInfo = new Dictionary<object, object>()
 			};
 
-			_entityRegistry.Securities.Add(security);
+			_securityStorage.Save(security, false);
 
 			return security;
 		}
@@ -1163,15 +1206,11 @@ namespace StockSharp.Algo.Storages
 			return lastTime;
 		}
 
-		private static DateTimeOffset SetTransactionId(NewsMessage msg, long transactionId)
+		private static DateTimeOffset SetTransactionId<TMessage>(TMessage msg, long transactionId)
+			where TMessage : ISubscriptionIdMessage, IServerTimeMessage
 		{
 			msg.OriginalTransactionId = transactionId;
-			return msg.ServerTime;
-		}
-
-		private static DateTimeOffset SetTransactionId(ExecutionMessage msg, long transactionId)
-		{
-			msg.OriginalTransactionId = transactionId;
+			msg.SubscriptionId = transactionId;
 			return msg.ServerTime;
 		}
 
@@ -1188,7 +1227,7 @@ namespace StockSharp.Algo.Storages
 			storage.SetValue(nameof(DaysLoad), DaysLoad);
 			storage.SetValue(nameof(CacheBuildableCandles), CacheBuildableCandles);
 			storage.SetValue(nameof(OverrideSecurityData), OverrideSecurityData);
-			storage.SetValue(nameof(SupportLookupMessages), SupportLookupMessages);
+			//storage.SetValue(nameof(SupportLookupMessages), SupportLookupMessages);
 		}
 
 		/// <inheritdoc />
@@ -1204,7 +1243,7 @@ namespace StockSharp.Algo.Storages
 			DaysLoad = storage.GetValue(nameof(DaysLoad), DaysLoad);
 			CacheBuildableCandles = storage.GetValue(nameof(CacheBuildableCandles), CacheBuildableCandles);
 			OverrideSecurityData = storage.GetValue(nameof(OverrideSecurityData), OverrideSecurityData);
-			SupportLookupMessages = storage.GetValue(nameof(SupportLookupMessages), SupportLookupMessages);
+			//SupportLookupMessages = storage.GetValue(nameof(SupportLookupMessages), SupportLookupMessages);
 		}
 
 		/// <summary>
@@ -1213,7 +1252,7 @@ namespace StockSharp.Algo.Storages
 		/// <returns>Copy.</returns>
 		public override IMessageChannel Clone()
 		{
-			return new StorageMessageAdapter(InnerAdapter, _entityRegistry, _storageRegistry, _snapshotRegistry)
+			return new StorageMessageAdapter(InnerAdapter, _securityStorage, _positionStorage, _storageRegistry, _snapshotRegistry, _candleBuilderProvider)
 			{
 				CacheBuildableCandles = CacheBuildableCandles,
 				OverrideSecurityData = OverrideSecurityData,
@@ -1221,7 +1260,7 @@ namespace StockSharp.Algo.Storages
 				Format = Format,
 				Drive = Drive,
 				Mode = Mode,
-				SupportLookupMessages = SupportLookupMessages,
+				//SupportLookupMessages = SupportLookupMessages,
 			};
 		}
 	}

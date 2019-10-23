@@ -19,6 +19,9 @@ namespace StockSharp.Messages
 	using System.ComponentModel;
 	using System.ComponentModel.DataAnnotations;
 	using System.Runtime.Serialization;
+	using System.Xml.Serialization;
+
+	using Ecng.Common;
 
 	using StockSharp.Localization;
 
@@ -105,6 +108,13 @@ namespace StockSharp.Messages
 		[EnumMember]
 		[Display(ResourceType = typeof(LocalizedStrings), Name = LocalizedStrings.RenkoCandleKey)]
 		CandleRenko,
+
+		/// <summary>
+		/// Board info.
+		/// </summary>
+		[EnumMember]
+		[Display(ResourceType = typeof(LocalizedStrings), Name = LocalizedStrings.BoardInfoKey)]
+		Board,
 	}
 
 	/// <summary>
@@ -141,7 +151,7 @@ namespace StockSharp.Messages
 	/// </summary>
 	[DataContract]
 	[Serializable]
-	public class MarketDataMessage : SecurityMessage
+	public class MarketDataMessage : SecurityMessage, ISubscriptionMessage
 	{
 		/// <summary>
 		/// Start date, from which data needs to be retrieved.
@@ -177,28 +187,25 @@ namespace StockSharp.Messages
 		[MainCategory]
 		public object Arg { get; set; }
 
-		/// <summary>
-		/// The message is market-data subscription.
-		/// </summary>
+		/// <inheritdoc />
 		[DataMember]
 		public bool IsSubscribe { get; set; }
 
-		/// <summary>
-		/// Request identifier.
-		/// </summary>
+		/// <inheritdoc />
 		[DataMember]
 		public long TransactionId { get; set; }
 
 		/// <summary>
-		/// The message is not supported by adapter. To be setted if the answer.
+		/// The message is not supported by adapter. To be set if the answer.
 		/// </summary>
 		[DataMember]
 		public bool IsNotSupported { get; set; }
 
 		/// <summary>
-		/// Subscribe or unsubscribe error info. Заполняется в случае ответа.
+		/// Subscribe or unsubscribe error info. To be set if the answer.
 		/// </summary>
 		[DataMember]
+		[XmlIgnore]
 		public Exception Error { get; set; }
 
 		/// <summary>
@@ -247,14 +254,12 @@ namespace StockSharp.Messages
 		/// Allow build candles from smaller timeframe.
 		/// </summary>
 		/// <remarks>
-		/// Avaible only for <see cref="TimeFrameCandleMessage"/>.
+		/// Available only for <see cref="TimeFrameCandleMessage"/>.
 		/// </remarks>
 		[DataMember]
 		public bool AllowBuildFromSmallerTimeFrame { get; set; } = true;
 
-		/// <summary>
-		/// Request history market data only.
-		/// </summary>
+		/// <inheritdoc />
 		[DataMember]
 		public bool IsHistory { get; set; }
 
@@ -265,9 +270,16 @@ namespace StockSharp.Messages
 		public bool IsRegularTradingHours { get; set; }
 
 		/// <summary>
-		/// The default depth of order book.
+		/// Request <see cref="CandleStates.Finished"/> only candles.
 		/// </summary>
-		public const int DefaultMaxDepth = 50;
+		[DataMember]
+		public bool IsFinished { get; set; }
+
+		/// <summary>
+		/// Board code.
+		/// </summary>
+		[DataMember]
+		public string BoardCode { get; set; }
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="MarketDataMessage"/>.
@@ -292,41 +304,92 @@ namespace StockSharp.Messages
 		/// <returns>Copy.</returns>
 		public override Message Clone()
 		{
-			var clone = new MarketDataMessage
-			{
-				Arg = Arg,
-				DataType = DataType,
-				Error = Error,
-				From = From,
-				To = To,
-				IsSubscribe = IsSubscribe,
-				TransactionId = TransactionId,
-				Count = Count,
-				MaxDepth = MaxDepth,
-				NewsId = NewsId,
-				LocalTime = LocalTime,
-				IsNotSupported = IsNotSupported,
-				BuildMode = BuildMode,
-				BuildFrom = BuildFrom,
-				BuildField = BuildField,
-				IsCalcVolumeProfile = IsCalcVolumeProfile,
-				IsHistory = IsHistory,
-				AllowBuildFromSmallerTimeFrame = AllowBuildFromSmallerTimeFrame,
-				IsRegularTradingHours = IsRegularTradingHours,
-			};
-
+			var clone = new MarketDataMessage();
 			CopyTo(clone);
-
 			return clone;
 		}
 
 		/// <summary>
-		/// Returns a string that represents the current object.
+		/// Copy the message into the <paramref name="destination" />.
 		/// </summary>
-		/// <returns>A string that represents the current object.</returns>
+		/// <param name="destination">The object, to which copied information.</param>
+		public void CopyTo(MarketDataMessage destination)
+		{
+			base.CopyTo(destination);
+
+			destination.Arg = Arg;
+			destination.DataType = DataType;
+			destination.Error = Error;
+			destination.From = From;
+			destination.To = To;
+			destination.IsSubscribe = IsSubscribe;
+			destination.TransactionId = TransactionId;
+			destination.Count = Count;
+			destination.MaxDepth = MaxDepth;
+			destination.NewsId = NewsId;
+			destination.IsNotSupported = IsNotSupported;
+			destination.BuildMode = BuildMode;
+			destination.BuildFrom = BuildFrom;
+			destination.BuildField = BuildField;
+			destination.IsCalcVolumeProfile = IsCalcVolumeProfile;
+			destination.IsHistory = IsHistory;
+			destination.AllowBuildFromSmallerTimeFrame = AllowBuildFromSmallerTimeFrame;
+			destination.IsRegularTradingHours = IsRegularTradingHours;
+			destination.IsFinished = IsFinished;
+			destination.BoardCode = BoardCode;
+		}
+
+		/// <inheritdoc />
 		public override string ToString()
 		{
-			return base.ToString() + $",Sec={SecurityId},Type={DataType},IsSubscribe={IsSubscribe},Arg={Arg},TransId={TransactionId},OrigId={OriginalTransactionId}";
+			var str = base.ToString() + $",Sec={SecurityId},Type={DataType},IsSubscribe={IsSubscribe}";
+
+			if (Arg != null)
+				str += $",Arg={Arg}";
+
+			if (TransactionId != default)
+				str += $",TransId={TransactionId}";
+
+			if (OriginalTransactionId != default)
+				str += $",OrigId={OriginalTransactionId}";
+
+			if (MaxDepth != null)
+				str += $",MaxDepth={MaxDepth}";
+
+			if (Count != null)
+				str += $",Cnt={Count}";
+
+			if (From != null)
+				str += $",From={From}";
+
+			if (To != null)
+				str += $",To={To}";
+
+			if (BuildMode == MarketDataBuildModes.Build)
+				str += $",Build={BuildMode}/{BuildFrom}/{BuildField}";
+
+			if (AllowBuildFromSmallerTimeFrame)
+				str += $",SmallTF={AllowBuildFromSmallerTimeFrame}";
+
+			if (IsRegularTradingHours)
+				str += $",RTH={IsRegularTradingHours}";
+
+			if (IsFinished)
+				str += $",Fin={IsFinished}";
+
+			if (IsHistory)
+				str += $",Hist={IsHistory}";
+
+			if (IsCalcVolumeProfile)
+				str += $",Profile={IsCalcVolumeProfile}";
+
+			if (!BoardCode.IsEmpty())
+				str += $",BoardCode={BoardCode}";
+
+			if (Error != null)
+				str += $",Error={Error.Message}";
+
+			return str;
 		}
 	}
 }

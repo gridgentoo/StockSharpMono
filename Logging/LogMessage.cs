@@ -24,7 +24,10 @@ namespace StockSharp.Logging
 	/// </summary>
 	public class LogMessage
 	{
-		internal bool IsDispose;
+		/// <summary>
+		/// Special message initiated from <see cref="IDisposable.Dispose"/> method.
+		/// </summary>
+		public bool IsDispose { get; internal set; }
 
 		private Func<string> _getMessage;
 
@@ -100,10 +103,7 @@ namespace StockSharp.Logging
 			}
 		}
 
-		/// <summary>
-		/// Returns a string that represents the current object.
-		/// </summary>
-		/// <returns>A string that represents the current object.</returns>
+		/// <inheritdoc />
 		public override string ToString()
 		{
 			return "{0} {1}".Put(Time, Message);

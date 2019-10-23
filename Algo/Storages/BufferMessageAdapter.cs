@@ -23,6 +23,7 @@ namespace StockSharp.Algo.Storages
 	using Ecng.Common;
 	using Ecng.Serialization;
 
+	using StockSharp.BusinessEntities;
 	using StockSharp.Localization;
 	using StockSharp.Messages;
 
@@ -36,7 +37,7 @@ namespace StockSharp.Algo.Storages
 		/// </summary>
 		/// <typeparam name="TKey">The key type.</typeparam>
 		/// <typeparam name="TMarketData">Market data type.</typeparam>
-		class DataBuffer<TKey, TMarketData>
+		private class DataBuffer<TKey, TMarketData>
 			where TMarketData : Message
 		{
 			private readonly SynchronizedDictionary<TKey, List<TMarketData>> _data = new SynchronizedDictionary<TKey, List<TMarketData>>();
@@ -192,7 +193,12 @@ namespace StockSharp.Algo.Storages
 						dataType = DataType.Create(typeof(TimeFrameCandleMessage), message.Arg);
 				}
 				else
+				{
 					dataType = CreateDataType(message);
+
+					if (dataType == null)
+						return;
+				}
 
 				var subscription = Tuple.Create(message.SecurityId, dataType);
 
@@ -254,6 +260,9 @@ namespace StockSharp.Algo.Storages
 				case MarketDataTypes.News:
 					return DataType.News;
 
+				case MarketDataTypes.Board:
+					return DataType.Board;
+
 				case MarketDataTypes.CandleTick:
 					return DataType.Create(typeof(TickCandleMessage), msg.Arg);
 
@@ -270,7 +279,8 @@ namespace StockSharp.Algo.Storages
 					return DataType.Create(typeof(RenkoCandleMessage), msg.Arg);
 
 				default:
-					throw new ArgumentOutOfRangeException(nameof(msg), msg.DataType, LocalizedStrings.Str1219);
+					return null;
+					//throw new ArgumentOutOfRangeException(nameof(msg), msg.DataType, LocalizedStrings.Str1219);
 			}
 		}
 
@@ -391,11 +401,8 @@ namespace StockSharp.Algo.Storages
 			}
 		}
 
-		/// <summary>
-		/// Send message.
-		/// </summary>
-		/// <param name="message">Message.</param>
-		public override void SendInMessage(Message message)
+		/// <inheritdoc />
+		protected override void OnSendInMessage(Message message)
 		{
 			switch (message.Type)
 			{
@@ -447,12 +454,11 @@ namespace StockSharp.Algo.Storages
 						IsMarketMaker = regMsg.IsMarketMaker,
 						IsMargin = regMsg.IsMargin,
 						Slippage = regMsg.Slippage,
+						IsManual = regMsg.IsManual,
 						OrderType = regMsg.OrderType,
 						UserOrderId = regMsg.UserOrderId,
 						OrderState = OrderStates.Pending,
 						Condition = regMsg.Condition?.Clone(),
-						//RepoInfo = regMsg.RepoInfo?.Clone(),
-						//RpsInfo = regMsg.RpsInfo?.Clone(),
 					});
 					break;
 				case MessageTypes.OrderCancel:
@@ -481,13 +487,10 @@ namespace StockSharp.Algo.Storages
 					break;
 			}
 
-			base.SendInMessage(message);
+			base.OnSendInMessage(message);
 		}
 
-		/// <summary>
-		/// Process <see cref="MessageAdapterWrapper.InnerAdapter"/> output message.
-		/// </summary>
-		/// <param name="message">The message.</param>
+		/// <inheritdoc />
 		protected override void OnInnerAdapterNewOutMessage(Message message)
 		{
 			if (message.IsBack)
@@ -569,7 +572,7 @@ namespace StockSharp.Algo.Storages
 				}
 				case MessageTypes.News:
 				{
-					if (CanStore<NewsMessage>(default(SecurityId)))
+					if (CanStore<NewsMessage>(default))
 						_newsBuffer.Add((NewsMessage)message.Clone());
 
 					break;

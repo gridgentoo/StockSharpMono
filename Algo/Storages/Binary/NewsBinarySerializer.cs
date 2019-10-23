@@ -20,7 +20,6 @@ namespace StockSharp.Algo.Storages.Binary
 	using System.IO;
 	using System.Linq;
 
-	using Ecng.Common;
 	using Ecng.Collections;
 	using Ecng.Serialization;
 
@@ -68,7 +67,7 @@ namespace StockSharp.Algo.Storages.Binary
 	class NewsBinarySerializer : BinaryMarketDataSerializer<NewsMessage, NewsMetaInfo>
 	{
 		public NewsBinarySerializer(IExchangeInfoProvider exchangeInfoProvider)
-			: base(default(SecurityId), 200, MarketDataVersions.Version47, exchangeInfoProvider)
+			: base(default, 200, MarketDataVersions.Version48, exchangeInfoProvider)
 		{
 		}
 
@@ -89,59 +88,27 @@ namespace StockSharp.Algo.Storages.Binary
 					isMetaEmpty = false;
 				}
 
-				if (news.Id.IsEmpty())
-					writer.Write(false);
-				else
-				{
-					writer.Write(true);
-					writer.WriteString(news.Id);
-				}
+				writer.WriteStringEx(news.Id);
 
 				writer.WriteString(news.Headline);
 
-				if (news.Story.IsEmpty())
-					writer.Write(false);
-				else
-				{
-					writer.Write(true);
-					writer.WriteString(news.Story);
-				}
-
-				if (news.Source.IsEmpty())
-					writer.Write(false);
-				else
-				{
-					writer.Write(true);
-					writer.WriteString(news.Source);
-				}
-
-				if (news.BoardCode.IsEmpty())
-					writer.Write(false);
-				else
-				{
-					writer.Write(true);
-					writer.WriteString(news.BoardCode);
-				}
-
-				if (news.SecurityId == null)
-					writer.Write(false);
-				else
-				{
-					writer.Write(true);
-					writer.WriteString(news.SecurityId.Value.SecurityCode);
-				}
-
-				if (news.Url == null)
-					writer.Write(false);
-				else
-				{
-					writer.Write(true);
-					writer.WriteString(news.Url.To<string>());
-				}
+				writer.WriteStringEx(news.Story);
+				writer.WriteStringEx(news.Source);
+				writer.WriteStringEx(news.BoardCode);
+				writer.WriteStringEx(news.SecurityId?.SecurityCode);
+				writer.WriteStringEx(news.Url);
 
 				var lastOffset = metaInfo.LastServerOffset;
 				metaInfo.LastTime = writer.WriteTime(news.ServerTime, metaInfo.LastTime, LocalizedStrings.News, true, true, metaInfo.ServerOffset, allowDiffOffsets, isTickPrecision, ref lastOffset);
 				metaInfo.LastServerOffset = lastOffset;
+
+				if (metaInfo.Version < MarketDataVersions.Version48)
+					continue;
+
+				writer.Write(news.Priority != null);
+
+				if (news.Priority != null)
+					writer.WriteInt((int)news.Priority.Value);
 			}
 		}
 
@@ -152,13 +119,13 @@ namespace StockSharp.Algo.Storages.Binary
 
 			var message = new NewsMessage
 			{
-				Id = reader.Read() ? reader.ReadString() : null,
+				Id = reader.ReadStringEx(),
 				Headline = reader.ReadString(),
-				Story = reader.Read() ? reader.ReadString() : null,
-				Source = reader.Read() ? reader.ReadString() : null,
-				BoardCode = reader.Read() ? reader.ReadString() : null,
+				Story = reader.ReadStringEx(),
+				Source = reader.ReadStringEx(),
+				BoardCode = reader.ReadStringEx(),
 				SecurityId = reader.Read() ? new SecurityId { SecurityCode = reader.ReadString() } : (SecurityId?)null,
-				Url = reader.Read() ? reader.ReadString().To<Uri>() : null,
+				Url = reader.ReadStringEx(),
 			};
 
 			var allowDiffOffsets = metaInfo.Version >= MarketDataVersions.Version46;
@@ -169,6 +136,12 @@ namespace StockSharp.Algo.Storages.Binary
 			message.ServerTime = reader.ReadTime(ref prevTime, true, true, metaInfo.ServerOffset, allowDiffOffsets, isTickPrecision, ref lastOffset);
 			metaInfo.FirstTime = prevTime;
 			metaInfo.FirstServerOffset = lastOffset;
+
+			if (metaInfo.Version >= MarketDataVersions.Version48)
+			{
+				if (reader.Read())
+					message.Priority = (NewsPriorities)reader.ReadInt();
+			}
 
 			return message;
 		}

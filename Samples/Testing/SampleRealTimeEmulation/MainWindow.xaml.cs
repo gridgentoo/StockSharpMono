@@ -24,6 +24,7 @@ namespace SampleRealTimeEmulation
 	using Ecng.Common;
 	using Ecng.Serialization;
 	using Ecng.Xaml;
+	using Ecng.Configuration;
 
 	using StockSharp.Algo;
 	using StockSharp.Algo.Candles;
@@ -41,7 +42,6 @@ namespace SampleRealTimeEmulation
 		private readonly SynchronizedList<Candle> _buffer = new SynchronizedList<Candle>();
 		private readonly ChartCandleElement _candlesElem;
 		private readonly LogManager _logManager;
-		private CandleManager _candleManager;
 		private CandleSeries _candleSeries;
 		private readonly Connector _realConnector = new Connector();
 		private RealTimeEmulationTrader<IMessageAdapter> _emuConnector;
@@ -51,11 +51,7 @@ namespace SampleRealTimeEmulation
 
 		private const string _settingsFile = "connection.xml";
 
-		private readonly Portfolio _emuPf = new Portfolio
-		{
-			Name = LocalizedStrings.Str1209,
-			BeginValue = 1000000
-		};
+		private readonly Portfolio _emuPf = Portfolio.CreateSimulator();
 
 		public MainWindow()
 		{
@@ -79,22 +75,48 @@ namespace SampleRealTimeEmulation
 			_candlesElem = new ChartCandleElement();
 			area.Elements.Add(_candlesElem);
 
-			InitConnector();
+			InitRealConnector();
+			InitEmuConnector();
 
 			GuiDispatcher.GlobalDispatcher.AddPeriodicalAction(ProcessCandles);
 		}
 
-		private void InitConnector()
+		private void InitRealConnector()
 		{
-			_emuConnector?.Dispose();
+			_realConnector.NewOrder += OrderGrid.Orders.Add;
+			_realConnector.NewMyTrade += TradeGrid.Trades.Add;
+			_realConnector.OrderRegisterFailed += OrderGrid.AddRegistrationFail;
+
+			_realConnector.MassOrderCancelFailed += (transId, error) =>
+				this.GuiAsync(() => MessageBox.Show(this, error.ToString(), LocalizedStrings.Str716));
+
+			_realConnector.Error += error =>
+				this.GuiAsync(() => MessageBox.Show(this, error.ToString(), LocalizedStrings.Str2955));
+
+			ConfigManager.RegisterService<IMessageAdapterProvider>(new FullInMemoryMessageAdapterProvider(_realConnector.Adapter.InnerAdapters));
 
 			try
 			{
 				if (File.Exists(_settingsFile))
-					_realConnector.Load(new XmlSerializer<SettingsStorage>().Deserialize(_settingsFile));
+				{
+					var ctx = new ContinueOnExceptionContext();
+					ctx.Error += ex => ex.LogError();
+
+					using (new Scope<ContinueOnExceptionContext>(ctx))
+						_realConnector.Load(new XmlSerializer<SettingsStorage>().Deserialize(_settingsFile));
+				}
 			}
 			catch
 			{
+			}
+		}
+
+		private void InitEmuConnector()
+		{
+			if (_emuConnector != null)
+			{
+				_emuConnector.Dispose();
+				_logManager.Sources.Remove(_emuConnector);
 			}
 
 			_emuConnector = new RealTimeEmulationTrader<IMessageAdapter>(_realConnector.MarketDataAdapter ?? new PassThroughMessageAdapter(new IncrementalIdGenerator()), _emuPf, false);
@@ -105,8 +127,6 @@ namespace SampleRealTimeEmulation
 
 			SecurityPicker.SecurityProvider = new FilterableSecurityProvider(_emuConnector);
 			SecurityPicker.MarketDataProvider = _emuConnector;
-
-			_candleManager = new CandleManager(_emuConnector);
 
 			// subscribe on connection successfully event
 			_emuConnector.Connected += () =>
@@ -140,14 +160,10 @@ namespace SampleRealTimeEmulation
 			_emuConnector.NewOrder += OrderGrid.Orders.Add;
 			_emuConnector.NewMyTrade += TradeGrid.Trades.Add;
 
-			_realConnector.NewOrder += OrderGrid.Orders.Add;
-			_realConnector.NewMyTrade += TradeGrid.Trades.Add;
-
 			// subscribe on error of order registration event
 			_emuConnector.OrderRegisterFailed += OrderGrid.AddRegistrationFail;
-			_realConnector.OrderRegisterFailed += OrderGrid.AddRegistrationFail;
 
-			_candleManager.Processing += (s, candle) =>
+			_emuConnector.CandleSeriesProcessing += (s, candle) =>
 			{
 				if (candle.State == CandleStates.Finished)
 					_buffer.Add(candle);
@@ -155,13 +171,9 @@ namespace SampleRealTimeEmulation
 
 			_emuConnector.MassOrderCancelFailed += (transId, error) =>
 				this.GuiAsync(() => MessageBox.Show(this, error.ToString(), LocalizedStrings.Str716));
-			_realConnector.MassOrderCancelFailed += (transId, error) =>
-				this.GuiAsync(() => MessageBox.Show(this, error.ToString(), LocalizedStrings.Str716));
 
 			// subscribe on error event
 			_emuConnector.Error += error =>
-				this.GuiAsync(() => MessageBox.Show(this, error.ToString(), LocalizedStrings.Str2955));
-			_realConnector.Error += error =>
 				this.GuiAsync(() => MessageBox.Show(this, error.ToString(), LocalizedStrings.Str2955));
 
 			// subscribe on error of market data subscription event
@@ -193,10 +205,11 @@ namespace SampleRealTimeEmulation
 
 		private void SettingsClick(object sender, RoutedEventArgs e)
 		{
-			if (_realConnector.Configure(this))
-				new XmlSerializer<SettingsStorage>().Serialize(_realConnector.Save(), _settingsFile);
+			if (!_realConnector.Configure(this))
+				return;
 
-			InitConnector();
+			new XmlSerializer<SettingsStorage>().Serialize(_realConnector.Save(), _settingsFile);
+			InitEmuConnector();
 		}
 
 		private void ConnectClick(object sender, RoutedEventArgs e)
@@ -245,18 +258,18 @@ namespace SampleRealTimeEmulation
 				return;
 
 			if (_candleSeries != null)
-				_candleManager.Stop(_candleSeries); // give back series memory
+				_emuConnector.UnSubscribeCandles(_candleSeries); // give back series memory
 
 			_security = security;
 
 			Chart.Reset(new[] { _candlesElem });
 
-			_emuConnector.RegisterMarketDepth(security);
-			_emuConnector.RegisterTrades(security);
-			_emuConnector.RegisterSecurity(security);
+			_emuConnector.SubscribeMarketDepth(security);
+			_emuConnector.SubscribeTrades(security);
+			_emuConnector.SubscribeLevel1(security);
 
 			_candleSeries = new CandleSeries(CandleSettingsEditor.Settings.CandleType, security, CandleSettingsEditor.Settings.Arg);
-			_candleManager.Start(_candleSeries);
+			_emuConnector.SubscribeCandles(_candleSeries);
 		}
 
 		private void NewOrder_OnClick(object sender, RoutedEventArgs e)
@@ -266,7 +279,8 @@ namespace SampleRealTimeEmulation
 
 		private void OrderGrid_OrderRegistering()
 		{
-			var pfDataSource = new PortfolioDataSource { _emuPf };
+			var pfDataSource = new PortfolioDataSource();
+			pfDataSource.Add(_emuPf);
 			pfDataSource.AddRange(_realConnector.Portfolios);
 
 			var newOrder = new OrderWindow
@@ -298,12 +312,15 @@ namespace SampleRealTimeEmulation
 
 		private void OrderGrid_OnOrderReRegistering(Order order)
 		{
+			var pfDataSource = new PortfolioDataSource();
+			pfDataSource.Add(order.Portfolio);
+
 			var window = new OrderWindow
 			{
 				Title = LocalizedStrings.Str2976Params.Put(order.TransactionId),
 				SecurityProvider = _emuConnector,
 				MarketDataProvider = _emuConnector,
-				Portfolios = new PortfolioDataSource { order.Portfolio },
+				Portfolios = pfDataSource,
 				Order = order.ReRegisterClone(newVolume: order.Balance)
 			};
 

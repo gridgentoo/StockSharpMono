@@ -18,7 +18,9 @@ namespace StockSharp.BusinessEntities
 	using System;
 	using System.ComponentModel;
 	using System.Runtime.Serialization;
+	using System.Xml.Serialization;
 
+	using Ecng.Common;
 	using Ecng.Serialization;
 
 	using StockSharp.Messages;
@@ -139,12 +141,68 @@ namespace StockSharp.BusinessEntities
 			}
 		}
 
-		private static readonly Portfolio _anonymousPortfolio = new Portfolio { Name = LocalizedStrings.Str545 };
+		private decimal? _commissionTaker;
+
+		/// <summary>
+		/// Commission (taker).
+		/// </summary>
+		[Ignore]
+		[XmlIgnore]
+		[Browsable(false)]
+		public decimal? CommissionTaker
+		{
+			get => _commissionTaker;
+			set
+			{
+				_commissionTaker = value;
+				NotifyChanged(nameof(CommissionTaker));
+			}
+		}
+
+		private decimal? _commissionMaker;
+
+		/// <summary>
+		/// Commission (maker).
+		/// </summary>
+		[Ignore]
+		[XmlIgnore]
+		[Browsable(false)]
+		public decimal? CommissionMaker
+		{
+			get => _commissionMaker;
+			set
+			{
+				_commissionMaker = value;
+				NotifyChanged(nameof(CommissionMaker));
+			}
+		}
 
 		/// <summary>
 		/// Portfolio associated with the orders received through the orders log.
 		/// </summary>
-		public static Portfolio AnonymousPortfolio => _anonymousPortfolio;
+		public static Portfolio AnonymousPortfolio { get; } = new Portfolio
+		{
+			Name = LocalizedStrings.Str545,
+			InternalId = "00000000-0000-0000-0000-000000000001".To<Guid>(),
+		};
+
+		/// <summary>
+		/// Internal identifier.
+		/// </summary>
+		[Browsable(false)]
+		[DataMember]
+		public Guid? InternalId { get; set; }
+
+		/// <summary>
+		/// Create virtual portfolio for simulation.
+		/// </summary>
+		/// <returns>Simulator.</returns>
+		public static Portfolio CreateSimulator() => new Portfolio
+		{
+			Name = LocalizedStrings.Str1209,
+			BeginValue = 1000000,
+			InternalId = "00000000-0000-0000-0000-000000000002".To<Guid>(),
+		};
 
 		/// <summary>
 		/// Create a copy of <see cref="Portfolio"/>.
@@ -171,12 +229,12 @@ namespace StockSharp.BusinessEntities
 			destination.Leverage = Leverage;
 			//destination.Connector = Connector;
 			destination.State = State;
+			destination.CommissionMaker = CommissionMaker;
+			destination.CommissionTaker = CommissionTaker;
+			destination.InternalId = InternalId;
 		}
 
-		/// <summary>
-		/// Returns a string that represents the current object.
-		/// </summary>
-		/// <returns>A string that represents the current object.</returns>
+		/// <inheritdoc />
 		public override string ToString()
 		{
 			return Name;

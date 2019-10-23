@@ -15,22 +15,16 @@
             </summary>
       <param name="transactionIdGenerator">Transaction id generator.</param>
     </member>
-    <member name="M:StockSharp.Oanda.OandaMessageAdapter.CreateOrderCondition">
+    <member name="P:StockSharp.Oanda.OandaMessageAdapter.IsSupportSecurityLookupResult">
       <inheritdoc />
     </member>
-    <member name="P:StockSharp.Oanda.OandaMessageAdapter.IsSupportStopLoss">
+    <member name="P:StockSharp.Oanda.OandaMessageAdapter.IsSupportPortfolioLookupResult">
       <inheritdoc />
     </member>
-    <member name="P:StockSharp.Oanda.OandaMessageAdapter.IsSupportTakeProfit">
+    <member name="P:StockSharp.Oanda.OandaMessageAdapter.IsSupportSecuritiesLookupAll">
       <inheritdoc />
     </member>
-    <member name="M:StockSharp.Oanda.OandaMessageAdapter.CreateStopCondition(System.Boolean,System.Nullable{System.Decimal})">
-      <inheritdoc />
-    </member>
-    <member name="P:StockSharp.Oanda.OandaMessageAdapter.IsSupportNativeSecurityLookup">
-      <inheritdoc />
-    </member>
-    <member name="P:StockSharp.Oanda.OandaMessageAdapter.IsSupportNativePortfolioLookup">
+    <member name="P:StockSharp.Oanda.OandaMessageAdapter.IsSupportExecutionsPnL">
       <inheritdoc />
     </member>
     <member name="M:StockSharp.Oanda.OandaMessageAdapter.OnSendInMessage(StockSharp.Messages.Message)">
@@ -66,20 +60,14 @@
             Possible time-frames.
             </summary>
     </member>
-    <member name="P:StockSharp.Oanda.OandaMessageAdapter.TimeFrames">
+    <member name="M:StockSharp.Oanda.OandaMessageAdapter.GetTimeFrames(StockSharp.Messages.SecurityId,System.Nullable{System.DateTimeOffset},System.Nullable{System.DateTimeOffset})">
       <inheritdoc />
     </member>
     <member name="M:StockSharp.Oanda.OandaMessageAdapter.Save(Ecng.Serialization.SettingsStorage)">
-      <summary>
-            Save settings.
-            </summary>
-      <param name="storage">Settings storage.</param>
+      <inheritdoc />
     </member>
     <member name="M:StockSharp.Oanda.OandaMessageAdapter.Load(Ecng.Serialization.SettingsStorage)">
-      <summary>
-            Load settings.
-            </summary>
-      <param name="storage">Settings storage.</param>
+      <inheritdoc />
     </member>
     <member name="T:StockSharp.Oanda.OandaOrderCondition">
       <summary>

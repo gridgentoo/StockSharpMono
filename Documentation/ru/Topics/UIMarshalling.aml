@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <topic id="a0a4c8df-2bba-4e1e-8ba9-e1fa98728f92" revisionNumber="0">
   <developerWalkthroughDocument xmlns="http://ddue.schemas.microsoft.com/authoring/2003/5" xmlns:xlink="http://www.w3.org/1999/xlink">
     <summary>
@@ -18,7 +18,7 @@
 	  <para>Основное ограничение визуального API под Windows состоит в том, что нельзя обращаться из другого потока к элементам окна. Это связанно с ограничениями архитектуры Windows (подробнее описано здесь
 	  <token>messagepump</token>). Реализации шлюза <codeEntityReference>T:StockSharp.BusinessEntities.IConnector</codeEntityReference> в целях повышения
 	  производительности работают в многопоточном режиме. Поэтому, подписываясь на событие, например, 
-	  <codeEntityReference qualifyHint="true">E:StockSharp.BusinessEntities.IConnector.NewSecurity</codeEntityReference>,
+	  <codeEntityReference qualifyHint="true">E:StockSharp.Algo.Connector.NewSecurity</codeEntityReference>,
 	  нельзя напрямую выводить полученные данные в окно пользователя. Для этого нужно провести операцию синхронизации при помощи специального объекта
 	  <externalLink>
 		<linkText>Dispatcher</linkText>
@@ -81,7 +81,7 @@ _trader.NewSecurity += security => this.GuiSync(() => this.Security.ItemsSource 
 
   </content>
 </section>
-	  
+ 	  
     </introduction>
     
   </developerWalkthroughDocument>

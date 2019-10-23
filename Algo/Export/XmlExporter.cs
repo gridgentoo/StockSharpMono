@@ -137,6 +137,7 @@ namespace StockSharp.Algo.Export
 						writer.WriteAttribute("isOrder", item.HasOrderInfo);
 						writer.WriteAttribute("isTrade", item.HasTradeInfo);
 						writer.WriteAttribute("commission", item.Commission);
+						writer.WriteAttribute("commissionCurrency", item.CommissionCurrency);
 						writer.WriteAttribute("pnl", item.PnL);
 						writer.WriteAttribute("position", item.Position);
 						writer.WriteAttribute("latency", item.Latency);
@@ -149,6 +150,7 @@ namespace StockSharp.Algo.Export
 						writer.WriteAttribute("isUpTick", item.IsUpTick);
 						writer.WriteAttribute("isMargin", item.IsMargin);
 						writer.WriteAttribute("isMarketMaker", item.IsMarketMaker);
+						writer.WriteAttribute("isManual", item.IsManual);
 
 						writer.WriteEndElement();
 					});
@@ -288,8 +290,11 @@ namespace StockSharp.Algo.Export
 				if (!n.Source.IsEmpty())
 					writer.WriteAttribute("source", n.Source);
 
-				if (n.Url != null)
-					writer.WriteAttribute("board", n.Url);
+				if (!n.Url.IsEmpty())
+					writer.WriteAttribute("url", n.Url);
+
+				if (n.Priority != null)
+					writer.WriteAttribute("priority", n.Priority.Value);
 
 				if (!n.Story.IsEmpty())
 					writer.WriteCData(n.Story);
@@ -320,6 +325,9 @@ namespace StockSharp.Algo.Export
 				if (security.VolumeStep != null)
 					writer.WriteAttribute("volumeStep", security.VolumeStep.Value);
 
+				if (security.MinVolume != null)
+					writer.WriteAttribute("minVolume", security.MinVolume.Value);
+
 				if (security.Multiplier != null)
 					writer.WriteAttribute("multiplier", security.Multiplier.Value);
 
@@ -334,6 +342,9 @@ namespace StockSharp.Algo.Export
 				
 				if (!security.CfiCode.IsEmpty())
 					writer.WriteAttribute("cfiCode", security.CfiCode);
+				
+				if (security.Shortable != null)
+					writer.WriteAttribute("shortable", security.Shortable.Value);
 
 				if (security.OptionType != null)
 					writer.WriteAttribute("optionType", security.OptionType.Value);
@@ -356,11 +367,26 @@ namespace StockSharp.Algo.Export
 				if (security.UnderlyingSecurityType != null)
 					writer.WriteAttribute("underlyingSecurityType", security.UnderlyingSecurityType);
 
+				if (security.UnderlyingSecurityMinVolume != null)
+					writer.WriteAttribute("underlyingSecurityMinVolume", security.UnderlyingSecurityMinVolume.Value);
+
+				if (security.UnderlyingSecurityMinVolume != null)
+					writer.WriteAttribute("underlyingSecurityMinVolume", security.UnderlyingSecurityMinVolume.Value);
+
 				if (security.ExpiryDate != null)
 					writer.WriteAttribute("expiryDate", security.ExpiryDate.Value.ToString("yyyy-MM-dd"));
 
 				if (security.SettlementDate != null)
 					writer.WriteAttribute("settlementDate", security.SettlementDate.Value.ToString("yyyy-MM-dd"));
+
+				if (!security.BasketCode.IsEmpty())
+					writer.WriteAttribute("basketCode", security.BasketCode);
+
+				if (!security.BasketExpression.IsEmpty())
+					writer.WriteAttribute("basketExpression", security.BasketExpression);
+
+				if (security.FaceValue != null)
+					writer.WriteAttribute("faceValue", security.FaceValue.Value);
 
 				if (!security.SecurityId.Bloomberg.IsEmpty())
 					writer.WriteAttribute("bloomberg", security.SecurityId.Bloomberg);

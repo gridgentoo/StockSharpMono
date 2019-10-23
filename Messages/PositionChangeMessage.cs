@@ -16,13 +16,11 @@ Copyright 2010 by StockSharp, LLC
 namespace StockSharp.Messages
 {
 	using System;
-	using System.ComponentModel;
 	using System.ComponentModel.DataAnnotations;
 	using System.Linq;
 	using System.Runtime.Serialization;
 
 	using Ecng.Common;
-	using Ecng.Collections;
 	using Ecng.Serialization;
 
 	using StockSharp.Localization;
@@ -66,7 +64,7 @@ namespace StockSharp.Messages
 		/// Average price.
 		/// </summary>
 		[EnumMember]
-		[Display(ResourceType = typeof(LocalizedStrings), Name = LocalizedStrings.Str257Key)]
+		[Display(ResourceType = typeof(LocalizedStrings), Name = LocalizedStrings.AveragePriceKey)]
 		AveragePrice,
 
 		/// <summary>
@@ -140,6 +138,34 @@ namespace StockSharp.Messages
 		[EnumMember]
 		[Display(ResourceType = typeof(LocalizedStrings), Name = LocalizedStrings.Str265Key)]
 		State,
+
+		/// <summary>
+		/// Expiration date.
+		/// </summary>
+		[EnumMember]
+		[Display(ResourceType = typeof(LocalizedStrings), Name = LocalizedStrings.ExpiryDateKey)]
+		ExpirationDate,
+
+		/// <summary>
+		/// Commission (taker).
+		/// </summary>
+		[EnumMember]
+		[Display(ResourceType = typeof(LocalizedStrings), Name = LocalizedStrings.CommissionTakerKey)]
+		CommissionTaker,
+
+		/// <summary>
+		/// Commission (maker).
+		/// </summary>
+		[EnumMember]
+		[Display(ResourceType = typeof(LocalizedStrings), Name = LocalizedStrings.CommissionMakerKey)]
+		CommissionMaker,
+
+		/// <summary>
+		/// Settlement price.
+		/// </summary>
+		[EnumMember]
+		[Display(ResourceType = typeof(LocalizedStrings), Name = LocalizedStrings.Str312Key)]
+		SettlementPrice,
 	}
 
 	/// <summary>
@@ -149,7 +175,7 @@ namespace StockSharp.Messages
 	[Serializable]
 	[DisplayNameLoc(LocalizedStrings.Str862Key)]
 	[DescriptionLoc(LocalizedStrings.PositionDescKey)]
-	public sealed class PositionChangeMessage : BaseChangeMessage<PositionChangeTypes>
+	public sealed class PositionChangeMessage : BasePositionChangeMessage, ISecurityIdMessage
 	{
 		/// <summary>
 		/// Security ID.
@@ -159,25 +185,6 @@ namespace StockSharp.Messages
 		[DescriptionLoc(LocalizedStrings.SecurityIdKey, true)]
 		[MainCategory]
 		public SecurityId SecurityId { get; set; }
-
-		/// <summary>
-		/// Portfolio name.
-		/// </summary>
-		[DataMember]
-		[DisplayNameLoc(LocalizedStrings.PortfolioKey)]
-		[DescriptionLoc(LocalizedStrings.PortfolioNameKey)]
-		[MainCategory]
-		[ReadOnly(true)]
-		public string PortfolioName { get; set; }
-
-		/// <summary>
-		/// Client code assigned by the broker.
-		/// </summary>
-		[DataMember]
-		[MainCategory]
-		[DisplayNameLoc(LocalizedStrings.ClientCodeKey)]
-		[DescriptionLoc(LocalizedStrings.ClientCodeDescKey)]
-		public string ClientCode { get; set; }
 
 		/// <summary>
 		/// The depositary where the physical security.
@@ -206,12 +213,6 @@ namespace StockSharp.Messages
 		public string Description { get; set; }
 
 		/// <summary>
-		/// ID of the original message <see cref="PortfolioMessage.TransactionId"/> for which this message is a response.
-		/// </summary>
-		[DataMember]
-		public long OriginalTransactionId { get; set; }
-
-		/// <summary>
 		/// Initializes a new instance of the <see cref="PositionChangeMessage"/>.
 		/// </summary>
 		public PositionChangeMessage()
@@ -225,32 +226,23 @@ namespace StockSharp.Messages
 		/// <returns>Copy.</returns>
 		public override Message Clone()
 		{
-			var msg = new PositionChangeMessage
+			var clone = new PositionChangeMessage
 			{
-				LocalTime = LocalTime,
-				PortfolioName = PortfolioName,
 				SecurityId = SecurityId,
 				DepoName = DepoName,
-				ServerTime = ServerTime,
 				LimitType = LimitType,
 				Description = Description,
-				OriginalTransactionId = OriginalTransactionId,
-				ClientCode = ClientCode,
 			};
 
-			msg.Changes.AddRange(Changes);
-			this.CopyExtensionInfo(msg);
+			CopyTo(clone);
 
-			return msg;
+			return clone;
 		}
 
-		/// <summary>
-		/// Returns a string that represents the current object.
-		/// </summary>
-		/// <returns>A string that represents the current object.</returns>
+		/// <inheritdoc />
 		public override string ToString()
 		{
-			return base.ToString() + $",Sec={SecurityId},P={PortfolioName},CL={ClientCode},Changes={Changes.Select(c => c.ToString()).Join(",")}";
+			return base.ToString() + $",Sec={SecurityId},P={PortfolioName},CL={ClientCode},L={LimitType},Changes={Changes.Select(c => c.ToString()).Join(",")}";
 		}
 	}
 }

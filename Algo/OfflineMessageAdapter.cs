@@ -36,7 +36,7 @@
 		/// Max message queue count. The default value is 10000.
 		/// </summary>
 		/// <remarks>
-		/// Value setted to -1 corresponds to the size without limitations.
+		/// Value set to -1 corresponds to the size without limitations.
 		/// </remarks>
 		public int MaxMessageCount
 		{
@@ -50,11 +50,8 @@
 			}
 		}
 
-		/// <summary>
-		/// Send message.
-		/// </summary>
-		/// <param name="message">Message.</param>
-		public override void SendInMessage(Message message)
+		/// <inheritdoc />
+		protected override void OnSendInMessage(Message message)
 		{
 			if (message.IsBack)
 			{
@@ -64,8 +61,37 @@
 					message.IsBack = false;
 				}
 
-				//base.SendInMessage(message);
+				//base.OnSendInMessage(message);
 				//return;
+			}
+
+			void ProcessOrderReplaceMessage(OrderReplaceMessage replaceMsg)
+			{
+				var originOrderMsg = _pendingRegistration.TryGetAndRemove(replaceMsg.OldTransactionId);
+
+				if (originOrderMsg == null)
+					_pendingMessages.Add(replaceMsg);
+				else
+				{
+					_pendingMessages.Remove(originOrderMsg);
+
+					RaiseNewOutMessage(new ExecutionMessage
+					{
+						ExecutionType = ExecutionTypes.Transaction,
+						HasOrderInfo = true,
+						OriginalTransactionId = replaceMsg.OldTransactionId,
+						ServerTime = DateTimeOffset.Now,
+						OrderState = OrderStates.Done,
+						OrderType = originOrderMsg.OrderType,
+					});
+
+					var orderMsg = new OrderRegisterMessage();
+
+					replaceMsg.CopyTo(orderMsg);
+
+					_pendingRegistration.Add(replaceMsg.TransactionId, orderMsg);
+					StoreMessage(orderMsg);
+				}
 			}
 
 			switch (message.Type)
@@ -92,7 +118,14 @@
 					lock (_syncObject)
 					{
 						if (!_connected)
+						{
+							var timeMsg = (TimeMessage)message;
+
+							if (timeMsg.OfflineMode == MessageOfflineModes.Force)
+								break;
+
 							return;
+						}
 					}
 
 					break;
@@ -153,34 +186,23 @@
 					{
 						if (!_connected)
 						{
-							var replaceMsg = (OrderReplaceMessage)message.Clone();
+							ProcessOrderReplaceMessage((OrderReplaceMessage)message.Clone());
+							return;
+						}
+					}
 
-							var originOrderMsg = _pendingRegistration.TryGetAndRemove(replaceMsg.OldTransactionId);
+					break;
+				}
+				case MessageTypes.OrderPairReplace:
+				{
+					lock (_syncObject)
+					{
+						if (!_connected)
+						{
+							var pairMsg = (OrderPairReplaceMessage)message.Clone();
 
-							if (originOrderMsg == null)
-								_pendingMessages.Add(replaceMsg);
-							else
-							{
-								_pendingMessages.Remove(originOrderMsg);
-
-								RaiseNewOutMessage(new ExecutionMessage
-								{
-									ExecutionType = ExecutionTypes.Transaction,
-									HasOrderInfo = true,
-									OriginalTransactionId = replaceMsg.OldTransactionId,
-									ServerTime = DateTimeOffset.Now,
-									OrderState = OrderStates.Done,
-									OrderType = originOrderMsg.OrderType,
-								});
-
-								var orderMsg = new OrderRegisterMessage();
-
-								replaceMsg.CopyTo(orderMsg);
-
-								_pendingRegistration.Add(replaceMsg.TransactionId, orderMsg);
-								StoreMessage(orderMsg);
-							}
-
+							ProcessOrderReplaceMessage(pairMsg.Message1);
+							ProcessOrderReplaceMessage(pairMsg.Message2);
 							return;
 						}
 					}
@@ -217,23 +239,50 @@
 				}
 				default:
 				{
-					if (!message.IgnoreOffline)
+					switch (message.OfflineMode)
 					{
-						lock (_syncObject)
-						{
-							if (!_connected)
+						case MessageOfflineModes.None:
+							lock (_syncObject)
 							{
-								StoreMessage(message.Clone());
-								return;
+								if (!_connected)
+								{
+									StoreMessage(message.Clone());
+									return;
+								}
 							}
+
+							break;
+						case MessageOfflineModes.Force:
+							break;
+						case MessageOfflineModes.Cancel:
+						{
+							switch (message.Type)
+							{
+								case MessageTypes.SecurityLookup:
+									var secLookup = (SecurityLookupMessage)message;
+									RaiseNewOutMessage(new SecurityLookupResultMessage { OriginalTransactionId = secLookup.TransactionId });
+									break;
+
+								case MessageTypes.PortfolioLookup:
+									var pfLookup = (PortfolioLookupMessage)message;
+
+									if (pfLookup.IsSubscribe)
+										RaiseNewOutMessage(new PortfolioLookupResultMessage { OriginalTransactionId = pfLookup.TransactionId });
+									
+									break;
+							}
+
+							return;
 						}
+						default:
+							throw new ArgumentOutOfRangeException();
 					}
 
 					break;
 				}
 			}
 
-			base.SendInMessage(message);
+			base.OnSendInMessage(message);
 		}
 
 		private void ProcessSubscriptionMessage<TMessage>(TMessage message, bool isSubscribe, long transactionId, long originalTransactionId, PairSet<long, TMessage> subscriptions)
@@ -277,10 +326,7 @@
 			_pendingMessages.Add(message);
 		}
 
-		/// <summary>
-		/// Process <see cref="MessageAdapterWrapper.InnerAdapter"/> output message.
-		/// </summary>
-		/// <param name="message">The message.</param>
+		/// <inheritdoc />
 		protected override void OnInnerAdapterNewOutMessage(Message message)
 		{
 			ConnectMessage connectMessage = null;
@@ -295,7 +341,22 @@
 
 				case MessageTypes.Disconnect:
 				{
-					_connected = false;
+					lock (_syncObject)
+						_connected = false;
+
+					break;
+				}
+
+				case ExtendedMessageTypes.ReconnectingStarted:
+				{
+					lock (_syncObject)
+						_connected = false;
+
+					return;
+				}
+
+				case ExtendedMessageTypes.ReconnectingFinished:
+				{
 					break;
 				}
 			}
@@ -304,7 +365,7 @@
 
 			Message[] msgs = null;
 
-			if (connectMessage != null && connectMessage.Error == null)
+			if ((connectMessage != null && connectMessage.Error == null) || message.Type == ExtendedMessageTypes.ReconnectingFinished)
 			{
 				lock (_syncObject)
 				{

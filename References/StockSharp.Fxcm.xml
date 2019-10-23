@@ -15,16 +15,13 @@
             </summary>
       <param name="transactionIdGenerator">Transaction id generator.</param>
     </member>
-    <member name="P:StockSharp.Fxcm.FxcmMessageAdapter.IsSupportNativeSecurityLookup">
+    <member name="P:StockSharp.Fxcm.FxcmMessageAdapter.IsSupportSecurityLookupResult">
       <inheritdoc />
     </member>
-    <member name="P:StockSharp.Fxcm.FxcmMessageAdapter.IsSupportNativePortfolioLookup">
+    <member name="P:StockSharp.Fxcm.FxcmMessageAdapter.IsSupportPortfolioLookupResult">
       <inheritdoc />
     </member>
-    <member name="P:StockSharp.Fxcm.FxcmMessageAdapter.IsNativeIdentifiers">
-      <inheritdoc />
-    </member>
-    <member name="M:StockSharp.Fxcm.FxcmMessageAdapter.CreateOrderCondition">
+    <member name="P:StockSharp.Fxcm.FxcmMessageAdapter.IsSupportSecuritiesLookupAll">
       <inheritdoc />
     </member>
     <member name="M:StockSharp.Fxcm.FxcmMessageAdapter.OnSendInMessage(StockSharp.Messages.Message)">
@@ -45,20 +42,17 @@
             Possible time-frames.
             </summary>
     </member>
-    <member name="P:StockSharp.Fxcm.FxcmMessageAdapter.TimeFrames">
+    <member name="M:StockSharp.Fxcm.FxcmMessageAdapter.GetTimeFrames(StockSharp.Messages.SecurityId,System.Nullable{System.DateTimeOffset},System.Nullable{System.DateTimeOffset})">
       <inheritdoc />
     </member>
     <member name="M:StockSharp.Fxcm.FxcmMessageAdapter.Save(Ecng.Serialization.SettingsStorage)">
-      <summary>
-            Save settings.
-            </summary>
-      <param name="storage">Settings storage.</param>
+      <inheritdoc />
     </member>
     <member name="M:StockSharp.Fxcm.FxcmMessageAdapter.Load(Ecng.Serialization.SettingsStorage)">
-      <summary>
-            Load settings.
-            </summary>
-      <param name="storage">Settings storage.</param>
+      <inheritdoc />
+    </member>
+    <member name="M:StockSharp.Fxcm.FxcmMessageAdapter.ToString">
+      <inheritdoc />
     </member>
     <member name="T:StockSharp.Fxcm.FxcmExtendedOrderTypes">
       <summary>
@@ -165,54 +159,9 @@
             Extended condition.
             </summary>
     </member>
-    <member name="P:StockSharp.Fxcm.FxcmOrderCondition.RateMin">
+    <member name="P:StockSharp.Fxcm.FxcmOrderCondition.StopLoss">
       <summary>
-            The minimum price at which the order can be filled.
-            </summary>
-    </member>
-    <member name="P:StockSharp.Fxcm.FxcmOrderCondition.RateMax">
-      <summary>
-            The maximum price at which the order can be filled.
-            </summary>
-    </member>
-    <member name="P:StockSharp.Fxcm.FxcmOrderCondition.AtMarket">
-      <summary>
-            The distance from the Rate within which the trader allows the order to be executed.
-            </summary>
-    </member>
-    <member name="P:StockSharp.Fxcm.FxcmOrderCondition.ContingencyType">
-      <summary>
-            The type of the contingent order to which the order is linked.
-            </summary>
-    </member>
-    <member name="P:StockSharp.Fxcm.FxcmOrderCondition.ContingentOrderId">
-      <summary>
-            The unique identifier of an existing contingency group which the order is linked to.
-            </summary>
-    </member>
-    <member name="P:StockSharp.Fxcm.FxcmOrderCondition.PegType">
-      <summary>
-            The price used to calculate the pegged order price.
-            </summary>
-    </member>
-    <member name="P:StockSharp.Fxcm.FxcmOrderCondition.PegOffset">
-      <summary>
-            The offset to the price specified in the <see cref="P:StockSharp.Fxcm.FxcmOrderCondition.PegType" /> field.
-            </summary>
-    </member>
-    <member name="P:StockSharp.Fxcm.FxcmOrderCondition.PegOffsetMin">
-      <summary>
-            Min value for <see cref="P:StockSharp.Fxcm.FxcmOrderCondition.PegOffset" />.
-            </summary>
-    </member>
-    <member name="P:StockSharp.Fxcm.FxcmOrderCondition.PegOffsetMax">
-      <summary>
-            Max value for <see cref="P:StockSharp.Fxcm.FxcmOrderCondition.PegOffset" />.
-            </summary>
-    </member>
-    <member name="P:StockSharp.Fxcm.FxcmOrderCondition.TrailRate">
-      <summary>
-            The market price at the time the order automatically moves following the market fluctuations.
+            The price of the associated stop order (loss limit level).
             </summary>
     </member>
     <member name="P:StockSharp.Fxcm.FxcmOrderCondition.TrailStep">
@@ -220,9 +169,14 @@
             The number of pips the market should move before the order moves the same number of pips after it.
             </summary>
     </member>
-    <member name="P:StockSharp.Fxcm.FxcmOrderCondition.Parties">
+    <member name="P:StockSharp.Fxcm.FxcmOrderCondition.TakeProfit">
       <summary>
-            The unique identifier of the environment that is used to place the order.
+            The price of the associated limit order (profit limit level).
+            </summary>
+    </member>
+    <member name="P:StockSharp.Fxcm.FxcmOrderCondition.IsInPips">
+      <summary>
+            Defines if the trade‘s stop/limit rate is in pips.
             </summary>
     </member>
     <member name="T:StockSharp.Fxcm.FxcmTrader">

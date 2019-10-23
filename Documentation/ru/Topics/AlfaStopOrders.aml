@@ -25,10 +25,6 @@
 			<codeEntityReference>T:StockSharp.AlfaDirect.AlfaOrderCondition</codeEntityReference>:
 		</para>
 		
-		<alert class="note">
-			<para>Исходный код примера доступ в дистрибутиве в папке <legacyItalic>Samples/AlfaDirect/SampleAlfa</legacyItalic>.</para>
-		</alert>
-		
 		<code language="C#"><![CDATA[
 private void NewStopOrderClick(object sender, RoutedEventArgs e)
 {
@@ -58,7 +54,7 @@ private void NewStopOrderClick(object sender, RoutedEventArgs e)
 				  <codeEntityReference qualifyHint="true">P:StockSharp.AlfaDirect.AlfaOrderCondition.StopPrice</codeEntityReference> - условие лимитной стоп-заявки.
 			  </listItem>
 			  <listItem>
-				  <codeEntityReference qualifyHint="true">P:StockSharp.AlfaDirect.AlfaOrderCondition.TargetPrice</codeEntityReference> - условие лимитной стоп-заявки + цель.
+				  <codeEntityReference qualifyHint="true">P:StockSharp.AlfaDirect.AlfaOrderCondition.TakeProfit</codeEntityReference> - условие лимитной стоп-заявки + цель.
 			  </listItem>
 			  <listItem>
 				  <codeEntityReference qualifyHint="true">P:StockSharp.AlfaDirect.AlfaOrderCondition.Level</codeEntityReference> - заявки "скользящий стоп".

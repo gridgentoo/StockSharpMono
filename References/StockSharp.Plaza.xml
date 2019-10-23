@@ -55,11 +55,6 @@
             Сбор по сделке продавца, точно.
             </summary>
     </member>
-    <member name="F:StockSharp.Plaza.Metadata.PlazaAdjustedFeeColumns.IdRepo">
-      <summary>
-            Номер другой части сделки РЕПО.
-            </summary>
-    </member>
     <member name="F:StockSharp.Plaza.Metadata.PlazaAdjustedFeeColumns.IdDealMultileg">
       <summary>
             Номер сделки по связке.
@@ -91,7 +86,7 @@
             Цена.
             </summary>
     </member>
-    <member name="F:StockSharp.Plaza.Metadata.PlazaAnonymousDealColumns.Amount">
+    <member name="F:StockSharp.Plaza.Metadata.PlazaAnonymousDealColumns.XAmount">
       <summary>
             Объем, кол-во единиц инструмента.
             </summary>
@@ -106,7 +101,7 @@
             Время заключения сделки, наносекунды.
             </summary>
     </member>
-    <member name="F:StockSharp.Plaza.Metadata.PlazaAnonymousDealColumns.Position">
+    <member name="F:StockSharp.Plaza.Metadata.PlazaAnonymousDealColumns.XPosition">
       <summary>
             Кол-во позиций по инструменту на рынке после сделки.
             </summary>
@@ -158,7 +153,7 @@
             Время появления заявки.
             </summary>
     </member>
-    <member name="F:StockSharp.Plaza.Metadata.PlazaAnonymousOrdersBookColumns.InitAmount">
+    <member name="F:StockSharp.Plaza.Metadata.PlazaAnonymousOrdersBookColumns.XInitAmount">
       <summary>
             Начальное количество в заявке.
             </summary>
@@ -210,7 +205,7 @@
             Время изменения состояния заявки, наносекунды.
             </summary>
     </member>
-    <member name="F:StockSharp.Plaza.Metadata.PlazaBaseOrdersColumns.Status">
+    <member name="F:StockSharp.Plaza.Metadata.PlazaBaseOrdersColumns.XStatus">
       <summary>
             Статус заявки.
             </summary>
@@ -235,24 +230,40 @@
             Цена.
             </summary>
     </member>
-    <member name="F:StockSharp.Plaza.Metadata.PlazaBaseOrdersColumns.Amount">
-      <summary>
-            Количество в операции.
-            </summary>
-    </member>
     <member name="F:StockSharp.Plaza.Metadata.PlazaBaseOrdersColumns.XAmount">
       <summary>
             Количество в операции.
             </summary>
     </member>
-    <member name="F:StockSharp.Plaza.Metadata.PlazaBaseOrdersColumns.AmountRest">
+    <member name="F:StockSharp.Plaza.Metadata.PlazaBaseOrdersColumns.XAmountRest">
       <summary>
             Оставшееся количество в заявке (8-байтовая версия).
             </summary>
     </member>
-    <member name="F:StockSharp.Plaza.Metadata.PlazaBaseOrdersColumns.XAmountRest">
+    <member name="T:StockSharp.Plaza.Metadata.PlazaClearingMembersColumns">
       <summary>
-            Оставшееся количество в заявке (8-байтовая версия).
+            Поток FORTS_FUTINFO_REPL - Фьючерсы: справочная и сессионная информация.
+            Таблица clearing_members: Участники клиринга.
+            </summary>
+    </member>
+    <member name="F:StockSharp.Plaza.Metadata.PlazaClearingMembersColumns.Code">
+      <summary>
+            Код участника.
+            </summary>
+    </member>
+    <member name="F:StockSharp.Plaza.Metadata.PlazaClearingMembersColumns.LockType">
+      <summary>
+            Тип блокировки (0 – нет блокировки, 2 – ликвидационный неттинг в отношении Участника клиринга).
+            </summary>
+    </member>
+    <member name="F:StockSharp.Plaza.Metadata.PlazaClearingMembersColumns.LockDate">
+      <summary>
+            Дата блокировки.
+            </summary>
+    </member>
+    <member name="F:StockSharp.Plaza.Metadata.PlazaClearingMembersColumns.Name">
+      <summary>
+            Название участника.
             </summary>
     </member>
     <member name="T:StockSharp.Plaza.Metadata.PlazaClearingMoneySaColumns">
@@ -341,12 +352,12 @@
             Тип счета (РФ/БФ/клиент).
             </summary>
     </member>
-    <member name="F:StockSharp.Plaza.Metadata.PlazaClearingPositionDerivativeColumns.BeginPosition">
+    <member name="F:StockSharp.Plaza.Metadata.PlazaClearingPositionDerivativeColumns.XBeginPosition">
       <summary>
             Позиция на начало дня.
             </summary>
     </member>
-    <member name="F:StockSharp.Plaza.Metadata.PlazaClearingPositionDerivativeColumns.EndPosition">
+    <member name="F:StockSharp.Plaza.Metadata.PlazaClearingPositionDerivativeColumns.XEndPosition">
       <summary>
             Позиция на конец дня.
             </summary>
@@ -407,12 +418,12 @@
             Расчетный Код НКЦ.
             </summary>
     </member>
-    <member name="F:StockSharp.Plaza.Metadata.PlazaClearingPositionDerivativeSaColumns.PosBegin">
+    <member name="F:StockSharp.Plaza.Metadata.PlazaClearingPositionDerivativeSaColumns.XPosBegin">
       <summary>
             Позиция на начало дня.
             </summary>
     </member>
-    <member name="F:StockSharp.Plaza.Metadata.PlazaClearingPositionDerivativeSaColumns.PosEnd">
+    <member name="F:StockSharp.Plaza.Metadata.PlazaClearingPositionDerivativeSaColumns.XPosEnd">
       <summary>
             Позиция на конец дня.
             </summary>
@@ -522,11 +533,129 @@
             Таблица dealer - Справочник фирм.
             </summary>
     </member>
+    <member name="F:StockSharp.Plaza.Metadata.PlazaDealerColumns.ClientCode">
+      <summary>
+            Код клиента.
+            </summary>
+    </member>
+    <member name="F:StockSharp.Plaza.Metadata.PlazaDealerColumns.Name">
+      <summary>
+            Наименование фирмы.
+            </summary>
+    </member>
+    <member name="F:StockSharp.Plaza.Metadata.PlazaDealerColumns.RtsCode">
+      <summary>
+            Код РТС фирмы.
+            </summary>
+    </member>
     <member name="F:StockSharp.Plaza.Metadata.PlazaDealerColumns.Signs">
       <summary>
             Поле признаков.
             4 - режим блокировки Администратора Торговой Системы,
             8 - режим блокировки Главного Трейдера Расчетной Фирмы.
+            </summary>
+    </member>
+    <member name="F:StockSharp.Plaza.Metadata.PlazaDealerColumns.Status">
+      <summary>
+            Признак обособленности раздела.
+            </summary>
+    </member>
+    <member name="F:StockSharp.Plaza.Metadata.PlazaDealerColumns.TransferCode">
+      <summary>
+            Код счета для переноса позиции.
+            </summary>
+    </member>
+    <member name="F:StockSharp.Plaza.Metadata.PlazaDealerColumns.ExpWeight">
+      <summary>
+            Вес сценариев экспирации для БФ в итоговом ГО. Будет применен в вечерний клиринг.
+            </summary>
+    </member>
+    <member name="F:StockSharp.Plaza.Metadata.PlazaDealerColumns.NumClr2Delivery">
+      <summary>
+            Количество клирингов до экспирации для начала расчета сценариев экспирации по БФ.
+            Будет применен в вечерний клиринг.
+            </summary>
+    </member>
+    <member name="F:StockSharp.Plaza.Metadata.PlazaDealerColumns.MarginType">
+      <summary>
+            Режим маржирования по разделам БФ. 3 - Полунетто, 4 - Нетто. Будет применен в вечерний клиринг.
+            </summary>
+    </member>
+    <member name="F:StockSharp.Plaza.Metadata.PlazaDealerColumns.CalendarSpreadMarginType">
+      <summary>
+            Тип маржирования календарных спредов для портфеля БФ. 3 - Полу-нетто, 4 - Нетто.
+            Будет применен в вечерний клиринг.
+            </summary>
+    </member>
+    <member name="F:StockSharp.Plaza.Metadata.PlazaDealerColumns.NumClr2DeliveryClientDefault">
+      <summary>
+            Количество клирингов до экспирации для начала расчета сценариев экспирации по клиентам - значение по умолчанию. Будет применен в вечерний клиринг.
+            </summary>
+    </member>
+    <member name="F:StockSharp.Plaza.Metadata.PlazaDealerColumns.ExpWeightClientDefault">
+      <summary>
+            Вес сценариев экспирации в итоговом ГО для клиентских разделов - значение по умолчанию.
+            Будет применен в вечерний клиринг.
+            </summary>
+    </member>
+    <member name="F:StockSharp.Plaza.Metadata.PlazaDealerColumns.GoRatio">
+      <summary>
+            Коэффициент итогового ГО для БФ. Будет применен в вечерний клиринг.
+            </summary>
+    </member>
+    <member name="F:StockSharp.Plaza.Metadata.PlazaDealerColumns.CheckLimitOnWithdrawal">
+      <summary>
+            Проверка достаточности обеспечения по БФ при вводе/выводе средств. 1 - Да, 0 - Нет.
+            </summary>
+    </member>
+    <member name="F:StockSharp.Plaza.Metadata.PlazaDealerColumns.LimitTiedMoney">
+      <summary>
+            Соответствие торгового лимита БФ сумме средств на разделах БФ.
+            1 - Поддерживать соответствие, 0 - Независимый (виртуальный) лимит.
+            Виртуальный лимит по результатам вечернего клиринга меняется только на величину дохода/убытка.
+            Будет применен в вечерний клиринг.
+            </summary>
+    </member>
+    <member name="F:StockSharp.Plaza.Metadata.PlazaDealerColumns.LimitsSet">
+      <summary>
+            Проверка достаточности лимита по БФ при постановке заявок. 1 - Да, 0 - Нет.
+            </summary>
+    </member>
+    <member name="F:StockSharp.Plaza.Metadata.PlazaDealerColumns.NoFutDiscount">
+      <summary>
+            Флаг запрещения использования скидки по фьючерсам для портфеля БФ.
+            1 - Запрет, 0 - Нет. Будет применен в вечерний клиринг.
+            </summary>
+    </member>
+    <member name="F:StockSharp.Plaza.Metadata.PlazaDealerColumns.NoFutDiscountClientDefault">
+      <summary>
+            Флаг запрещения использования скидки по фьючерсам для клиентов - значение по умолчанию.
+            1 - Запрет, 0 - Нет. Будет применен в вечерний клиринг.
+            </summary>
+    </member>
+    <member name="F:StockSharp.Plaza.Metadata.PlazaDealerColumns.FirmId">
+      <summary>
+            Код Участника торгов на срочном рынке.
+            </summary>
+    </member>
+    <member name="F:StockSharp.Plaza.Metadata.PlazaDealerColumns.TmName">
+      <summary>
+            Наименование Участника торгов.
+            </summary>
+    </member>
+    <member name="F:StockSharp.Plaza.Metadata.PlazaDealerColumns.ShortOptionMinimumChargeRatio">
+      <summary>
+            Индивидуальный коэффициент веса сценария SOMC.
+            </summary>
+    </member>
+    <member name="F:StockSharp.Plaza.Metadata.PlazaDealerColumns.CoeffIm">
+      <summary>
+            Коэффициент итогового ГО для БФ.
+            </summary>
+    </member>
+    <member name="F:StockSharp.Plaza.Metadata.PlazaDealerColumns.IcsMarginType">
+      <summary>
+            Тип маржирования межконтрактных спредов. 3 - полунетто, 4 - нетто.
             </summary>
     </member>
     <member name="T:StockSharp.Plaza.Metadata.PlazaFeeRateDerivativesColumns">
@@ -623,21 +752,6 @@
             Смещение от спота.
             </summary>
     </member>
-    <member name="F:StockSharp.Plaza.Metadata.PlazaFutInstrumentsColumns.IsLimited">
-      <summary>
-            Признак наличия лимитов в торгах.
-            </summary>
-    </member>
-    <member name="F:StockSharp.Plaza.Metadata.PlazaFutInstrumentsColumns.LimitUpOpt">
-      <summary>
-            Для опционов в деньгах: верхний лимит отклонения от волатильности центрального страйка.
-            </summary>
-    </member>
-    <member name="F:StockSharp.Plaza.Metadata.PlazaFutInstrumentsColumns.LimitDownOpt">
-      <summary>
-            Для опционов в деньгах: нижний лимит отклонения от волатильности центрального страйка.
-            </summary>
-    </member>
     <member name="F:StockSharp.Plaza.Metadata.PlazaFutInstrumentsColumns.OldKotir">
       <summary>
             Скорректированная расчетная цена предыдущей сессии.
@@ -703,21 +817,6 @@
             Процентная ставка для расчета вариационной маржи по процентным фьючерсам.
             </summary>
     </member>
-    <member name="F:StockSharp.Plaza.Metadata.PlazaFutInstrumentsColumns.VolatilityMin">
-      <summary>
-            Нижняя граница волатильности.
-            </summary>
-    </member>
-    <member name="F:StockSharp.Plaza.Metadata.PlazaFutInstrumentsColumns.VolatilityMax">
-      <summary>
-            Верхняя граница волатильности.
-            </summary>
-    </member>
-    <member name="F:StockSharp.Plaza.Metadata.PlazaFutInstrumentsColumns.PriceDir">
-      <summary>
-            Направление цены инструмента.
-            </summary>
-    </member>
     <member name="F:StockSharp.Plaza.Metadata.PlazaFutInstrumentsColumns.MultilegType">
       <summary>
             Тип связки.
@@ -748,12 +847,37 @@
             Дата ввода инструмента в обращение.
             </summary>
     </member>
-    <member name="F:StockSharp.Plaza.Metadata.PlazaFutInstrumentsColumns.IsLimitOpt">
+    <member name="F:StockSharp.Plaza.Metadata.PlazaFutInstrumentsColumns.ExecName">
       <summary>
-            Рассчитывать ли лимиты по опционам на этот базовый фьючерс.
+            Признак срочности опциона. D-daily, W-weekly, M-monthly.
             </summary>
     </member>
-    <member name="F:StockSharp.Plaza.Metadata.PlazaFutInstrumentsColumns.ExecName">
+    <member name="F:StockSharp.Plaza.Metadata.PlazaFutInstrumentsColumns.BaseContractCode">
+      <summary>
+            Код базового актива.
+            </summary>
+    </member>
+    <member name="F:StockSharp.Plaza.Metadata.PlazaFutInstrumentsColumns.SettlementPriceOpen">
+      <summary>
+            Расчетная цена на начало сессии.
+            </summary>
+    </member>
+    <member name="F:StockSharp.Plaza.Metadata.PlazaFutInstrumentsColumns.SettlementPrice">
+      <summary>
+            Расчетная цена после последнего клиринга.
+            </summary>
+    </member>
+    <member name="F:StockSharp.Plaza.Metadata.PlazaFutInstrumentsColumns.LastTradeDate">
+      <summary>
+            Дата окончания обращения инструмента.
+            </summary>
+    </member>
+    <member name="F:StockSharp.Plaza.Metadata.PlazaFutInstrumentsColumns.ExpStart">
+      <summary>
+            Дата начала исполнения инструмента.
+            </summary>
+    </member>
+    <member name="F:StockSharp.Plaza.Metadata.PlazaFutInstrumentsColumns.SeriesType">
       <summary>
             Признак срочности опциона. D-daily, W-weekly, M-monthly.
             </summary>
@@ -798,126 +922,6 @@
     <member name="F:StockSharp.Plaza.Metadata.PlazaFutSettlementAccountColumns.SettlementAccount">
       <summary>
             Расчетный Код НКЦ.
-            </summary>
-    </member>
-    <member name="T:StockSharp.Plaza.Metadata.PlazaInvestorColumns">
-      <summary>
-            Поток FORTS_FUTINFO_REPL - Фьючерсы: справочная и сессионная информация.
-            Таблица investr - Справочник клиентов.
-            </summary>
-    </member>
-    <member name="F:StockSharp.Plaza.Metadata.PlazaInvestorColumns.ClientCode">
-      <summary>
-            Код клиента.
-            </summary>
-    </member>
-    <member name="F:StockSharp.Plaza.Metadata.PlazaInvestorColumns.Name">
-      <summary>
-            Наименование клиента.
-            </summary>
-    </member>
-    <member name="F:StockSharp.Plaza.Metadata.PlazaInvestorColumns.Status">
-      <summary>
-            Признаки раздела.
-            </summary>
-    </member>
-    <member name="T:StockSharp.Plaza.Metadata.PlazaDilerColumns">
-      <summary>
-            Поток FORTS_FUTINFO_REPL - Фьючерсы: справочная и сессионная информация.
-            Таблица diler - Справочник имен фирм.
-            </summary>
-    </member>
-    <member name="F:StockSharp.Plaza.Metadata.PlazaDilerColumns.ClientCode">
-      <summary>
-            Код клиента.
-            </summary>
-    </member>
-    <member name="F:StockSharp.Plaza.Metadata.PlazaDilerColumns.Name">
-      <summary>
-            Наименование фирмы.
-            </summary>
-    </member>
-    <member name="F:StockSharp.Plaza.Metadata.PlazaDilerColumns.RtsCode">
-      <summary>
-            Код РТС фирмы.
-            </summary>
-    </member>
-    <member name="F:StockSharp.Plaza.Metadata.PlazaDilerColumns.Status">
-      <summary>
-            Признак обособленности раздела.
-            </summary>
-    </member>
-    <member name="F:StockSharp.Plaza.Metadata.PlazaDilerColumns.TransferCode">
-      <summary>
-            Код счета для переноса позиции.
-            </summary>
-    </member>
-    <member name="F:StockSharp.Plaza.Metadata.PlazaDilerColumns.ExpWeight">
-      <summary>
-            Вес сценариев экспирации для БФ в итоговом ГО. Будет применен в вечерний клиринг.
-            </summary>
-    </member>
-    <member name="F:StockSharp.Plaza.Metadata.PlazaDilerColumns.NumClr2Delivery">
-      <summary>
-            Количество клирингов до экспирации для начала расчета сценариев экспирации по БФ.
-            Будет применен в вечерний клиринг.
-            </summary>
-    </member>
-    <member name="F:StockSharp.Plaza.Metadata.PlazaDilerColumns.MarginType">
-      <summary>
-            Режим маржирования по разделам БФ. 3 - Полунетто, 4 - Нетто. Будет применен в вечерний клиринг.
-            </summary>
-    </member>
-    <member name="F:StockSharp.Plaza.Metadata.PlazaDilerColumns.CalendarSpreadMarginType">
-      <summary>
-            Тип маржирования календарных спредов для портфеля БФ. 3 - Полу-нетто, 4 - Нетто.
-            Будет применен в вечерний клиринг.
-            </summary>
-    </member>
-    <member name="F:StockSharp.Plaza.Metadata.PlazaDilerColumns.NumClr2DeliveryClientDefault">
-      <summary>
-            Количество клирингов до экспирации для начала расчета сценариев экспирации по клиентам - значение по умолчанию. Будет применен в вечерний клиринг.
-            </summary>
-    </member>
-    <member name="F:StockSharp.Plaza.Metadata.PlazaDilerColumns.ExpWeightClientDefault">
-      <summary>
-            Вес сценариев экспирации в итоговом ГО для клиентских разделов - значение по умолчанию.
-            Будет применен в вечерний клиринг.
-            </summary>
-    </member>
-    <member name="F:StockSharp.Plaza.Metadata.PlazaDilerColumns.GoRatio">
-      <summary>
-            Коэффициент итогового ГО для БФ. Будет применен в вечерний клиринг.
-            </summary>
-    </member>
-    <member name="F:StockSharp.Plaza.Metadata.PlazaDilerColumns.CheckLimitOnWithdrawal">
-      <summary>
-            Проверка достаточности обеспечения по БФ при вводе/выводе средств. 1 - Да, 0 - Нет.
-            </summary>
-    </member>
-    <member name="F:StockSharp.Plaza.Metadata.PlazaDilerColumns.LimitTiedMoney">
-      <summary>
-            Соответствие торгового лимита БФ сумме средств на разделах БФ.
-            1 - Поддерживать соответствие, 0 - Независимый (виртуальный) лимит.
-            Виртуальный лимит по результатам вечернего клиринга меняется только на величину дохода/убытка.
-            Будет применен в вечерний клиринг.
-            </summary>
-    </member>
-    <member name="F:StockSharp.Plaza.Metadata.PlazaDilerColumns.LimitsSet">
-      <summary>
-            Проверка достаточности лимита по БФ при постановке заявок. 1 - Да, 0 - Нет.
-            </summary>
-    </member>
-    <member name="F:StockSharp.Plaza.Metadata.PlazaDilerColumns.NoFutDiscount">
-      <summary>
-            Флаг запрещения использования скидки по фьючерсам для портфеля БФ.
-            1 - Запрет, 0 - Нет. Будет применен в вечерний клиринг.
-            </summary>
-    </member>
-    <member name="F:StockSharp.Plaza.Metadata.PlazaDilerColumns.NoFutDiscountClientDefault">
-      <summary>
-            Флаг запрещения использования скидки по фьючерсам для клиентов - значение по умолчанию.
-            1 - Запрет, 0 - Нет. Будет применен в вечерний клиринг.
             </summary>
     </member>
     <member name="T:StockSharp.Plaza.Metadata.PlazaMarketMakingAgreementColumns">
@@ -973,11 +977,6 @@
             Цена худшей заявки на продажу, вошедшей в спред.
             </summary>
     </member>
-    <member name="F:StockSharp.Plaza.Metadata.PlazaMarketMakingDerivativeColumns.AmountSells">
-      <summary>
-            Кол-во контрактов в заявках на продажу, входящих в спред.
-            </summary>
-    </member>
     <member name="F:StockSharp.Plaza.Metadata.PlazaMarketMakingDerivativeColumns.XAmountSells">
       <summary>
             Кол-во контрактов в заявках на продажу, входящих в спред (8-байтовая версия).
@@ -988,11 +987,6 @@
             Цена худшей заявки на покупку, вошедшей в спред.
             </summary>
     </member>
-    <member name="F:StockSharp.Plaza.Metadata.PlazaMarketMakingDerivativeColumns.AmountBuys">
-      <summary>
-            Кол-во контрактов в заявках на покупку, входящих в спред.
-            </summary>
-    </member>
     <member name="F:StockSharp.Plaza.Metadata.PlazaMarketMakingDerivativeColumns.XAmountBuys">
       <summary>
             Кол-во контрактов в заявках на покупку, входящих в спред (8-байтовая версия).
@@ -1001,11 +995,6 @@
     <member name="F:StockSharp.Plaza.Metadata.PlazaMarketMakingDerivativeColumns.MarketMakingSpread">
       <summary>
             Спред по договору.
-            </summary>
-    </member>
-    <member name="F:StockSharp.Plaza.Metadata.PlazaMarketMakingDerivativeColumns.MarketMakingAmount">
-      <summary>
-            Кол-во по договору.
             </summary>
     </member>
     <member name="F:StockSharp.Plaza.Metadata.PlazaMarketMakingDerivativeColumns.XMarketMakingAmount">
@@ -1106,11 +1095,6 @@
             FORTS_MM_REPL - таблица cs_mm_rule.
             </summary>
     </member>
-    <member name="F:StockSharp.Plaza.Metadata.PlazaMarketMakingRuleColumns.IsinId">
-      <summary>
-            Уникальный числовой идентификатор инструмента.
-            </summary>
-    </member>
     <member name="F:StockSharp.Plaza.Metadata.PlazaMarketMakingRuleColumns.SessionId">
       <summary>
             Идентификатор торговой сессии.
@@ -1119,6 +1103,11 @@
     <member name="F:StockSharp.Plaza.Metadata.PlazaMarketMakingRuleColumns.ClientCode">
       <summary>
             Код клиента.
+            </summary>
+    </member>
+    <member name="F:StockSharp.Plaza.Metadata.PlazaMarketMakingRuleColumns.OptionSeriesId">
+      <summary>
+            Идентификатор опционной серии.
             </summary>
     </member>
     <member name="T:StockSharp.Plaza.Metadata.PlazaMcxBcMessagesColumns">
@@ -1381,11 +1370,6 @@
             Признаваемая котировка, рассчитываемая в соответствии с методикой ФСФР.
             </summary>
     </member>
-    <member name="F:StockSharp.Plaza.Metadata.PlazaMcxCommonColumns.SettleDate">
-      <summary>
-            Дата расчетов.
-            </summary>
-    </member>
     <member name="T:StockSharp.Plaza.Metadata.PlazaMcxCommonCurrencyColumns">
       <summary>
             Поток MCXCC_MDCOMMON_REPL - Валютный рынок : общая информация по инструментам.
@@ -1395,6 +1379,16 @@
     <member name="F:StockSharp.Plaza.Metadata.PlazaMcxCommonCurrencyColumns.BasePrice">
       <summary>
             Base SWAP price.
+            </summary>
+    </member>
+    <member name="F:StockSharp.Plaza.Metadata.PlazaMcxCommonCurrencyColumns.SettleDate1">
+      <summary>
+            Дата расчетов по сделке или первой части сделки РЕПО/своп.
+            </summary>
+    </member>
+    <member name="F:StockSharp.Plaza.Metadata.PlazaMcxCommonCurrencyColumns.SettleDate2">
+      <summary>
+            Дата расчетов второй части сделки РЕПО/своп.
             </summary>
     </member>
     <member name="T:StockSharp.Plaza.Metadata.PlazaMcxCommonSpotColumns">
@@ -2258,9 +2252,9 @@
             Дата расчетов.
             </summary>
     </member>
-    <member name="F:StockSharp.Plaza.Metadata.PlazaMcxTradesSpotColumns.Open">
+    <member name="F:StockSharp.Plaza.Metadata.PlazaMcxTradesSpotColumns.FaceAmount">
       <summary>
-            Первая.
+            Объем сделки по номиналу, выраженный в валюте номинала.
             </summary>
     </member>
     <member name="T:StockSharp.Plaza.Metadata.PlazaMcxTradeTimeColumns">
@@ -2372,6 +2366,223 @@
             Коэффициент количества.
             </summary>
     </member>
+    <member name="T:StockSharp.Plaza.Metadata.PlazaOptionSeriesColumns">
+      <summary>
+            Поток FORTS_OPTINFO_REPL - Опционы: справочная и сессионная информация.
+            Таблица option_series - Опционные серии.
+            </summary>
+    </member>
+    <member name="F:StockSharp.Plaza.Metadata.PlazaOptionSeriesColumns.SeriesId">
+      <summary>
+            Идентификатор опционной серии.
+            </summary>
+    </member>
+    <member name="F:StockSharp.Plaza.Metadata.PlazaOptionSeriesColumns.UnderlyingId">
+      <summary>
+            Идентификатор фьючерса.
+            </summary>
+    </member>
+    <member name="F:StockSharp.Plaza.Metadata.PlazaOptionSeriesColumns.BaseContractId">
+      <summary>
+            Идентификатор базового контракта.
+            </summary>
+    </member>
+    <member name="F:StockSharp.Plaza.Metadata.PlazaOptionSeriesColumns.ExpirationDate">
+      <summary>
+            Дата завершения периода исполнения.
+            </summary>
+    </member>
+    <member name="F:StockSharp.Plaza.Metadata.PlazaOptionSeriesColumns.ExpirationAnchorDate">
+      <summary>
+            Якорная дата (дата экспирации опционной серии).
+            </summary>
+    </member>
+    <member name="F:StockSharp.Plaza.Metadata.PlazaOptionSeriesColumns.DaysToExpiration">
+      <summary>
+            Количество рабочих дней (по местному календарю) до исполнения.
+            </summary>
+    </member>
+    <member name="F:StockSharp.Plaza.Metadata.PlazaOptionSeriesColumns.YearsToExpiration">
+      <summary>
+            Время до экспирации опциона в долях года (календарных дней до экспирации/количество дней в году).
+            </summary>
+    </member>
+    <member name="F:StockSharp.Plaza.Metadata.PlazaOptionSeriesColumns.SeriesType">
+      <summary>
+            Тип: D-дневной; W-недельный; M-месячный; Q-квартальный.
+            </summary>
+    </member>
+    <member name="F:StockSharp.Plaza.Metadata.PlazaOptionSeriesColumns.SmallName">
+      <summary>
+            Символьный код.
+            </summary>
+    </member>
+    <member name="F:StockSharp.Plaza.Metadata.PlazaOptionSeriesColumns.A">
+      <summary>
+            Параметр расчета кривой волатильности.
+            </summary>
+    </member>
+    <member name="F:StockSharp.Plaza.Metadata.PlazaOptionSeriesColumns.B">
+      <summary>
+            Параметр расчета кривой волатильности.
+            </summary>
+    </member>
+    <member name="F:StockSharp.Plaza.Metadata.PlazaOptionSeriesColumns.C">
+      <summary>
+            Параметр расчета кривой волатильности.
+            </summary>
+    </member>
+    <member name="F:StockSharp.Plaza.Metadata.PlazaOptionSeriesColumns.D">
+      <summary>
+            Параметр расчета кривой волатильности.
+            </summary>
+    </member>
+    <member name="F:StockSharp.Plaza.Metadata.PlazaOptionSeriesColumns.E">
+      <summary>
+            Параметр расчета кривой волатильности.
+            </summary>
+    </member>
+    <member name="F:StockSharp.Plaza.Metadata.PlazaOptionSeriesColumns.S">
+      <summary>
+            Параметр расчета кривой волатильности.
+            </summary>
+    </member>
+    <member name="F:StockSharp.Plaza.Metadata.PlazaOptionSeriesColumns.StrikeStep">
+      <summary>
+            Шаг стайков.
+            </summary>
+    </member>
+    <member name="F:StockSharp.Plaza.Metadata.PlazaOptionSeriesColumns.UseNullVolat">
+      <summary>
+            Включен режим расчета нулевой волатильности.
+            </summary>
+    </member>
+    <member name="F:StockSharp.Plaza.Metadata.PlazaOptionSeriesColumns.SubRisk">
+      <summary>
+            Включен режим учета рисков по подточкам риска.
+            </summary>
+    </member>
+    <member name="F:StockSharp.Plaza.Metadata.PlazaOptionSeriesColumns.VolatMin">
+      <summary>
+            Лимит волатильности минимальный.
+            </summary>
+    </member>
+    <member name="F:StockSharp.Plaza.Metadata.PlazaOptionSeriesColumns.VolatMax">
+      <summary>
+            Лимит волатильности максимальный.
+            </summary>
+    </member>
+    <member name="F:StockSharp.Plaza.Metadata.PlazaOptionSeriesColumns.VolatilityRisk">
+      <summary>
+            Текущая ставка риска волатильности в долях.
+            </summary>
+    </member>
+    <member name="F:StockSharp.Plaza.Metadata.PlazaOptionSeriesColumns.VolatilityMismatchRisk">
+      <summary>
+            Текущая ставка риска рассогласования волатильности в долях.
+            </summary>
+    </member>
+    <member name="T:StockSharp.Plaza.Metadata.PlazaOptionSeriesParamsColumns">
+      <summary>
+            Поток FORTS_INFO_REPL - Справочная информация.
+            Таблица option_series_params - Информация о параметрах опционных серий.
+            </summary>
+    </member>
+    <member name="F:StockSharp.Plaza.Metadata.PlazaOptionSeriesParamsColumns.SmallName">
+      <summary>
+            Символьный код.
+            </summary>
+    </member>
+    <member name="F:StockSharp.Plaza.Metadata.PlazaOptionSeriesParamsColumns.IsinBase">
+      <summary>
+            Код реального фьючерса.
+            </summary>
+    </member>
+    <member name="F:StockSharp.Plaza.Metadata.PlazaOptionSeriesParamsColumns.A">
+      <summary>
+            Параметр a.
+            </summary>
+    </member>
+    <member name="F:StockSharp.Plaza.Metadata.PlazaOptionSeriesParamsColumns.B">
+      <summary>
+            Параметр b.
+            </summary>
+    </member>
+    <member name="F:StockSharp.Plaza.Metadata.PlazaOptionSeriesParamsColumns.C">
+      <summary>
+            Параметр c.
+            </summary>
+    </member>
+    <member name="F:StockSharp.Plaza.Metadata.PlazaOptionSeriesParamsColumns.D">
+      <summary>
+            Параметр d.
+            </summary>
+    </member>
+    <member name="F:StockSharp.Plaza.Metadata.PlazaOptionSeriesParamsColumns.E">
+      <summary>
+            Параметр e.
+            </summary>
+    </member>
+    <member name="F:StockSharp.Plaza.Metadata.PlazaOptionSeriesParamsColumns.S">
+      <summary>
+            Параметр s.
+            </summary>
+    </member>
+    <member name="F:StockSharp.Plaza.Metadata.PlazaOptionSeriesParamsColumns.ExpirationDate">
+      <summary>
+            Дата завершения периода исполнения.
+            </summary>
+    </member>
+    <member name="F:StockSharp.Plaza.Metadata.PlazaOptionSeriesParamsColumns.StrikeStep">
+      <summary>
+            Шаг стайка.
+            </summary>
+    </member>
+    <member name="F:StockSharp.Plaza.Metadata.PlazaOptionSeriesParamsColumns.UseNullVolat">
+      <summary>
+            Включен режим расчета нулевой волатильности.
+            </summary>
+    </member>
+    <member name="F:StockSharp.Plaza.Metadata.PlazaOptionSeriesParamsColumns.VolatilityRisk">
+      <summary>
+            Ставка диапазона риска волатильности.
+            </summary>
+    </member>
+    <member name="F:StockSharp.Plaza.Metadata.PlazaOptionSeriesParamsColumns.VolatilityMismatchRisk">
+      <summary>
+            Ставка рассогласования риска волатильности между разными сроками опционных серий.
+            </summary>
+    </member>
+    <member name="F:StockSharp.Plaza.Metadata.PlazaOptionSeriesParamsColumns.ExpClearingsSa">
+      <summary>
+            Определяет, за сколько клиринговых сессий по РК начнет блокироваться ГО, рассчитанное для всего РК по модели экспирации. Устанавливается НКЦ.
+            </summary>
+    </member>
+    <member name="F:StockSharp.Plaza.Metadata.PlazaOptionSeriesParamsColumns.ExpClearingsBf">
+      <summary>
+            Определяет, за сколько клиринговых сессий по БФ начнет блокироваться ГО, рассчитанное для всей БФ по модели экспирации. Устанавливается НКЦ.
+            </summary>
+    </member>
+    <member name="F:StockSharp.Plaza.Metadata.PlazaOptionSeriesParamsColumns.ExpClearingsCc">
+      <summary>
+            Определяет, за сколько клиринговых сессий начнется применение веса ExpWeight для клиентов БФ. Устанавливается НКЦ.
+            </summary>
+    </member>
+    <member name="F:StockSharp.Plaza.Metadata.PlazaOptionSeriesParamsColumns.TimeToExpiration">
+      <summary>
+            Время до экспирации инструмента в долях года.
+            </summary>
+    </member>
+    <member name="F:StockSharp.Plaza.Metadata.PlazaOptionSeriesParamsColumns.OptionSeriesId">
+      <summary>
+            Идентификатор опционной серии.
+            </summary>
+    </member>
+    <member name="F:StockSharp.Plaza.Metadata.PlazaOptionSeriesParamsColumns.UnderlyingId">
+      <summary>
+            Идентификатор фьючерса.
+            </summary>
+    </member>
     <member name="T:StockSharp.Plaza.Metadata.PlazaOrderBookOrdersDerivativeColumns">
       <summary>
             Колонки логовой таблицы заявок.
@@ -2382,7 +2593,7 @@
             Время появления заявки.
             </summary>
     </member>
-    <member name="F:StockSharp.Plaza.Metadata.PlazaOrderBookOrdersDerivativeColumns.InitAmount">
+    <member name="F:StockSharp.Plaza.Metadata.PlazaOrderBookOrdersDerivativeColumns.XInitAmount">
       <summary>
             Начальное количество в заявке.
             </summary>
@@ -2523,22 +2734,22 @@
             Код клиента.
             </summary>
     </member>
-    <member name="F:StockSharp.Plaza.Metadata.PlazaPositionSaColumns.OpenQty">
+    <member name="F:StockSharp.Plaza.Metadata.PlazaPositionSaColumns.XOpenQty">
       <summary>
             Количество позиций на начало сессии.
             </summary>
     </member>
-    <member name="F:StockSharp.Plaza.Metadata.PlazaPositionSaColumns.BuysQty">
+    <member name="F:StockSharp.Plaza.Metadata.PlazaPositionSaColumns.XBuysQty">
       <summary>
             Количество купленных контрактов в ходе сессии.
             </summary>
     </member>
-    <member name="F:StockSharp.Plaza.Metadata.PlazaPositionSaColumns.SellsQty">
+    <member name="F:StockSharp.Plaza.Metadata.PlazaPositionSaColumns.XSellsQty">
       <summary>
             Количество проданных контрактов в ходе сессии.
             </summary>
     </member>
-    <member name="F:StockSharp.Plaza.Metadata.PlazaPositionSaColumns.Pos">
+    <member name="F:StockSharp.Plaza.Metadata.PlazaPositionSaColumns.XPos">
       <summary>
             Текущая позиция.
             </summary>
@@ -2755,16 +2966,6 @@
     <member name="F:StockSharp.Plaza.Metadata.PlazaBaseContractsParamsColumns.PercentRate">
       <summary>
             Процентная ставка (для контрактов на ставки).
-            </summary>
-    </member>
-    <member name="F:StockSharp.Plaza.Metadata.PlazaBaseContractsParamsColumns.CurrencyVolat">
-      <summary>
-            Волатильность курса валюты.
-            </summary>
-    </member>
-    <member name="F:StockSharp.Plaza.Metadata.PlazaBaseContractsParamsColumns.IsUsd">
-      <summary>
-            Признак расчета в долларах.
             </summary>
     </member>
     <member name="F:StockSharp.Plaza.Metadata.PlazaBaseContractsParamsColumns.Somc">
@@ -3057,97 +3258,6 @@
             Расчетная цена.
             </summary>
     </member>
-    <member name="T:StockSharp.Plaza.Metadata.PlazaVirtualFuturesParamsColumns">
-      <summary>
-            Поток FORTS_INFO_REPL - Дополнительная справочная информация.
-            Таблица virtual_futures_params - Параметры виртуальных фьючерсов.
-            </summary>
-    </member>
-    <member name="F:StockSharp.Plaza.Metadata.PlazaVirtualFuturesParamsColumns.Isin">
-      <summary>
-            Идентификатор инструмента.
-            </summary>
-    </member>
-    <member name="F:StockSharp.Plaza.Metadata.PlazaVirtualFuturesParamsColumns.IsinBase">
-      <summary>
-            Код реального фьючерса.
-            </summary>
-    </member>
-    <member name="F:StockSharp.Plaza.Metadata.PlazaVirtualFuturesParamsColumns.A">
-      <summary>
-            A.
-            </summary>
-    </member>
-    <member name="F:StockSharp.Plaza.Metadata.PlazaVirtualFuturesParamsColumns.B">
-      <summary>
-            B.
-            </summary>
-    </member>
-    <member name="F:StockSharp.Plaza.Metadata.PlazaVirtualFuturesParamsColumns.C">
-      <summary>
-            C.
-            </summary>
-    </member>
-    <member name="F:StockSharp.Plaza.Metadata.PlazaVirtualFuturesParamsColumns.D">
-      <summary>
-            D.
-            </summary>
-    </member>
-    <member name="F:StockSharp.Plaza.Metadata.PlazaVirtualFuturesParamsColumns.E">
-      <summary>
-            E.
-            </summary>
-    </member>
-    <member name="F:StockSharp.Plaza.Metadata.PlazaVirtualFuturesParamsColumns.S">
-      <summary>
-            S.
-            </summary>
-    </member>
-    <member name="F:StockSharp.Plaza.Metadata.PlazaVirtualFuturesParamsColumns.ExpDate">
-      <summary>
-            Дата экспирации.
-            </summary>
-    </member>
-    <member name="F:StockSharp.Plaza.Metadata.PlazaVirtualFuturesParamsColumns.UseNullVolat">
-      <summary>
-            Признак нулевой волатильности.
-            </summary>
-    </member>
-    <member name="F:StockSharp.Plaza.Metadata.PlazaVirtualFuturesParamsColumns.StrikeStep">
-      <summary>
-            Шаг страйка.
-            </summary>
-    </member>
-    <member name="F:StockSharp.Plaza.Metadata.PlazaVirtualFuturesParamsColumns.ExpClearingsSa">
-      <summary>
-            Определяет, за сколько клиринговых сессий по РК начнет блокироваться ГО, рассчитанное для всего РК по модели экспирации. Устанавливается НКЦ.
-            </summary>
-    </member>
-    <member name="F:StockSharp.Plaza.Metadata.PlazaVirtualFuturesParamsColumns.ExpClearingsBf">
-      <summary>
-            Определяет, за сколько клиринговых сессий по БФ начнет блокироваться ГО, рассчитанное для всей БФ по модели экспирации. Устанавливается НКЦ.
-            </summary>
-    </member>
-    <member name="F:StockSharp.Plaza.Metadata.PlazaVirtualFuturesParamsColumns.ExpClearingsCc">
-      <summary>
-            Определяет, за сколько клиринговых сессий начнется применение веса ExpWeight для клиентов БФ. Устанавливается НКЦ.
-            </summary>
-    </member>
-    <member name="F:StockSharp.Plaza.Metadata.PlazaVirtualFuturesParamsColumns.VolatilityRisk">
-      <summary>
-            Ставка диапазона риска волатильности.
-            </summary>
-    </member>
-    <member name="F:StockSharp.Plaza.Metadata.PlazaVirtualFuturesParamsColumns.VolatilityRiskMismatch">
-      <summary>
-            Ставка рассогласования риска волатильности между разными сроками опционных серий.
-            </summary>
-    </member>
-    <member name="F:StockSharp.Plaza.Metadata.PlazaVirtualFuturesParamsColumns.TimeToExpiration">
-      <summary>
-            Время до экспирации инструмента в долях года.
-            </summary>
-    </member>
     <member name="T:StockSharp.Plaza.Metadata.PlazaColumnRegistry">
       <summary>
             Реестр всех колонок, описывающие метаданные Plaza.
@@ -3261,6 +3371,11 @@
     <member name="F:StockSharp.Plaza.Metadata.PlazaColumnRegistry.InterClearingInfoOption">
       <summary>
             Колонки таблицы с информацией о ВМ, рассчитанной по результатам пром. клиринга.
+            </summary>
+    </member>
+    <member name="F:StockSharp.Plaza.Metadata.PlazaColumnRegistry.ClearingMembers">
+      <summary>
+            Колонки таблицы участники клиринга.
             </summary>
     </member>
     <member name="F:StockSharp.Plaza.Metadata.PlazaColumnRegistry.MultiLegOrdersLogFuture">
@@ -3393,19 +3508,9 @@
             Колонки таблицы с трансляцией курса USD.
             </summary>
     </member>
-    <member name="F:StockSharp.Plaza.Metadata.PlazaColumnRegistry.Diler">
-      <summary>
-            Колонки таблицы с именами фирм.
-            </summary>
-    </member>
     <member name="F:StockSharp.Plaza.Metadata.PlazaColumnRegistry.Dealer">
       <summary>
             Колонки таблицы с фирмами.
-            </summary>
-    </member>
-    <member name="F:StockSharp.Plaza.Metadata.PlazaColumnRegistry.Investor">
-      <summary>
-            Колонки таблицы с клиентами.
             </summary>
     </member>
     <member name="F:StockSharp.Plaza.Metadata.PlazaColumnRegistry.Prohibition">
@@ -3486,11 +3591,6 @@
     <member name="F:StockSharp.Plaza.Metadata.PlazaColumnRegistry.FuturesParams">
       <summary>
             Колонки таблицы с параметрами фьючерсов.
-            </summary>
-    </member>
-    <member name="F:StockSharp.Plaza.Metadata.PlazaColumnRegistry.VirtualFuturesParams">
-      <summary>
-            Колонки таблицы с параметрами виртуальных фьючерсов.
             </summary>
     </member>
     <member name="F:StockSharp.Plaza.Metadata.PlazaColumnRegistry.OptionsParams">
@@ -3606,6 +3706,16 @@
     <member name="F:StockSharp.Plaza.Metadata.PlazaColumnRegistry.AdjustedFee">
       <summary>
             Колонки таблицы комиссии биржи.
+            </summary>
+    </member>
+    <member name="F:StockSharp.Plaza.Metadata.PlazaColumnRegistry.OptionSeries">
+      <summary>
+            Колонки таблицы опционных серий.
+            </summary>
+    </member>
+    <member name="F:StockSharp.Plaza.Metadata.PlazaColumnRegistry.OptionSeriesParams">
+      <summary>
+            Колонки таблицы информации о параметрах опционных серий.
             </summary>
     </member>
     <member name="F:StockSharp.Plaza.Metadata.PlazaColumnRegistry.McxTradesSpot">
@@ -3779,11 +3889,6 @@
             Код клиента.
             </summary>
     </member>
-    <member name="F:StockSharp.Plaza.Metadata.PlazaExpirationOrdersOptionColumns.Amount">
-      <summary>
-            Количество экспирируемых позиций.
-            </summary>
-    </member>
     <member name="F:StockSharp.Plaza.Metadata.PlazaExpirationOrdersOptionColumns.XAmount">
       <summary>
             Количество экспирируемых позиций (8-байтовая версия).
@@ -3797,11 +3902,6 @@
     <member name="F:StockSharp.Plaza.Metadata.PlazaExpirationOrdersOptionColumns.Date">
       <summary>
             Дата и время.
-            </summary>
-    </member>
-    <member name="F:StockSharp.Plaza.Metadata.PlazaExpirationOrdersOptionColumns.AmountApply">
-      <summary>
-            Кол-во в заявках на момент пром.клиринга.
             </summary>
     </member>
     <member name="F:StockSharp.Plaza.Metadata.PlazaExpirationOrdersOptionColumns.XAmountApply">
@@ -3868,16 +3968,6 @@
     <member name="F:StockSharp.Plaza.Metadata.PlazaOrdersDerivativeColumns.Comment">
       <summary>
             Комментарий трейдера.
-            </summary>
-    </member>
-    <member name="F:StockSharp.Plaza.Metadata.PlazaOrdersDerivativeColumns.Hedge">
-      <summary>
-            Признак хеджевой заявки.
-            </summary>
-    </member>
-    <member name="F:StockSharp.Plaza.Metadata.PlazaOrdersDerivativeColumns.Trust">
-      <summary>
-            Признак заявки доверительного управления.
             </summary>
     </member>
     <member name="F:StockSharp.Plaza.Metadata.PlazaOrdersDerivativeColumns.ExtId">
@@ -3975,21 +4065,6 @@
             Стоимость шага цены.
             </summary>
     </member>
-    <member name="F:StockSharp.Plaza.Metadata.PlazaSessionContentsDerivativeColumns.IsLimited">
-      <summary>
-            Признак наличия лимитов в торгах.
-            </summary>
-    </member>
-    <member name="F:StockSharp.Plaza.Metadata.PlazaSessionContentsDerivativeColumns.LimitUp">
-      <summary>
-            Верхний лимит премии.
-            </summary>
-    </member>
-    <member name="F:StockSharp.Plaza.Metadata.PlazaSessionContentsDerivativeColumns.LimitDown">
-      <summary>
-            Нижний лимит премии.
-            </summary>
-    </member>
     <member name="F:StockSharp.Plaza.Metadata.PlazaSessionContentsDerivativeColumns.DateEnd">
       <summary>
             Дата окончания обращения инструмента.
@@ -4010,9 +4085,24 @@
             Дата ввода инструмента в обращение.
             </summary>
     </member>
-    <member name="F:StockSharp.Plaza.Metadata.PlazaSessionContentsDerivativeColumns.ExchangePay">
+    <member name="F:StockSharp.Plaza.Metadata.PlazaSessionContentsDerivativeColumns.BaseContractCode">
       <summary>
-            Биржевой сбор.
+            Код базового актива.
+            </summary>
+    </member>
+    <member name="F:StockSharp.Plaza.Metadata.PlazaSessionContentsDerivativeColumns.SettlementPriceOpen">
+      <summary>
+            Расчетная цена на начало сессии.
+            </summary>
+    </member>
+    <member name="F:StockSharp.Plaza.Metadata.PlazaSessionContentsDerivativeColumns.SettlementPrice">
+      <summary>
+            Расчетная цена после последнего клиринга.
+            </summary>
+    </member>
+    <member name="F:StockSharp.Plaza.Metadata.PlazaSessionContentsDerivativeColumns.LastTradeDate">
+      <summary>
+            Дата окончания обращения инструмента.
             </summary>
     </member>
     <member name="T:StockSharp.Plaza.Metadata.PlazaCommonFutureColumns">
@@ -4026,9 +4116,9 @@
             Текущая котировка.
             </summary>
     </member>
-    <member name="F:StockSharp.Plaza.Metadata.PlazaCommonFutureColumns.CurrentMarketQuote">
+    <member name="F:StockSharp.Plaza.Metadata.PlazaCommonFutureColumns.MarketPrice">
       <summary>
-            Рыночная котировка.
+            Текущая рыночная цена.
             </summary>
     </member>
     <member name="T:StockSharp.Plaza.Metadata.PlazaCommonOptionColumns">
@@ -4075,11 +4165,6 @@
     <member name="F:StockSharp.Plaza.Metadata.PlazaRejectedOrdersDerivativeColumns.Direction">
       <summary>
             Направление.
-            </summary>
-    </member>
-    <member name="F:StockSharp.Plaza.Metadata.PlazaRejectedOrdersDerivativeColumns.Amount">
-      <summary>
-            Количество в операции.
             </summary>
     </member>
     <member name="F:StockSharp.Plaza.Metadata.PlazaRejectedOrdersDerivativeColumns.XAmount">
@@ -4166,9 +4251,9 @@
             Таблица volat_coeff - Таблица с коэффициентами волатильности.
             </summary>
     </member>
-    <member name="F:StockSharp.Plaza.Metadata.PlazaVolatilitySmileColumns.IsinId">
+    <member name="F:StockSharp.Plaza.Metadata.PlazaVolatilitySmileColumns.OptionSeriesId">
       <summary>
-            Уникальный числовой идентификатор инструмента.
+            Идентификатор опционной серии.
             </summary>
     </member>
     <member name="F:StockSharp.Plaza.Metadata.PlazaVolatilitySmileColumns.A">
@@ -4178,27 +4263,27 @@
     </member>
     <member name="F:StockSharp.Plaza.Metadata.PlazaVolatilitySmileColumns.B">
       <summary>
-            Коэффициент A параметрической кривой волатильности.
+            Коэффициент B параметрической кривой волатильности.
             </summary>
     </member>
     <member name="F:StockSharp.Plaza.Metadata.PlazaVolatilitySmileColumns.C">
       <summary>
-            Коэффициент A параметрической кривой волатильности.
+            Коэффициент C параметрической кривой волатильности.
             </summary>
     </member>
     <member name="F:StockSharp.Plaza.Metadata.PlazaVolatilitySmileColumns.D">
       <summary>
-            Коэффициент A параметрической кривой волатильности.
+            Коэффициент D параметрической кривой волатильности.
             </summary>
     </member>
     <member name="F:StockSharp.Plaza.Metadata.PlazaVolatilitySmileColumns.E">
       <summary>
-            Коэффициент A параметрической кривой волатильности.
+            Коэффициент E параметрической кривой волатильности.
             </summary>
     </member>
     <member name="F:StockSharp.Plaza.Metadata.PlazaVolatilitySmileColumns.S">
       <summary>
-            Коэффициент A параметрической кривой волатильности.
+            Коэффициент S параметрической кривой волатильности.
             </summary>
     </member>
     <member name="T:StockSharp.Plaza.Metadata.PlazaTableRegistry">
@@ -4553,6 +4638,11 @@
             Клиентские деньги в клиринге (НКЦ).
             </summary>
     </member>
+    <member name="F:StockSharp.Plaza.Metadata.PlazaTableRegistry.ClearingMembers">
+      <summary>
+            Участники клиринга.
+            </summary>
+    </member>
     <member name="F:StockSharp.Plaza.Metadata.PlazaTableRegistry.ClearingFuturePositionSa">
       <summary>
             Позиции фьючерсов (НКЦ).
@@ -4573,11 +4663,6 @@
             Параметры фьючерсов.
             </summary>
     </member>
-    <member name="F:StockSharp.Plaza.Metadata.PlazaTableRegistry.VirtualFuturesParams">
-      <summary>
-            Параметры виртуальных фьючерсов.
-            </summary>
-    </member>
     <member name="F:StockSharp.Plaza.Metadata.PlazaTableRegistry.OptionsParams">
       <summary>
             Параметры опционов.
@@ -4593,19 +4678,9 @@
             Информация о параметрах клиентов.
             </summary>
     </member>
-    <member name="F:StockSharp.Plaza.Metadata.PlazaTableRegistry.Diler">
-      <summary>
-            Справочник имен фирм.
-            </summary>
-    </member>
     <member name="F:StockSharp.Plaza.Metadata.PlazaTableRegistry.Dealer">
       <summary>
             Справочник фирм.
-            </summary>
-    </member>
-    <member name="F:StockSharp.Plaza.Metadata.PlazaTableRegistry.Investor">
-      <summary>
-            Справочник клиентов.
             </summary>
     </member>
     <member name="F:StockSharp.Plaza.Metadata.PlazaTableRegistry.Prohibition">
@@ -4696,6 +4771,16 @@
     <member name="F:StockSharp.Plaza.Metadata.PlazaTableRegistry.AdjustedFee">
       <summary>
             Комиссии биржи.
+            </summary>
+    </member>
+    <member name="F:StockSharp.Plaza.Metadata.PlazaTableRegistry.OptionSeries">
+      <summary>
+            Опционные серии.
+            </summary>
+    </member>
+    <member name="F:StockSharp.Plaza.Metadata.PlazaTableRegistry.OptionSeriesParams">
+      <summary>
+            Информация о параметрах опционных серий.
             </summary>
     </member>
     <member name="F:StockSharp.Plaza.Metadata.PlazaTableRegistry.McxTradesSpot">
@@ -5017,6 +5102,16 @@
             Идентификатор курса.
             </summary>
     </member>
+    <member name="F:StockSharp.Plaza.Metadata.PlazaVcbDerivativeColumns.BaseContractId">
+      <summary>
+            Идентификатор базового контракта.
+            </summary>
+    </member>
+    <member name="F:StockSharp.Plaza.Metadata.PlazaVcbDerivativeColumns.BaseContractCode">
+      <summary>
+            Код базового актива.
+            </summary>
+    </member>
     <member name="T:StockSharp.Plaza.Metadata.PlazaBondIsinFutureColumns">
       <summary>
             Поток FORTS_FUTINFO_REPL - Фьючерсы: справочная и сессионная информация.
@@ -5059,6 +5154,13 @@
             НКД на дату выплаты купона.
             </summary>
     </member>
+    <member name="F:StockSharp.Plaza.Metadata.PlazaBondNkdFutureColumns.IsCupon">
+      <summary>
+            Признак:
+            0 - НКД на дату исполнения срочного контракта с облигацией,
+            2 - НКД на дату поставки облигации.
+            </summary>
+    </member>
     <member name="T:StockSharp.Plaza.Metadata.PlazaBondNominalFutureColumns">
       <summary>
             Поток FORTS_FUTINFO_REPL - Фьючерсы: справочная и сессионная информация.
@@ -5078,6 +5180,23 @@
     <member name="F:StockSharp.Plaza.Metadata.PlazaBondNominalFutureColumns.Nominal">
       <summary>
             Размер выплат номинальной стоимости.
+            </summary>
+    </member>
+    <member name="F:StockSharp.Plaza.Metadata.PlazaBondNominalFutureColumns.FaceValue">
+      <summary>
+            Размер остаточной номинальной стоимости облигации.
+            </summary>
+    </member>
+    <member name="F:StockSharp.Plaza.Metadata.PlazaBondNominalFutureColumns.CouponNominal">
+      <summary>
+            Cтоимость купона в % от номинала.
+            </summary>
+    </member>
+    <member name="F:StockSharp.Plaza.Metadata.PlazaBondNominalFutureColumns.IsCupon">
+      <summary>
+            Признак записи в таблицах номиналов:
+            0 - Размер остаточной номинальной стоимости на дату исполнения срочного контракта с облигацией,
+            2 - Размер остаточной номинальной стоимости на дату поставки облигации.
             </summary>
     </member>
     <member name="T:StockSharp.Plaza.Metadata.PlazaBondRegistryFutureColumns">
@@ -5230,86 +5349,96 @@
             Таблица fut_sess_contents: Справочник торгуемых инструментов
             </summary>
     </member>
+    <member name="F:StockSharp.Plaza.Metadata.PlazaSessionContentsFutureColumns.LimitUp">
+      <summary>
+            Верхний лимит премии.
+            </summary>
+    </member>
+    <member name="F:StockSharp.Plaza.Metadata.PlazaSessionContentsFutureColumns.LimitDown">
+      <summary>
+            Нижний лимит премии.
+            </summary>
+    </member>
     <member name="F:StockSharp.Plaza.Metadata.PlazaSessionContentsFutureColumns.InstTerm">
       <summary>
-            Смещение от спота
+            Смещение от спота.
             </summary>
     </member>
     <member name="F:StockSharp.Plaza.Metadata.PlazaSessionContentsFutureColumns.BuyDeposit">
       <summary>
-            ГО покупателя
+            ГО покупателя.
             </summary>
     </member>
     <member name="F:StockSharp.Plaza.Metadata.PlazaSessionContentsFutureColumns.SellDeposit">
       <summary>
-            ГО продавца
+            ГО продавца.
             </summary>
     </member>
     <member name="F:StockSharp.Plaza.Metadata.PlazaSessionContentsFutureColumns.IsSpread">
       <summary>
-            Признак вхождения фьючерса в межмесячный спрэд. 1 –
-            входит; 0 – не входит
-            </summary>
-    </member>
-    <member name="F:StockSharp.Plaza.Metadata.PlazaSessionContentsFutureColumns.DateExpiration">
-      <summary>
-            Дата исполнения инструмента
+            Признак вхождения фьючерса в межмесячный спрэд.
+            1 – входит; 0 – не входит.
             </summary>
     </member>
     <member name="F:StockSharp.Plaza.Metadata.PlazaSessionContentsFutureColumns.IsPercent">
       <summary>
-            Признак того, что фьючерс торгуется в процентах. 1 -
-            торгуется процентах, 0 – торгуется не в процентах
+            Признак того, что фьючерс торгуется в процентах.
+            1 - торгуется процентах, 0 – торгуется не в процентах.
             </summary>
     </member>
     <member name="F:StockSharp.Plaza.Metadata.PlazaSessionContentsFutureColumns.PercentRate">
       <summary>
-            Процентная ставка для расчета вариационной маржи по процентным фьючерсам
+            Процентная ставка для расчета вариационной маржи по процентным фьючерсам.
             </summary>
     </member>
     <member name="F:StockSharp.Plaza.Metadata.PlazaSessionContentsFutureColumns.IsTradeEvening">
       <summary>
-            Признак торговли в вечернюю сессию
+            Признак торговли в вечернюю сессию.
             </summary>
     </member>
     <member name="F:StockSharp.Plaza.Metadata.PlazaSessionContentsFutureColumns.Ticker">
       <summary>
-            Уникальный числовой код Главного Спота
+            Уникальный числовой код Главного Спота.
             </summary>
     </member>
     <member name="F:StockSharp.Plaza.Metadata.PlazaSessionContentsFutureColumns.State">
       <summary>
-            Состояние торговли по инструменту
-            </summary>
-    </member>
-    <member name="F:StockSharp.Plaza.Metadata.PlazaSessionContentsFutureColumns.PriceDir">
-      <summary>
-            Направление цены инструмента
+            Состояние торговли по инструменту.
             </summary>
     </member>
     <member name="F:StockSharp.Plaza.Metadata.PlazaSessionContentsFutureColumns.MultilegType">
       <summary>
-            Тип связки
+            Тип связки.
             </summary>
     </member>
     <member name="F:StockSharp.Plaza.Metadata.PlazaSessionContentsFutureColumns.LegsQty">
       <summary>
-            Количество инструментов в связке
+            Количество инструментов в связке.
             </summary>
     </member>
     <member name="F:StockSharp.Plaza.Metadata.PlazaSessionContentsFutureColumns.StepPriceClr">
       <summary>
-            Стоимость шага цены вечернего клиринга
+            Стоимость шага цены вечернего клиринга.
             </summary>
     </member>
     <member name="F:StockSharp.Plaza.Metadata.PlazaSessionContentsFutureColumns.StepPriceInterclr">
       <summary>
-            Стоимость шага цены пром. клиринга
+            Стоимость шага цены пром. клиринга.
             </summary>
     </member>
     <member name="F:StockSharp.Plaza.Metadata.PlazaSessionContentsFutureColumns.StepPriceCurr">
       <summary>
-            Стоимость минимального шага цены, выраженная в валюте
+            Дата окончания исполнения инструмента.
+            </summary>
+    </member>
+    <member name="F:StockSharp.Plaza.Metadata.PlazaSessionContentsFutureColumns.DateExpirationEnd">
+      <summary>
+            Дата окончания исполнения инструмента.
+            </summary>
+    </member>
+    <member name="F:StockSharp.Plaza.Metadata.PlazaSessionContentsFutureColumns.DateExpirationStart">
+      <summary>
+            Дата начала исполнения инструмента.
             </summary>
     </member>
     <member name="T:StockSharp.Plaza.Metadata.PlazaMultiLegOrdersLogFutureColumns">
@@ -5343,6 +5472,11 @@
     <member name="F:StockSharp.Plaza.Metadata.PlazaVcbFutureColumns.Section">
       <summary>
             Наименование Секции.
+            </summary>
+    </member>
+    <member name="F:StockSharp.Plaza.Metadata.PlazaVcbFutureColumns.Signs">
+      <summary>
+            Поле признаков.
             </summary>
     </member>
     <member name="T:StockSharp.Plaza.Metadata.PlazaHeartBeatColumns">
@@ -5420,11 +5554,6 @@
             Таблица opt_vcb: Справочник торгуемых активов опционов.
             </summary>
     </member>
-    <member name="F:StockSharp.Plaza.Metadata.PlazaVcbOptionColumns.CoeffOut">
-      <summary>
-            Коэффициент приближенности 'внелимитных' опционов.
-            </summary>
-    </member>
     <member name="F:StockSharp.Plaza.Metadata.PlazaVcbOptionColumns.MinVol">
       <summary>
             Минимальный объем в котировках специалиста.
@@ -5452,7 +5581,7 @@
             Цена лучшей заявки на продажу.
             </summary>
     </member>
-    <member name="F:StockSharp.Plaza.Metadata.PlazaCommonDerivativeColumns.AmountToSell">
+    <member name="F:StockSharp.Plaza.Metadata.PlazaCommonDerivativeColumns.XAmountToSell">
       <summary>
             Количество в лучшей заявке на продажу.
             </summary>
@@ -5462,7 +5591,7 @@
             Цена лучшей заявки на покупку.
             </summary>
     </member>
-    <member name="F:StockSharp.Plaza.Metadata.PlazaCommonDerivativeColumns.AmountToBuy">
+    <member name="F:StockSharp.Plaza.Metadata.PlazaCommonDerivativeColumns.XAmountToBuy">
       <summary>
             Количество в лучшей заявке на покупку.
             </summary>
@@ -5477,7 +5606,7 @@
             Тренд изменения цены (разница между ценами двух последних сделок).
             </summary>
     </member>
-    <member name="F:StockSharp.Plaza.Metadata.PlazaCommonDerivativeColumns.Amount">
+    <member name="F:StockSharp.Plaza.Metadata.PlazaCommonDerivativeColumns.XAmount">
       <summary>
             Количество в последней сделке.
             </summary>
@@ -5517,7 +5646,7 @@
             Количество сделок.
             </summary>
     </member>
-    <member name="F:StockSharp.Plaza.Metadata.PlazaCommonDerivativeColumns.ContractCount">
+    <member name="F:StockSharp.Plaza.Metadata.PlazaCommonDerivativeColumns.XContractCount">
       <summary>
             Общее количество контрактов в сделках.
             </summary>
@@ -5527,7 +5656,7 @@
             Суммарный объём сделок в рублях.
             </summary>
     </member>
-    <member name="F:StockSharp.Plaza.Metadata.PlazaCommonDerivativeColumns.Position">
+    <member name="F:StockSharp.Plaza.Metadata.PlazaCommonDerivativeColumns.XPosition">
       <summary>
             Текущее кол-во открытых позиций.
             </summary>
@@ -5542,7 +5671,7 @@
             Количество заявок на продажу.
             </summary>
     </member>
-    <member name="F:StockSharp.Plaza.Metadata.PlazaCommonDerivativeColumns.OrdersSellAmount">
+    <member name="F:StockSharp.Plaza.Metadata.PlazaCommonDerivativeColumns.XOrdersSellAmount">
       <summary>
             Объём в контрактах в заявках на продажу.
             </summary>
@@ -5552,7 +5681,7 @@
             Количество заявок на покупку.
             </summary>
     </member>
-    <member name="F:StockSharp.Plaza.Metadata.PlazaCommonDerivativeColumns.OrdersBuyAmount">
+    <member name="F:StockSharp.Plaza.Metadata.PlazaCommonDerivativeColumns.XOrdersBuyAmount">
       <summary>
             Объём в контрактах в заявках на покупку.
             </summary>
@@ -5565,6 +5694,11 @@
     <member name="F:StockSharp.Plaza.Metadata.PlazaCommonDerivativeColumns.ClosingPrice">
       <summary>
             Цена закрытия.
+            </summary>
+    </member>
+    <member name="F:StockSharp.Plaza.Metadata.PlazaCommonDerivativeColumns.SettlementPriceOpen">
+      <summary>
+            Расчетная цена предыдущей сессии.
             </summary>
     </member>
     <member name="T:StockSharp.Plaza.Metadata.PlazaOrdersLogOptionColumns">
@@ -5633,6 +5767,11 @@
     <member name="F:StockSharp.Plaza.Metadata.PlazaSessionContentsOptionColumns.BaseIsinId">
       <summary>
             Числовой идентификатор базового инструмента.
+            </summary>
+    </member>
+    <member name="F:StockSharp.Plaza.Metadata.PlazaSessionContentsOptionColumns.OptionSeriesId">
+      <summary>
+            Идентификатор опционной серии.
             </summary>
     </member>
     <member name="T:StockSharp.Plaza.Metadata.PlazaSessionSettlementOptionColumns">
@@ -6021,11 +6160,6 @@
             Накопленная по сделкам вариационная маржа по деривативам, рассчитанная по текущей котировке.
             </summary>
     </member>
-    <member name="F:StockSharp.Plaza.Metadata.PlazaVarMarginDerivativeColumns.VarMarginReal">
-      <summary>
-            Накопленная по сделкам вариационная маржа по деривативам, рассчитанная по текущей рыночной котировке.
-            </summary>
-    </member>
     <member name="T:StockSharp.Plaza.Metadata.PlazaVarMarginFutureColumns">
       <summary>
             Поток FORTS_VM_REPL - Вариационная маржа.
@@ -6108,11 +6242,6 @@
             Операция не поддерживается.
             </summary>
     </member>
-    <member name="T:StockSharp.Plaza.Native.ClientGate.MessageDispatcher">
-      <summary>
-            Внутренний класс для обработки Plaza сообщений.
-            </summary>
-    </member>
     <member name="T:StockSharp.Plaza.PlazaBaseManager">
       <summary>
             Базовый менеджер.
@@ -6142,15 +6271,9 @@
             Если планируется подключать несколько <see cref="T:StockSharp.Plaza.PlazaTrader" /> к одному роутеру, они должны иметь уникальные <see cref="P:StockSharp.Plaza.PlazaMessageAdapter.AppName" />.
             </remarks>
     </member>
-    <member name="P:StockSharp.Plaza.PlazaMessageAdapter.IsCGate">
-      <summary>
-            Использовать ли CGate для торговли через Plaza или использовать старый COM.
-            По-умолчанию, включено.
-            </summary>
-    </member>
     <member name="P:StockSharp.Plaza.PlazaMessageAdapter.CGateKey">
       <summary>
-            Идентификатор клиентского ПО. Используется при режиме <see cref="P:StockSharp.Plaza.PlazaMessageAdapter.IsCGate" />.
+            Идентификатор клиентского ПО.
             </summary>
     </member>
     <member name="P:StockSharp.Plaza.PlazaMessageAdapter.IsDemo">
@@ -6200,16 +6323,10 @@
             </summary>
     </member>
     <member name="M:StockSharp.Plaza.PlazaMessageAdapter.Load(Ecng.Serialization.SettingsStorage)">
-      <summary>
-            Загрузить настройки.
-            </summary>
-      <param name="storage">Хранилище настроек.</param>
+      <inheritdoc />
     </member>
     <member name="M:StockSharp.Plaza.PlazaMessageAdapter.Save(Ecng.Serialization.SettingsStorage)">
-      <summary>
-            Сохранить настройки.
-            </summary>
-      <param name="storage">Хранилище настроек.</param>
+      <inheritdoc />
     </member>
     <member name="M:StockSharp.Plaza.PlazaMessageAdapter.#ctor(Ecng.Common.IdGenerator)">
       <summary>
@@ -6234,23 +6351,13 @@
       <param name="message">Сообщение.</param>
     </member>
     <member name="M:StockSharp.Plaza.PlazaMessageAdapter.OnSendInMessage(StockSharp.Messages.Message)">
-      <summary>
-            Отправить сообщение.
-            </summary>
-      <param name="message">Сообщение.</param>
+      <inheritdoc />
     </member>
     <member name="M:StockSharp.Plaza.PlazaMessageAdapter.IsConnectionAlive">
-      <summary>
-            Проверить, установлено ли еще соединение. Проверяется только в том случае, если было успешно установлено подключение.
-            </summary>
-      <returns>
-        <see langword="true" />, если соединение еще установлено, <see langword="false" />, если торговая система разорвала подключение.</returns>
+      <inheritdoc />
     </member>
     <member name="M:StockSharp.Plaza.PlazaMessageAdapter.ToString">
-      <summary>
-            Получить строковое представление.
-            </summary>
-      <returns>Строковое представление.</returns>
+      <inheritdoc />
     </member>
     <member name="M:StockSharp.Plaza.PlazaMessageAdapter.DisposeManaged">
       <summary>
@@ -6386,16 +6493,10 @@
       <param name="depth">Стакан.</param>
     </member>
     <member name="P:StockSharp.Plaza.PlazaOrderLogMarketDepthBuilder.Depth">
-      <summary>
-            Стакан.
-            </summary>
+      <inheritdoc />
     </member>
     <member name="M:StockSharp.Plaza.PlazaOrderLogMarketDepthBuilder.Update(StockSharp.Messages.ExecutionMessage)">
-      <summary>
-            Добавить новую строчку из лога заявок к стакану.
-            </summary>
-      <param name="item">Строчка лога заявок.</param>
-      <returns>Был ли изменен стакан.</returns>
+      <inheritdoc />
     </member>
     <member name="T:StockSharp.Plaza.PlazaRevisionManager">
       <summary>
@@ -6436,11 +6537,6 @@
     <member name="T:StockSharp.Plaza.PlazaStreamRegistry">
       <summary>
             Реестр всех потоков данных сервера Плазы.
-            </summary>
-    </member>
-    <member name="P:StockSharp.Plaza.PlazaStreamRegistry.IsFastRepl">
-      <summary>
-            Используется ли быстрая репликация. По-умолчанию выключено.
             </summary>
     </member>
     <member name="F:StockSharp.Plaza.PlazaStreamRegistry.AllStreams">
@@ -6976,17 +7072,7 @@
             Код РТС фирмы.
             </summary>
     </member>
-    <member name="P:StockSharp.Plaza.Transaction.Hedge">
-      <summary>
-            Признак хедж-заявки.
-            </summary>
-    </member>
-    <member name="P:StockSharp.Plaza.Transaction.Trust">
-      <summary>
-            Признак доверительного управления.
-            </summary>
-    </member>
-    <member name="P:StockSharp.Plaza.Transaction.RatePrice">
+    <member name="P:StockSharp.Plaza.Transaction.SwapPrice">
       <summary>
             Цена для заявки по составному инструменту.
             Ставка - для инструментов РЕПО
@@ -7023,7 +7109,7 @@
             Код клиентского счета или '%%%' - по всем.
             </summary>
     </member>
-    <member name="P:StockSharp.Plaza.Transaction.CodeVcb">
+    <member name="P:StockSharp.Plaza.Transaction.BaseContractCode">
       <summary>
             Код базового актива или '%' - по всем.
             </summary>
@@ -7046,11 +7132,6 @@
     <member name="P:StockSharp.Plaza.Transaction.LimitMoney">
       <summary>
             Лимит денежных средств.
-            </summary>
-    </member>
-    <member name="P:StockSharp.Plaza.Transaction.LimitPledge">
-      <summary>
-            Лимит залоговых средств.
             </summary>
     </member>
     <member name="P:StockSharp.Plaza.Transaction.LimitSpotBuy">
@@ -7108,9 +7189,14 @@
             Размер денежных средств для перевода.
             </summary>
     </member>
-    <member name="P:StockSharp.Plaza.Transaction.AmountPledge">
+    <member name="P:StockSharp.Plaza.Transaction.OldPassword">
       <summary>
-            Размер залоговых средств для перевода.
+            Текущий пароль пользователя.
+            </summary>
+    </member>
+    <member name="P:StockSharp.Plaza.Transaction.NewPassword">
+      <summary>
+            Новый пароль пользователя.
             </summary>
     </member>
     <member name="T:StockSharp.Plaza.TransactionFactory">
@@ -7176,12 +7262,6 @@
             </summary>
       <returns>Транзакция.</returns>
     </member>
-    <member name="M:StockSharp.Plaza.TransactionFactory.CreateChangeBaseAssetLimit">
-      <summary>
-            Создать транзакцию на изменение клиентских параметров по базовому активу.
-            </summary>
-      <returns>Транзакция.</returns>
-    </member>
     <member name="M:StockSharp.Plaza.TransactionFactory.CreateChangeLimit(StockSharp.Messages.SecurityTypes)">
       <summary>
             Создать транзакцию на смену лимитов.
@@ -7217,6 +7297,12 @@
       <param name="transactionId">Номер транзакции. Может отсутствовать.</param>
       <param name="message">Сообщение. Может отсутствовать.</param>
       <param name="brokerCode">Код брокерской фирмы.</param>
+      <returns>Транзакция.</returns>
+    </member>
+    <member name="M:StockSharp.Plaza.TransactionFactory.CreateChangePassword">
+      <summary>
+            Создать транзакцию смены пароля.
+            </summary>
       <returns>Транзакция.</returns>
     </member>
     <member name="T:StockSharp.Plaza.PlazaRouter">
@@ -7760,28 +7846,12 @@
       <param name="brokerToCode">Код РТС фирмы.</param>
       <returns>Транзакция.</returns>
     </member>
-    <member name="M:StockSharp.Plaza.TransactionHelper.SetHedge(StockSharp.Plaza.Transaction,System.Boolean)">
+    <member name="M:StockSharp.Plaza.TransactionHelper.SetSwapPrice(StockSharp.Plaza.Transaction,System.Decimal)">
       <summary>
-            Установить <see cref="P:StockSharp.Plaza.Transaction.Hedge" />.
+            Установить <see cref="P:StockSharp.Plaza.Transaction.SwapPrice" />.
             </summary>
       <param name="transaction">Транзакция.</param>
-      <param name="isHedge">Признак хедж-заявки.</param>
-      <returns>Транзакция.</returns>
-    </member>
-    <member name="M:StockSharp.Plaza.TransactionHelper.SetTrust(StockSharp.Plaza.Transaction,System.Boolean)">
-      <summary>
-            Установить <see cref="P:StockSharp.Plaza.Transaction.Trust" />.
-            </summary>
-      <param name="transaction">Транзакция.</param>
-      <param name="isTrust">Признак ДУ.</param>
-      <returns>Транзакция.</returns>
-    </member>
-    <member name="M:StockSharp.Plaza.TransactionHelper.SetRatePrice(StockSharp.Plaza.Transaction,System.Decimal)">
-      <summary>
-            Установить <see cref="P:StockSharp.Plaza.Transaction.RatePrice" />.
-            </summary>
-      <param name="transaction">Транзакция.</param>
-      <param name="ratePrice">Цена для заявки по составному инструменту</param>
+      <param name="swapPrice">Цена для заявки по составному инструменту</param>
       <returns>Транзакция.</returns>
     </member>
     <member name="M:StockSharp.Plaza.TransactionHelper.SetRepoMode(StockSharp.Plaza.Transaction,System.Boolean)">
@@ -7924,6 +7994,11 @@
     <member name="M:StockSharp.Plaza.Xaml.PlazaTableEditor.#ctor">
       <summary>
             Создать <see cref="T:StockSharp.Plaza.Xaml.PlazaTableEditor" />.
+            </summary>
+    </member>
+    <member name="M:StockSharp.Plaza.Xaml.PlazaTableEditor.OnLoadedInternal">
+      <summary>
+            Control loading handler.
             </summary>
     </member>
   </members>

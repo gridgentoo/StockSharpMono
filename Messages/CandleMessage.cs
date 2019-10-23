@@ -17,8 +17,10 @@ namespace StockSharp.Messages
 {
 	using System;
 	using System.Collections.Generic;
+	using System.ComponentModel.DataAnnotations;
 	using System.Linq;
 	using System.Runtime.Serialization;
+	using System.Xml.Serialization;
 
 	using Ecng.Common;
 	using Ecng.Serialization;
@@ -36,18 +38,21 @@ namespace StockSharp.Messages
 		/// Empty state (candle doesn't exist).
 		/// </summary>
 		[EnumMember]
+		[Display(ResourceType = typeof(LocalizedStrings), Name = LocalizedStrings.Str1658Key)]
 		None,
 
 		/// <summary>
 		/// Candle active.
 		/// </summary>
 		[EnumMember]
+		[Display(ResourceType = typeof(LocalizedStrings), Name = LocalizedStrings.Str238Key)]
 		Active,
 
 		/// <summary>
 		/// Candle finished.
 		/// </summary>
 		[EnumMember]
+		[Display(ResourceType = typeof(LocalizedStrings), Name = LocalizedStrings.FinishedKey)]
 		Finished,
 	}
 
@@ -56,7 +61,7 @@ namespace StockSharp.Messages
 	/// </summary>
 	[System.Runtime.Serialization.DataContract]
 	[Serializable]
-	public abstract class CandleMessage : Message
+	public abstract class CandleMessage : BaseSubscriptionIdMessage, IServerTimeMessage, ISecurityIdMessage
 	{
 		/// <summary>
 		/// Security ID.
@@ -235,15 +240,10 @@ namespace StockSharp.Messages
 		public CandleStates State { get; set; }
 
 		/// <summary>
-		/// ID of the original message <see cref="MarketDataMessage.TransactionId"/> for which this message is a response.
-		/// </summary>
-		[DataMember]
-		public long OriginalTransactionId { get; set; }
-
-		/// <summary>
 		/// Price levels.
 		/// </summary>
 		[DataMember]
+		[XmlIgnore]
 		public IEnumerable<CandlePriceLevel> PriceLevels { get; set; }
 
 		private CandleMessageVolumeProfile _volumeProfile;
@@ -252,6 +252,7 @@ namespace StockSharp.Messages
 		/// Volume profile.
 		/// </summary>
 		[Ignore]
+		[XmlIgnore]
 		public CandleMessageVolumeProfile VolumeProfile
 		{
 			get => _volumeProfile;
@@ -265,6 +266,7 @@ namespace StockSharp.Messages
 		/// <summary>
 		/// Candle arg.
 		/// </summary>
+		[Ignore]
 		public abstract object Arg { get; set; }
 
 		/// <summary>
@@ -277,16 +279,20 @@ namespace StockSharp.Messages
 		}
 
 		/// <summary>
+		/// Clone <see cref="Arg"/>.
+		/// </summary>
+		/// <returns>Copy.</returns>
+		public virtual object CloneArg() => Arg;
+
+		/// <summary>
 		/// Copy parameters.
 		/// </summary>
 		/// <param name="copy">Copy.</param>
 		/// <returns>Copy.</returns>
 		protected CandleMessage CopyTo(CandleMessage copy)
 		{
-			if (copy == null)
-				throw new ArgumentNullException(nameof(copy));
+			base.CopyTo(copy);
 
-			copy.LocalTime = LocalTime;
 			copy.OpenPrice = OpenPrice;
 			copy.OpenTime = OpenTime;
 			copy.OpenVolume = OpenVolume;
@@ -303,7 +309,6 @@ namespace StockSharp.Messages
 			copy.SecurityId = SecurityId;
 			copy.TotalVolume = TotalVolume;
 			copy.RelativeVolume = RelativeVolume;
-			copy.OriginalTransactionId = OriginalTransactionId;
 			copy.DownTicks = DownTicks;
 			copy.UpTicks = UpTicks;
 			copy.TotalTicks = TotalTicks;
@@ -313,14 +318,13 @@ namespace StockSharp.Messages
 			return copy;
 		}
 
-		/// <summary>
-		/// Returns a string that represents the current object.
-		/// </summary>
-		/// <returns>A string that represents the current object.</returns>
+		/// <inheritdoc />
 		public override string ToString()
 		{
-			return $"{Type},Sec={SecurityId},A={Arg},T={OpenTime:yyyy/MM/dd HH:mm:ss.fff},O={OpenPrice},H={HighPrice},L={LowPrice},C={ClosePrice},V={TotalVolume},S={State}";
+			return $"{Type},Sec={SecurityId},A={Arg},T={OpenTime:yyyy/MM/dd HH:mm:ss.fff},O={OpenPrice},H={HighPrice},L={LowPrice},C={ClosePrice},V={TotalVolume},S={State},TransId={OriginalTransactionId}";
 		}
+
+		DateTimeOffset IServerTimeMessage.ServerTime => OpenTime;
 	}
 
 	/// <summary>
@@ -357,9 +361,8 @@ namespace StockSharp.Messages
 			});
 		}
 
-		/// <summary>
-		/// Candle arg.
-		/// </summary>
+		/// <inheritdoc />
+		[Ignore]
 		public override object Arg
 		{
 			get => TimeFrame;
@@ -401,9 +404,8 @@ namespace StockSharp.Messages
 			});
 		}
 
-		/// <summary>
-		/// Candle arg.
-		/// </summary>
+		/// <inheritdoc />
+		[Ignore]
 		public override object Arg
 		{
 			get => MaxTradeCount;
@@ -445,9 +447,8 @@ namespace StockSharp.Messages
 			});
 		}
 
-		/// <summary>
-		/// Candle arg.
-		/// </summary>
+		/// <inheritdoc />
+		[Ignore]
 		public override object Arg
 		{
 			get => Volume;
@@ -485,18 +486,20 @@ namespace StockSharp.Messages
 		{
 			return CopyTo(new RangeCandleMessage
 			{
-				PriceRange = PriceRange
+				PriceRange = PriceRange.Clone()
 			});
 		}
 
-		/// <summary>
-		/// Candle arg.
-		/// </summary>
+		/// <inheritdoc />
+		[Ignore]
 		public override object Arg
 		{
 			get => PriceRange;
 			set => PriceRange = (Unit)value;
 		}
+
+		/// <inheritdoc />
+		public override object CloneArg() => PriceRange.Clone();
 	}
 
 	///// <summary>
@@ -535,13 +538,7 @@ namespace StockSharp.Messages
 		public Unit BoxSize
 		{
 			get => _boxSize;
-			set
-			{
-				if (value == null)
-					throw new ArgumentNullException(nameof(value));
-
-				_boxSize = value;
-			}
+			set => _boxSize = value ?? throw new ArgumentNullException(nameof(value));
 		}
 
 		private int _reversalAmount = 1;
@@ -562,10 +559,7 @@ namespace StockSharp.Messages
 			}
 		}
 
-		/// <summary>
-		/// Returns a string that represents the current object.
-		/// </summary>
-		/// <returns>A string that represents the current object.</returns>
+		/// <inheritdoc />
 		public override string ToString()
 		{
 			return $"Box = {BoxSize} RA = {ReversalAmount}";
@@ -640,19 +634,21 @@ namespace StockSharp.Messages
 		{
 			return CopyTo(new PnFCandleMessage
 			{
-				PnFArg = PnFArg,
+				PnFArg = PnFArg.Clone(),
 				//PnFType = PnFType
 			});
 		}
 
-		/// <summary>
-		/// Candle arg.
-		/// </summary>
+		/// <inheritdoc />
+		[Ignore]
 		public override object Arg
 		{
 			get => PnFArg;
 			set => PnFArg = (PnFArg)value;
 		}
+
+		/// <inheritdoc />
+		public override object CloneArg() => PnFArg.Clone();
 	}
 
 	/// <summary>
@@ -685,17 +681,19 @@ namespace StockSharp.Messages
 		{
 			return CopyTo(new RenkoCandleMessage
 			{
-				BoxSize = BoxSize
+				BoxSize = BoxSize.Clone()
 			});
 		}
 
-		/// <summary>
-		/// Candle arg.
-		/// </summary>
+		/// <inheritdoc />
+		[Ignore]
 		public override object Arg
 		{
 			get => BoxSize;
 			set => BoxSize = (Unit)value;
 		}
+
+		/// <inheritdoc />
+		public override object CloneArg() => BoxSize.Clone();
 	}
 }

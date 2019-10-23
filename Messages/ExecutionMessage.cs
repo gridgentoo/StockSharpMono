@@ -17,7 +17,9 @@ namespace StockSharp.Messages
 {
 	using System;
 	using System.ComponentModel;
+	using System.Linq;
 	using System.Runtime.Serialization;
+	using System.Xml.Serialization;
 
 	using Ecng.Serialization;
 
@@ -61,7 +63,7 @@ namespace StockSharp.Messages
 	/// </summary>
 	[Serializable]
 	[System.Runtime.Serialization.DataContract]
-	public sealed class ExecutionMessage : Message
+	public sealed class ExecutionMessage : BaseSubscriptionIdMessage, ITransactionIdMessage, IServerTimeMessage, ISecurityIdMessage
 	{
 		/// <summary>
 		/// Security ID.
@@ -108,32 +110,19 @@ namespace StockSharp.Messages
 		[MainCategory]
 		public string DepoName { get; set; }
 
-		/// <summary>
-		/// Server time.
-		/// </summary>
+		/// <inheritdoc />
 		[DataMember]
 		[DisplayNameLoc(LocalizedStrings.ServerTimeKey)]
 		[DescriptionLoc(LocalizedStrings.ServerTimeKey, true)]
 		[MainCategory]
 		public DateTimeOffset ServerTime { get; set; }
 
-		/// <summary>
-		/// Transaction ID.
-		/// </summary>
+		/// <inheritdoc />
 		[DataMember]
 		[DisplayNameLoc(LocalizedStrings.TransactionKey)]
 		[DescriptionLoc(LocalizedStrings.TransactionIdKey, true)]
 		[MainCategory]
 		public long TransactionId { get; set; }
-
-		/// <summary>
-		/// ID of original transaction, for which this message is the answer.
-		/// </summary>
-		[DataMember]
-		[DisplayNameLoc(LocalizedStrings.OriginalTransactionKey)]
-		[DescriptionLoc(LocalizedStrings.OriginalTransactionIdKey)]
-		[MainCategory]
-		public long OriginalTransactionId { get; set; }
 
 		/// <summary>
 		/// Data type, information about which is contained in the <see cref="ExecutionMessage"/>.
@@ -260,7 +249,7 @@ namespace StockSharp.Messages
 		public Sides Side { get; set; }
 
 		/// <summary>
-		/// Order contracts remainder.
+		/// Order contracts balance.
 		/// </summary>
 		[DataMember]
 		[DisplayNameLoc(LocalizedStrings.Str130Key)]
@@ -407,6 +396,7 @@ namespace StockSharp.Messages
 		[DisplayNameLoc(LocalizedStrings.Str152Key)]
 		[DescriptionLoc(LocalizedStrings.Str153Key, true)]
 		[MainCategory]
+		[XmlIgnore]
 		public Exception Error { get; set; }
 
 		/// <summary>
@@ -415,6 +405,7 @@ namespace StockSharp.Messages
 		[DisplayNameLoc(LocalizedStrings.Str154Key)]
 		[DescriptionLoc(LocalizedStrings.Str155Key)]
 		[CategoryLoc(LocalizedStrings.Str156Key)]
+		[XmlIgnore]
 		public OrderCondition Condition { get; set; }
 
 		///// <summary>
@@ -445,6 +436,11 @@ namespace StockSharp.Messages
 		[MainCategory]
 		[Nullable]
 		public decimal? Commission { get; set; }
+
+		/// <summary>
+		/// Commission currency. Can be <see lnagword="null"/>.
+		/// </summary>
+		public string CommissionCurrency { get; set; }
 
 		/// <summary>
 		/// Network latency. Uses when <see cref="ExecutionType"/> set to <see cref="ExecutionTypes.Transaction"/>.
@@ -522,6 +518,32 @@ namespace StockSharp.Messages
 		public bool? IsMargin { get; set; }
 
 		/// <summary>
+		/// Is order manual.
+		/// </summary>
+		[DataMember]
+		[DisplayNameLoc(LocalizedStrings.ManualKey)]
+		[DescriptionLoc(LocalizedStrings.IsOrderManualKey)]
+		public bool? IsManual { get; set; }
+
+		/// <summary>
+		/// Average execution price.
+		/// </summary>
+		[DataMember]
+		public decimal? AveragePrice { get; set; }
+
+		/// <summary>
+		/// Yield.
+		/// </summary>
+		[DataMember]
+		public decimal? Yield { get; set; }
+
+		/// <summary>
+		/// Minimum quantity of an order to be executed.
+		/// </summary>
+		[DataMember]
+		public decimal? MinVolume { get; set; }
+
+		/// <summary>
 		/// Initializes a new instance of the <see cref="ExecutionMessage"/>.
 		/// </summary>
 		public ExecutionMessage()
@@ -529,10 +551,7 @@ namespace StockSharp.Messages
 		{
 		}
 
-		/// <summary>
-		/// Returns a string that represents the current object.
-		/// </summary>
-		/// <returns>A string that represents the current object.</returns>
+		/// <inheritdoc />
 		public override string ToString()
 		{
 			return base.ToString() + $",T(S)={ServerTime:yyyy/MM/dd HH:mm:ss.fff},({ExecutionType}),Sec={SecurityId},Ord={OrderId}/{TransactionId}/{OriginalTransactionId},Fail={Error},Price={OrderPrice},OrdVol={OrderVolume},TrVol={TradeVolume},Bal={Balance},TId={TradeId},Pf={PortfolioName},TPrice={TradePrice},UId={UserOrderId},State={OrderState}";
@@ -557,7 +576,6 @@ namespace StockSharp.Messages
 				Error = Error,
 				ExpiryDate = ExpiryDate,
 				IsSystem = IsSystem,
-				LocalTime = LocalTime,
 				OpenInterest = OpenInterest,
 				OrderId = OrderId,
 				OrderStringId = OrderStringId,
@@ -580,7 +598,6 @@ namespace StockSharp.Messages
 				TradePrice = TradePrice,
 				TradeStatus = TradeStatus,
 				TransactionId = TransactionId,
-				OriginalTransactionId = OriginalTransactionId,
 				OrderVolume = OrderVolume,
 				TradeVolume = TradeVolume,
 				//IsFinished = IsFinished,
@@ -602,9 +619,19 @@ namespace StockSharp.Messages
 
 				IsMarketMaker = IsMarketMaker,
 				IsMargin = IsMargin,
+				IsManual = IsManual,
+
+				CommissionCurrency = CommissionCurrency,
+
+				AveragePrice = AveragePrice,
+				Yield = Yield,
+				MinVolume = MinVolume,
+
+				SubscriptionId = SubscriptionId,
+				SubscriptionIds = SubscriptionIds?.ToArray()
 			};
 
-			this.CopyExtensionInfo(clone);
+			CopyTo(clone);
 
 			return clone;
 		}

@@ -65,6 +65,9 @@ namespace StockSharp.Algo
 		public event Action<IEnumerable<Order>> StopOrdersChanged;
 
 		/// <inheritdoc />
+		public event Action<long, Exception, DateTimeOffset> OrderStatusFailed2;
+
+		/// <inheritdoc />
 		public event Action<OrderFail> StopOrderRegisterFailed;
 
 		/// <inheritdoc />
@@ -89,7 +92,13 @@ namespace StockSharp.Algo
 		public event Action<long> MassOrderCanceled;
 
 		/// <inheritdoc />
+		public event Action<long, DateTimeOffset> MassOrderCanceled2;
+
+		/// <inheritdoc />
 		public event Action<long, Exception> MassOrderCancelFailed;
+
+		/// <inheritdoc />
+		public event Action<long, Exception, DateTimeOffset> MassOrderCancelFailed2;
 
 		/// <inheritdoc />
 		public event Action<long, Exception> OrderStatusFailed;
@@ -181,16 +190,26 @@ namespace StockSharp.Algo
 		/// <inheritdoc />
 		public event Action<IMessageAdapter, Exception> ConnectionErrorEx;
 
-		/// <summary>
-		/// Data process error.
-		/// </summary>
+		/// <inheritdoc cref="IConnector" />
 		public event Action<Exception> Error;
 
 		/// <inheritdoc />
-		public event Action<Exception, IEnumerable<Security>> LookupSecuritiesResult;
+		public event Action<SecurityLookupMessage, IEnumerable<Security>, Exception> LookupSecuritiesResult;
 
 		/// <inheritdoc />
-		public event Action<Exception, IEnumerable<Portfolio>> LookupPortfoliosResult;
+		public event Action<PortfolioLookupMessage, IEnumerable<Portfolio>, Exception> LookupPortfoliosResult;
+
+		/// <inheritdoc />
+		public event Action<BoardLookupMessage, IEnumerable<ExchangeBoard>, Exception> LookupBoardsResult;
+
+		/// <inheritdoc />
+		public event Action<SecurityLookupMessage, IEnumerable<Security>, IEnumerable<Security>, Exception> LookupSecuritiesResult2;
+
+		/// <inheritdoc />
+		public event Action<PortfolioLookupMessage, IEnumerable<Portfolio>, IEnumerable<Portfolio>, Exception> LookupPortfoliosResult2;
+
+		/// <inheritdoc />
+		public event Action<BoardLookupMessage, IEnumerable<ExchangeBoard>, IEnumerable<ExchangeBoard>, Exception> LookupBoardsResult2;
 
 		/// <inheritdoc />
 		public event Action<Security, MarketDataMessage> MarketDataSubscriptionSucceeded;
@@ -199,16 +218,70 @@ namespace StockSharp.Algo
 		public event Action<Security, MarketDataMessage, Exception> MarketDataSubscriptionFailed;
 
 		/// <inheritdoc />
+		public event Action<Security, MarketDataMessage, MarketDataMessage> MarketDataSubscriptionFailed2;
+
+		/// <inheritdoc />
 		public event Action<Security, MarketDataMessage> MarketDataUnSubscriptionSucceeded;
 
 		/// <inheritdoc />
 		public event Action<Security, MarketDataMessage, Exception> MarketDataUnSubscriptionFailed;
 
 		/// <inheritdoc />
+		public event Action<Security, MarketDataMessage, MarketDataMessage> MarketDataUnSubscriptionFailed2;
+
+		/// <inheritdoc />
+		public event Action<Security, MarketDataFinishedMessage> MarketDataSubscriptionFinished;
+
+		/// <inheritdoc />
+		public event Action<Security, MarketDataMessage, Exception> MarketDataUnexpectedCancelled;
+
+		/// <inheritdoc />
 		public event Action<ExchangeBoard, SessionStates> SessionStateChanged;
 
 		/// <inheritdoc />
 		public event Action<Security, IEnumerable<KeyValuePair<Level1Fields, object>>, DateTimeOffset, DateTimeOffset> ValuesChanged;
+
+		/// <inheritdoc />
+		public event Action<Subscription, Level1ChangeMessage> Level1Received;
+
+		/// <inheritdoc />
+		public event Action<Subscription, Trade> TickTradeReceived;
+
+		/// <inheritdoc />
+		public event Action<Subscription, Security> SecurityReceived;
+
+		/// <inheritdoc />
+		public event Action<Subscription, ExchangeBoard> BoardReceived;
+
+		/// <inheritdoc />
+		public event Action<Subscription, MarketDepth> MarketDepthReceived;
+
+		/// <inheritdoc />
+		public event Action<Subscription, OrderLogItem> OrderLogItemReceived;
+
+		/// <inheritdoc />
+		public event Action<Subscription, News> NewsReceived;
+
+		/// <inheritdoc />
+		public event Action<Subscription, Candle> CandleReceived;
+
+		/// <inheritdoc />
+		public event Action<Subscription, MyTrade> OwnTradeReceived;
+
+		/// <inheritdoc />
+		public event Action<Subscription, Order> OrderReceived;
+
+		/// <inheritdoc />
+		public event Action<Subscription, OrderFail> OrderRegisterFailReceived;
+
+		/// <inheritdoc />
+		public event Action<Subscription, OrderFail> OrderCancelFailReceived;
+
+		/// <inheritdoc />
+		public event Action<Subscription, Portfolio> PortfolioReceived;
+
+		/// <inheritdoc />
+		public event Action<Subscription, Position> PositionReceived;
 
 		/// <summary>
 		/// Connection restored.
@@ -229,6 +302,22 @@ namespace StockSharp.Algo
 		/// The series processing end event.
 		/// </summary>
 		public event Action<CandleSeries> CandleSeriesStopped;
+
+		/// <summary>
+		/// The series error event.
+		/// </summary>
+		public event Action<CandleSeries, MarketDataMessage> CandleSeriesError;
+
+		/// <inheritdoc />
+		public event Action<Order> OrderInitialized;
+
+		/// <inheritdoc />
+		public event Action<long, Exception> ChangePasswordResult;
+
+		private void RaiseOrderInitialized(Order order)
+		{
+			OrderInitialized?.Invoke(order);
+		}
 
 		private void RaiseNewMyTrade(MyTrade trade)
 		{
@@ -308,19 +397,22 @@ namespace StockSharp.Algo
 			StopOrdersCancelFailed?.Invoke(new[] { fail });
 		}
 
-		private void RaiseMassOrderCanceled(long transactionId)
+		private void RaiseMassOrderCanceled(long transactionId, DateTimeOffset time)
 		{
 			MassOrderCanceled?.Invoke(transactionId);
+			MassOrderCanceled2?.Invoke(transactionId, time);
 		}
 
-		private void RaiseMassOrderCancelFailed(long transactionId, Exception error)
+		private void RaiseMassOrderCancelFailed(long transactionId, Exception error, DateTimeOffset time)
 		{
 			MassOrderCancelFailed?.Invoke(transactionId, error);
+			MassOrderCancelFailed2?.Invoke(transactionId, error, time);
 		}
 
-		private void RaiseOrderStatusFailed(long transactionId, Exception error)
+		private void RaiseOrderStatusFailed(long transactionId, Exception error, DateTimeOffset time)
 		{
 			OrderStatusFailed?.Invoke(transactionId, error);
+			OrderStatusFailed2?.Invoke(transactionId, error, time);
 		}
 
 		private void RaiseNewSecurity(Security security)
@@ -503,21 +595,40 @@ namespace StockSharp.Algo
 		/// <summary>
 		/// To call the event <see cref="LookupSecuritiesResult"/>.
 		/// </summary>
-		/// <param name="error">An error of security lookup operation. The value will be <see langword="null"/> if operation complete successfully.</param>
+		/// <param name="message">Message.</param>
+		/// <param name="error">An error of lookup operation. The value will be <see langword="null"/> if operation complete successfully.</param>
 		/// <param name="securities">Found instruments.</param>
-		private void RaiseLookupSecuritiesResult(Exception error, IEnumerable<Security> securities)
+		/// <param name="newSecurities">Newly created.</param>
+		private void RaiseLookupSecuritiesResult(SecurityLookupMessage message, Exception error, Security[] securities, Security[] newSecurities)
 		{
-			LookupSecuritiesResult?.Invoke(error, securities);
+			LookupSecuritiesResult?.Invoke(message, securities, error);
+			LookupSecuritiesResult2?.Invoke(message, securities, newSecurities, error);
+		}
+
+		/// <summary>
+		/// To call the event <see cref="LookupBoardsResult"/>.
+		/// </summary>
+		/// <param name="message">Message.</param>
+		/// <param name="error">An error of lookup operation. The value will be <see langword="null"/> if operation complete successfully.</param>
+		/// <param name="boards">Found boards.</param>
+		/// <param name="newBoards">Newly created.</param>
+		private void RaiseLookupBoardsResult(BoardLookupMessage message, Exception error, ExchangeBoard[] boards, ExchangeBoard[] newBoards)
+		{
+			LookupBoardsResult?.Invoke(message, boards, error);
+			LookupBoardsResult2?.Invoke(message, boards, newBoards, error);
 		}
 
 		/// <summary>
 		/// To call the event <see cref="LookupPortfoliosResult"/>.
 		/// </summary>
-		/// <param name="error">An error of portfolio lookup operation. The value will be <see langword="null"/> if operation complete successfully.</param>
+		/// <param name="message">Message.</param>
+		/// <param name="error">An error of lookup operation. The value will be <see langword="null"/> if operation complete successfully.</param>
 		/// <param name="portfolios">Found portfolios.</param>
-		private void RaiseLookupPortfoliosResult(Exception error, IEnumerable<Portfolio> portfolios)
+		/// <param name="newPortfolios">Newly created.</param>
+		private void RaiseLookupPortfoliosResult(PortfolioLookupMessage message, Exception error, Portfolio[] portfolios, Portfolio[] newPortfolios)
 		{
-			LookupPortfoliosResult?.Invoke(error, portfolios);
+			LookupPortfoliosResult?.Invoke(message, portfolios, error);
+			LookupPortfoliosResult2?.Invoke(message, portfolios, newPortfolios, error);
 		}
 
 		private void RaiseMarketDataSubscriptionSucceeded(Security security, MarketDataMessage message)
@@ -533,10 +644,17 @@ namespace StockSharp.Algo
 			MarketDataSubscriptionSucceeded?.Invoke(security, message);
 		}
 
-		private void RaiseMarketDataSubscriptionFailed(Security security, MarketDataMessage message, Exception error)
+		private void RaiseMarketDataSubscriptionFailed(Security security, MarketDataMessage origin, MarketDataMessage reply)
 		{
-			this.AddErrorLog(LocalizedStrings.SubscribedError, security?.Id, message.DataType, message.Error);
-			MarketDataSubscriptionFailed?.Invoke(security, message, error);
+			var error = reply.Error ?? new NotSupportedException(LocalizedStrings.SubscriptionNotSupported.Put(origin));
+
+			if (reply.IsNotSupported)
+				this.AddWarningLog(LocalizedStrings.SubscriptionNotSupported, origin);
+			else
+				this.AddErrorLog(LocalizedStrings.SubscribedError, security?.Id, origin.DataType, error.Message);
+
+			MarketDataSubscriptionFailed?.Invoke(security, origin, error);
+			MarketDataSubscriptionFailed2?.Invoke(security, origin, reply);
 		}
 
 		private void RaiseMarketDataUnSubscriptionSucceeded(Security security, MarketDataMessage message)
@@ -552,19 +670,34 @@ namespace StockSharp.Algo
 			MarketDataUnSubscriptionSucceeded?.Invoke(security, message);
 		}
 
-		private void RaiseMarketDataUnSubscriptionFailed(Security security, MarketDataMessage message, Exception error)
+		private void RaiseMarketDataUnSubscriptionFailed(Security security, MarketDataMessage origin, MarketDataMessage reply)
 		{
-			this.AddErrorLog(LocalizedStrings.UnSubscribedError, security?.Id, message.DataType, message.Error);
-			MarketDataUnSubscriptionFailed?.Invoke(security, message, error);
+			var error = reply.Error ?? new NotSupportedException();
+			this.AddErrorLog(LocalizedStrings.UnSubscribedError, security?.Id, origin.DataType, error.Message);
+			MarketDataUnSubscriptionFailed?.Invoke(security, origin, error);
+			MarketDataUnSubscriptionFailed2?.Invoke(security, origin, reply);
+		}
+
+		private void RaiseMarketDataSubscriptionFinished(Security security, MarketDataFinishedMessage message)
+		{
+			this.AddDebugLog(LocalizedStrings.SubscriptionFinished, security?.Id, message);
+			MarketDataSubscriptionFinished?.Invoke(security, message);
+		}
+
+		private void RaiseMarketDataUnexpectedCancelled(Security security, MarketDataMessage message, Exception error)
+		{
+			this.AddErrorLog(LocalizedStrings.SubscriptionUnexpectedCancelled, security?.Id, message.DataType, error.Message);
+			MarketDataUnexpectedCancelled?.Invoke(security, message, error);
 		}
 
 		/// <summary>
-		/// To call the event <see cref="Connector.NewMessage"/>.
+		/// To call the event <see cref="NewMessage"/>.
 		/// </summary>
 		/// <param name="message">A new message.</param>
 		private void RaiseNewMessage(Message message)
 		{
 			NewMessage?.Invoke(message);
+			_newOutMessage?.Invoke(message);
 		}
 
 		private void RaiseValuesChanged(Security security, IEnumerable<KeyValuePair<Level1Fields, object>> changes, DateTimeOffset serverTime, DateTimeOffset localTime)
@@ -590,6 +723,35 @@ namespace StockSharp.Algo
 		private void RaiseCandleSeriesStopped(CandleSeries series)
 		{
 			CandleSeriesStopped?.Invoke(series);
+		}
+
+		private void RaiseCandleSeriesError(CandleSeries series, MarketDataMessage reply)
+		{
+			CandleSeriesError?.Invoke(series, reply);
+		}
+
+		private void RaiseSessionStateChanged(ExchangeBoard board, SessionStates state)
+		{
+			SessionStateChanged?.Invoke(board, state);
+		}
+
+		private void RaiseChangePassword(long transactionId, Exception error)
+		{
+			ChangePasswordResult?.Invoke(transactionId, error);
+		}
+
+		private void RaiseReceived<TEntity>(TEntity entity, ISubscriptionIdMessage message, Action<Subscription, TEntity> evt)
+		{
+			if (evt == null)
+				return;
+
+			foreach (var id in message.GetSubscriptionIds())
+			{
+				if (!_subscriptions.TryGetValue(id, out var subscription))
+					continue;
+
+				evt(subscription, entity);
+			}
 		}
 	}
 }

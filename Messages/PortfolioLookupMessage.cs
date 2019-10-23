@@ -19,7 +19,7 @@ namespace StockSharp.Messages
 	using System.Runtime.Serialization;
 
 	/// <summary>
-	/// Message security lookup for specified criteria.
+	/// Message portfolio lookup for specified criteria.
 	/// </summary>
 	[DataContract]
 	[Serializable]
@@ -42,10 +42,7 @@ namespace StockSharp.Messages
 			return CopyTo(new PortfolioLookupMessage());
 		}
 
-		/// <summary>
-		/// Returns a string that represents the current object.
-		/// </summary>
-		/// <returns>A string that represents the current object.</returns>
+		/// <inheritdoc />
 		public override string ToString()
 		{
 			return base.ToString() + $",TransId={TransactionId},Curr={Currency},Board={BoardCode},IsSubscribe={IsSubscribe}";

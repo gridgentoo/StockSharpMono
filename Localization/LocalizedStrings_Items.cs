@@ -18,6 +18,306 @@ namespace StockSharp.Localization
 	partial class LocalizedStrings
 	{
 		/// <summary>
+		/// Draw size
+		/// </summary>
+		public const string  DrawSizeKey = nameof(DrawSize);
+
+		/// <summary>
+		/// Draw size
+		/// </summary>
+		public static string DrawSize => GetString(DrawSizeKey);
+
+		/// <summary>
+		/// Orders display filter.
+		/// </summary>
+		public const string  OrdersDisplayFilterKey = nameof(OrdersDisplayFilter);
+
+		/// <summary>
+		/// Orders display filter.
+		/// </summary>
+		public static string OrdersDisplayFilter => GetString(OrdersDisplayFilterKey);
+
+		/// <summary>
+		/// All orders
+		/// </summary>
+		public const string  AllOrdersKey = nameof(AllOrders);
+
+		/// <summary>
+		/// All orders
+		/// </summary>
+		public static string AllOrders => GetString(AllOrdersKey);
+
+		/// <summary>
+		/// Orders with errors
+		/// </summary>
+		public const string  ErrorOrdersOnlyKey = nameof(ErrorOrdersOnly);
+
+		/// <summary>
+		/// Orders with errors
+		/// </summary>
+		public static string ErrorOrdersOnly => GetString(ErrorOrdersOnlyKey);
+
+		/// <summary>
+		/// Orders with no errors
+		/// </summary>
+		public const string  NoErrorOrdersOnlyKey = nameof(NoErrorOrdersOnly);
+		
+		/// <summary>
+		/// Orders with no errors
+		/// </summary>
+		public static string NoErrorOrdersOnly => GetString(NoErrorOrdersOnlyKey);
+
+		/// <summary>
+		/// Order errors color
+		/// </summary>
+		public const string TransactionErrorColorKey = nameof(TransactionErrorColor);
+
+		/// <summary>
+		/// Order errors color
+		/// </summary>
+		public static string TransactionErrorColor => GetString(TransactionErrorColorKey);
+
+		/// <summary>
+		/// Use alternative icon.
+		/// </summary>
+		public const string UseAltIconKey = nameof(UseAltIcon);
+
+		/// <summary>
+		/// Use alternative icon.
+		/// </summary>
+		public static string UseAltIcon => GetString(UseAltIconKey);
+
+		/// <summary>
+		/// Days letter.
+		/// </summary>
+		public const string DaysLetterKey = nameof(DaysLetter);
+
+		/// <summary>
+		/// Days letter.
+		/// </summary>
+		public static string DaysLetter => GetString(DaysLetterKey);
+
+		/// <summary>
+		/// Hours letter.
+		/// </summary>
+		public const string HoursLetterKey = nameof(HoursLetter);
+
+		/// <summary>
+		/// Hours letter.
+		/// </summary>
+		public static string HoursLetter => GetString(HoursLetterKey);
+
+		/// <summary>
+		/// Minutes letter.
+		/// </summary>
+		public const string MinutesLetterKey = nameof(MinutesLetter);
+
+		/// <summary>
+		/// Minutes letter.
+		/// </summary>
+		public static string MinutesLetter => GetString(MinutesLetterKey);
+
+		/// <summary>
+		/// Seconds letter.
+		/// </summary>
+		public const string SecondsLetterKey = nameof(SecondsLetter);
+
+		/// <summary>
+		/// Seconds letter.
+		/// </summary>
+		public static string SecondsLetter => GetString(SecondsLetterKey);
+
+		/// <summary>
+		/// Ruler.
+		/// </summary>
+		public const string RulerKey = nameof(Ruler);
+
+		/// <summary>
+		/// Ruler.
+		/// </summary>
+		public static string Ruler => GetString(RulerKey);
+
+		/// <summary>
+		/// Unable to change group name of axis while it is attached to a chart area.
+		/// </summary>
+		public const string ErrorChangingGroupNameKey = nameof(ErrorChangingGroupName);
+
+		/// <summary>
+		/// Unable to change group name of axis while it is attached to a chart area.
+		/// </summary>
+		public static string ErrorChangingGroupName => GetString(ErrorChangingGroupNameKey);
+
+		/// <summary>
+		/// Element axis is not set.
+		/// </summary>
+		public const string AxisIsNotSetKey = nameof(AxisIsNotSet);
+
+		/// <summary>
+		/// Element axis is not set.
+		/// </summary>
+		public static string AxisIsNotSet => GetString(AxisIsNotSetKey);
+
+		/// <summary>
+		/// Unable to remove default axis.
+		/// </summary>
+		public const string ErrorRemovingDefaultAxisKey = nameof(ErrorRemovingDefaultAxis);
+
+		/// <summary>
+		/// Unable to remove default axis.
+		/// </summary>
+		public static string ErrorRemovingDefaultAxis => GetString(ErrorRemovingDefaultAxisKey);
+
+		/// <summary>
+		/// Source values.
+		/// </summary>
+		public const string SourceValuesKey = nameof(SourceValues);
+
+		/// <summary>
+		/// Source values.
+		/// </summary>
+		public static string SourceValues => GetString(SourceValuesKey);
+
+		/// <summary>
+		/// Indicator painter can only be set once.
+		/// </summary>
+		public const string ChartPainterAlreadySetKey = nameof(ChartPainterAlreadySet);
+
+		/// <summary>
+		/// Indicator painter can only be set once.
+		/// </summary>
+		public static string ChartPainterAlreadySet => GetString(ChartPainterAlreadySetKey);
+
+		/// <summary>
+		/// Annotation type cannot be changed once set.
+		/// </summary>
+		public const string AnnotationTypeCantBeChangedKey = nameof(AnnotationTypeCantBeChanged);
+
+		/// <summary>
+		/// Annotation type cannot be changed once set.
+		/// </summary>
+		public static string AnnotationTypeCantBeChanged => GetString(AnnotationTypeCantBeChangedKey);
+
+		/// <summary>
+		/// The element was already attached to chart before.
+		/// </summary>
+		public const string ElementAlreadyAttachedKey = nameof(ElementAlreadyAttached);
+
+		/// <summary>
+		/// The element was already attached to chart before.
+		/// </summary>
+		public static string ElementAlreadyAttached => GetString(ElementAlreadyAttachedKey);
+
+		/// <summary>
+		/// Axis type must be set before adding any elements.
+		/// </summary>
+		public const string AxisTypeCantBeSetKey = nameof(AxisTypeCantBeSet);
+
+		/// <summary>
+		/// Axis type must be set before adding any elements.
+		/// </summary>
+		public static string AxisTypeCantBeSet => GetString(AxisTypeCantBeSetKey);
+
+		/// <summary>
+		/// Element of type '{0}' doesn't support axes X({1}), Y({2}).
+		/// </summary>
+		public const string AxesTypesNotSupportedParamsKey = nameof(AxesTypesNotSupportedParams);
+
+		/// <summary>
+		/// Element of type '{0}' doesn't support axes X({1}), Y({2}).
+		/// </summary>
+		public static string AxesTypesNotSupportedParams => GetString(AxesTypesNotSupportedParamsKey);
+
+		/// <summary>
+		/// Invalid axis type.
+		/// </summary>
+		public const string InvalidAxisTypeKey = nameof(InvalidAxisType);
+
+		/// <summary>
+		/// Invalid axis type.
+		/// </summary>
+		public static string InvalidAxisType => GetString(InvalidAxisTypeKey);
+
+		/// <summary>
+		/// Elements on chart do not support axis type {0}.
+		/// </summary>
+		public const string ElementDontSupportAxisTypeParamsKey = nameof(ElementDontSupportAxisTypeParams);
+
+		/// <summary>
+		/// Elements on chart do not support axis type {0}.
+		/// </summary>
+		public static string ElementDontSupportAxisTypeParams => GetString(ElementDontSupportAxisTypeParamsKey);
+
+		/// <summary>
+		/// Cannot set this property on child element.
+		/// </summary>
+		public const string CantSetChildPropertyKey = nameof(CantSetChildProperty);
+
+		/// <summary>
+		/// Cannot set this property on child element.
+		/// </summary>
+		public static string CantSetChildProperty => GetString(CantSetChildPropertyKey);
+
+		/// <summary>
+		/// The element already has a parent.
+		/// </summary>
+		public const string ParentElementAlreadySetKey = nameof(ParentElementAlreadySet);
+
+		/// <summary>
+		/// The element already has a parent.
+		/// </summary>
+		public static string ParentElementAlreadySet => GetString(ParentElementAlreadySetKey);
+
+		/// <summary>
+		/// Remove is not supported. Use Clear() instead.
+		/// </summary>
+		public const string RemoveNotSupportedKey = nameof(RemoveNotSupported);
+
+		/// <summary>
+		/// Remove is not supported. Use Clear() instead.
+		/// </summary>
+		public static string RemoveNotSupported => GetString(RemoveNotSupportedKey);
+
+		/// <summary>
+		/// Got new Indicator with same ChartIndicatorElement without Reset() call.
+		/// </summary>
+		public const string NewIndicatorNoResetKey = nameof(NewIndicatorNoReset);
+
+		/// <summary>
+		/// Got new Indicator with same ChartIndicatorElement without Reset() call.
+		/// </summary>
+		public static string NewIndicatorNoReset => GetString(NewIndicatorNoResetKey);
+
+		/// <summary>
+		/// Unexpected coordinate type {0}.
+		/// </summary>
+		public const string UnexpectedCoordTypeParamsKey = nameof(UnexpectedCoordTypeParams);
+
+		/// <summary>
+		/// Unexpected coordinate type {0}.
+		/// </summary>
+		public static string UnexpectedCoordTypeParams => GetString(UnexpectedCoordTypeParamsKey);
+
+		/// <summary>
+		/// Dashed line
+		/// </summary>
+		public const string DashedLineKey = nameof(DashedLine);
+
+		/// <summary>
+		/// Dashed line
+		/// </summary>
+		public static string DashedLine => GetString(DashedLineKey);
+
+		/// <summary>
+		/// Senkou range
+		/// </summary>
+		public const string SenkouRangeKey = nameof(SenkouRange);
+
+		/// <summary>
+		/// Senkou range
+		/// </summary>
+		public static string SenkouRange => GetString(SenkouRangeKey);
+
+		/// <summary>
 		/// Show hidden axes
 		/// </summary>
 		public const string ShowHiddenAxesKey = nameof(ShowHiddenAxes);
@@ -106,7 +406,7 @@ namespace StockSharp.Localization
 		/// Show FPS stats
 		/// </summary>
 		public static string ShowFPS => GetString(ShowFPSKey);
-		
+
 		/// <summary>
 		/// Active orders
 		/// </summary>
@@ -216,7 +516,7 @@ namespace StockSharp.Localization
 		/// Line (close)
 		/// </summary>
 		public static string LineClose => GetString(LineCloseKey);
-		
+
 		/// <summary>
 		/// Timeframe and price step were not set
 		/// </summary>
@@ -898,22 +1198,22 @@ namespace StockSharp.Localization
 		public static string CannotGetLicense => GetString(CannotGetLicenseKey);
 
 		/// <summary>
-		/// License revoked.
+		/// License N{0} revoked.
 		/// </summary>
 		public const string LicenseRevokedKey = nameof(LicenseRevoked);
 
 		/// <summary>
-		/// License revoked.
+		/// License N{0} revoked.
 		/// </summary>
 		public static string LicenseRevoked => GetString(LicenseRevokedKey);
 
 		/// <summary>
-		/// License renewed max times.
+		/// License N{0} renewed max times.
 		/// </summary>
 		public const string LicenseMaxRenewKey = nameof(LicenseMaxRenew);
 
 		/// <summary>
-		/// License renewed max times.
+		/// License N{0} renewed max times.
 		/// </summary>
 		public static string LicenseMaxRenew => GetString(LicenseMaxRenewKey);
 
@@ -1668,22 +1968,22 @@ namespace StockSharp.Localization
 		public static string Str129 => GetString(Str129Key);
 
 		/// <summary>
-		/// Remainder
+		/// Balance
 		/// </summary>
 		public const string Str130Key = nameof(Str130);
 
 		/// <summary>
-		/// Remainder
+		/// Balance
 		/// </summary>
 		public static string Str130 => GetString(Str130Key);
 
 		/// <summary>
-		/// Order contracts remainder.
+		/// Order contracts balance.
 		/// </summary>
 		public const string Str131Key = nameof(Str131);
 
 		/// <summary>
-		/// Order contracts remainder.
+		/// Order contracts balance.
 		/// </summary>
 		public static string Str131 => GetString(Str131Key);
 
@@ -2208,22 +2508,22 @@ namespace StockSharp.Localization
 		public static string Str183 => GetString(Str183Key);
 
 		/// <summary>
-		/// Work mode
+		/// Work schedule
 		/// </summary>
 		public const string Str184Key = nameof(Str184);
 
 		/// <summary>
-		/// Work mode
+		/// Work schedule
 		/// </summary>
 		public static string Str184 => GetString(Str184Key);
 
 		/// <summary>
-		/// Work mode, during which connections must be established.
+		/// Work schedule, during which connections must be established.
 		/// </summary>
 		public const string Str185Key = nameof(Str185);
 
 		/// <summary>
-		/// Work mode, during which connections must be established.
+		/// Work schedule, during which connections must be established.
 		/// </summary>
 		public static string Str185 => GetString(Str185Key);
 
@@ -2670,42 +2970,32 @@ namespace StockSharp.Localization
 		/// <summary>
 		/// Information for REPO\REPO-M orders.
 		/// </summary>
-		public const string Str234Key = nameof(Str234);
+		public const string RepoInfoKey = nameof(RepoInfo);
 
 		/// <summary>
 		/// Information for REPO\REPO-M orders.
 		/// </summary>
-		public static string Str234 => GetString(Str234Key);
+		public static string RepoInfo => GetString(RepoInfoKey);
 
 		/// <summary>
-		/// Negotiate Trades Mode information
+		/// Negotiated Trades Mode information
 		/// </summary>
-		public const string Str235Key = nameof(Str235);
+		public const string NtmInfoKey = nameof(NtmInfo);
 
 		/// <summary>
-		/// Negotiate Trades Mode information
+		/// Negotiated Trades Mode information
 		/// </summary>
-		public static string Str235 => GetString(Str235Key);
+		public static string NtmInfo => GetString(NtmInfoKey);
 
 		/// <summary>
-		/// Information for Negotiate Deals Mode orders.
+		/// Information for Negotiated Trades Mode orders.
 		/// </summary>
 		public const string Str236Key = nameof(Str236);
 
 		/// <summary>
-		/// Information for Negotiate Deals Mode orders.
+		/// Information for Negotiated Trades Mode orders.
 		/// </summary>
 		public static string Str236 => GetString(Str236Key);
-
-		/// <summary>
-		/// Without state
-		/// </summary>
-		public const string Str237Key = nameof(Str237);
-
-		/// <summary>
-		/// Without state
-		/// </summary>
-		public static string Str237 => GetString(Str237Key);
 
 		/// <summary>
 		/// Active
@@ -2750,32 +3040,42 @@ namespace StockSharp.Localization
 		/// <summary>
 		/// REPO
 		/// </summary>
-		public const string Str243Key = nameof(Str243);
+		public const string RepoKey = nameof(Repo);
 
 		/// <summary>
 		/// REPO
 		/// </summary>
-		public static string Str243 => GetString(Str243Key);
+		public static string Repo => GetString(RepoKey);
 
 		/// <summary>
 		/// REPO-M
 		/// </summary>
-		public const string Str244Key = nameof(Str244);
+		public const string RepoMKey = nameof(RepoM);
 
 		/// <summary>
 		/// REPO-M
 		/// </summary>
-		public static string Str244 => GetString(Str244Key);
+		public static string RepoM => GetString(RepoMKey);
 
 		/// <summary>
-		/// Negotiable Trades Mode
+		/// NTM
 		/// </summary>
-		public const string Str245Key = nameof(Str245);
+		public const string NtmKey = nameof(Ntm);
 
 		/// <summary>
-		/// Negotiable Trades Mode
+		/// NTM
 		/// </summary>
-		public static string Str245 => GetString(Str245Key);
+		public static string Ntm => GetString(NtmKey);
+
+		/// <summary>
+		/// Negotiated Trades Mode
+		/// </summary>
+		public const string NtmDescKey = nameof(NtmDesc);
+
+		/// <summary>
+		/// Negotiated Trades Mode
+		/// </summary>
+		public static string NtmDesc => GetString(NtmDescKey);
 
 		/// <summary>
 		/// Filling
@@ -2886,16 +3186,6 @@ namespace StockSharp.Localization
 		/// Position price
 		/// </summary>
 		public static string Str256 => GetString(Str256Key);
-
-		/// <summary>
-		/// Average price
-		/// </summary>
-		public const string Str257Key = nameof(Str257);
-
-		/// <summary>
-		/// Average price
-		/// </summary>
-		public static string Str257 => GetString(Str257Key);
 
 		/// <summary>
 		/// Unrealized profit
@@ -4358,12 +4648,12 @@ namespace StockSharp.Localization
 		public static string IOC => GetString(IOCKey);
 
 		/// <summary>
-		/// Work mode (time, holidays etc.).
+		/// Work schedule (time, holidays etc.).
 		/// </summary>
 		public const string Str408Key = nameof(Str408);
 
 		/// <summary>
-		/// Work mode (time, holidays etc.).
+		/// Work schedule (time, holidays etc.).
 		/// </summary>
 		public static string Str408 => GetString(Str408Key);
 
@@ -5198,12 +5488,12 @@ namespace StockSharp.Localization
 		public static string Str533 => GetString(Str533Key);
 
 		/// <summary>
-		/// {0}/{1} {2} Price={3} Volume={4} State={5} Bal={6}
+		/// {0}/{1} {2} {3} {4} Price={5} Volume={6} State={7} Bal={8} State={9}
 		/// </summary>
 		public const string Str534ParamsKey = nameof(Str534Params);
 
 		/// <summary>
-		/// {0}/{1} {2} Price={3} Volume={4} State={5} Bal={6}
+		/// {0}/{1} {2} {3} {4} Price={5} Volume={6} State={7} Bal={8} State={9}
 		/// </summary>
 		public static string Str534Params => GetString(Str534ParamsKey);
 
@@ -5748,12 +6038,12 @@ namespace StockSharp.Localization
 		public static string Str594 => GetString(Str594Key);
 
 		/// <summary>
-		/// Maximum ask during the session.
+		/// Minimum ask during the session.
 		/// </summary>
 		public const string Str595Key = nameof(Str595);
 
 		/// <summary>
-		/// Maximum ask during the session.
+		/// Minimum ask during the session.
 		/// </summary>
 		public static string Str595 => GetString(Str595Key);
 
@@ -6528,22 +6818,22 @@ namespace StockSharp.Localization
 		public static string UnSubscribedOk => GetString(UnSubscribedOkKey);
 
 		/// <summary>
-		/// Security {0} cannot subscribe for {1}. Error is '{0}'.
+		/// Security {0} cannot subscribe for {1}. Error is '{2}'.
 		/// </summary>
 		public const string SubscribedErrorKey = nameof(SubscribedError);
 
 		/// <summary>
-		/// Security {0} cannot subscribe for {1}. Error is '{0}'.
+		/// Security {0} cannot subscribe for {1}. Error is '{2}'.
 		/// </summary>
 		public static string SubscribedError => GetString(SubscribedErrorKey);
 
 		/// <summary>
-		/// Security {0} cannot unsubscribe from {1}. Error is '{0}'.
+		/// Security {0} cannot unsubscribe from {1}. Error is '{2}'.
 		/// </summary>
 		public const string UnSubscribedErrorKey = nameof(UnSubscribedError);
 
 		/// <summary>
-		/// Security {0} cannot unsubscribe from {1}. Error is '{0}'.
+		/// Security {0} cannot unsubscribe from {1}. Error is '{2}'.
 		/// </summary>
 		public static string UnSubscribedError => GetString(UnSubscribedErrorKey);
 
@@ -11258,22 +11548,22 @@ namespace StockSharp.Localization
 		public static string Str1175 => GetString(Str1175Key);
 
 		/// <summary>
-		/// Combine on touch
+		/// Match on touch
 		/// </summary>
 		public const string Str1176Key = nameof(Str1176);
 
 		/// <summary>
-		/// Combine on touch
+		/// Match on touch
 		/// </summary>
 		public static string Str1176 => GetString(Str1176Key);
 
 		/// <summary>
-		/// When emulating trades combination, combine orders, when trade price touched the order price (equal to order price).
+		/// When emulating trades matches, match orders, when trade price touched the order price (equal to order price).
 		/// </summary>
 		public const string Str1177Key = nameof(Str1177);
 
 		/// <summary>
-		/// When emulating trades combination, combine orders, when trade price touched the order price (equal to order price).
+		/// When emulating trades matches, match orders, when trade price touched the order price (equal to order price).
 		/// </summary>
 		public static string Str1177 => GetString(Str1177Key);
 
@@ -13948,24 +14238,14 @@ namespace StockSharp.Localization
 		public static string Str1461 => GetString(Str1461Key);
 
 		/// <summary>
-		/// To save data, enter the Russian name of the stock exchange.
+		/// To save data, enter the full name of the stock exchange.
 		/// </summary>
 		public const string Str1462Key = nameof(Str1462);
 
 		/// <summary>
-		/// To save data, enter the Russian name of the stock exchange.
+		/// To save data, enter the full name of the stock exchange.
 		/// </summary>
 		public static string Str1462 => GetString(Str1462Key);
-
-		/// <summary>
-		/// To save data, enter the English name of the stock exchange.
-		/// </summary>
-		public const string Str1463Key = nameof(Str1463);
-
-		/// <summary>
-		/// To save data, enter the English name of the stock exchange.
-		/// </summary>
-		public static string Str1463 => GetString(Str1463Key);
 
 		/// <summary>
 		/// To save data, enter the country of the stock exchange.
@@ -14546,16 +14826,6 @@ namespace StockSharp.Localization
 		/// &lt; Choose &gt;
 		/// </summary>
 		public static string Str1521 => GetString(Str1521Key);
-
-		/// <summary>
-		/// Security with code {0} not found
-		/// </summary>
-		public const string Str1522ParamsKey = nameof(Str1522Params);
-
-		/// <summary>
-		/// Security with code {0} not found
-		/// </summary>
-		public static string Str1522Params => GetString(Str1522ParamsKey);
 
 		/// <summary>
 		/// Error in index '{0}' format.
@@ -20138,16 +20408,6 @@ namespace StockSharp.Localization
 		public static string Str2110Params => GetString(Str2110ParamsKey);
 
 		/// <summary>
-		/// Period starting date {0} is greater than ending date {1}.
-		/// </summary>
-		public const string Str2111ParamsKey = nameof(Str2111Params);
-
-		/// <summary>
-		/// Period starting date {0} is greater than ending date {1}.
-		/// </summary>
-		public static string Str2111Params => GetString(Str2111ParamsKey);
-
-		/// <summary>
 		/// Failed to get data.
 		/// </summary>
 		public const string Str2112Key = nameof(Str2112);
@@ -20408,12 +20668,12 @@ namespace StockSharp.Localization
 		public static string Str2138 => GetString(Str2138Key);
 
 		/// <summary>
-		/// IQFeed does not support interval {0}.
+		/// Interval {0} isn't supported.
 		/// </summary>
 		public const string Str2139ParamsKey = nameof(Str2139Params);
 
 		/// <summary>
-		/// IQFeed does not support interval {0}.
+		/// Interval {0} isn't supported.
 		/// </summary>
 		public static string Str2139Params => GetString(Str2139ParamsKey);
 
@@ -21288,12 +21548,12 @@ namespace StockSharp.Localization
 		public static string Str2251 => GetString(Str2251Key);
 
 		/// <summary>
-		/// Order {0} does not have a stock exchange ID.
+		/// Order {0} does not have an exchange ID.
 		/// </summary>
 		public const string Str2252ParamsKey = nameof(Str2252Params);
 
 		/// <summary>
-		/// Order {0} does not have a stock exchange ID.
+		/// Order {0} does not have an exchange ID.
 		/// </summary>
 		public static string Str2252Params => GetString(Str2252ParamsKey);
 
@@ -28738,12 +28998,12 @@ namespace StockSharp.Localization
 		public static string OnlyFormed => GetString(OnlyFormedKey);
 
 		/// <summary>
-		/// Process only formed candles.
+		/// Send only formed candles.
 		/// </summary>
 		public const string ProcessOnlyFormedKey = nameof(ProcessOnlyFormed);
 
 		/// <summary>
-		/// Process only formed candles.
+		/// Send only formed candles.
 		/// </summary>
 		public static string ProcessOnlyFormed => GetString(ProcessOnlyFormedKey);
 
@@ -29158,22 +29418,22 @@ namespace StockSharp.Localization
 		public static string Str3122 => GetString(Str3122Key);
 
 		/// <summary>
-		/// Position opening
+		/// Order registering
 		/// </summary>
 		public const string Str3123Key = nameof(Str3123);
 
 		/// <summary>
-		/// Position opening
+		/// Order registering
 		/// </summary>
 		public static string Str3123 => GetString(Str3123Key);
 
 		/// <summary>
-		/// Position opening element.
+		/// Order registering element.
 		/// </summary>
 		public const string Str3124Key = nameof(Str3124);
 
 		/// <summary>
-		/// Position opening element.
+		/// Order registering element.
 		/// </summary>
 		public static string Str3124 => GetString(Str3124Key);
 
@@ -29398,12 +29658,12 @@ namespace StockSharp.Localization
 		public static string Str3146 => GetString(Str3146Key);
 
 		/// <summary>
-		/// Weekend order
+		/// Order (out)
 		/// </summary>
 		public const string Str3147Key = nameof(Str3147);
 
 		/// <summary>
-		/// Weekend order
+		/// Order (out)
 		/// </summary>
 		public static string Str3147 => GetString(Str3147Key);
 
@@ -32218,12 +32478,12 @@ namespace StockSharp.Localization
 		public static string Str3466 => GetString(Str3466Key);
 
 		/// <summary>
-		/// Login (extra)
+		/// Login (trans)
 		/// </summary>
 		public const string Str3467Key = nameof(Str3467);
 
 		/// <summary>
-		/// Login (extra)
+		/// Login (trans)
 		/// </summary>
 		public static string Str3467 => GetString(Str3467Key);
 
@@ -32238,12 +32498,12 @@ namespace StockSharp.Localization
 		public static string Str3468 => GetString(Str3468Key);
 
 		/// <summary>
-		/// Password (extra)
+		/// Password (trans)
 		/// </summary>
 		public const string Str3469Key = nameof(Str3469);
 
 		/// <summary>
-		/// Password (extra)
+		/// Password (trans)
 		/// </summary>
 		public static string Str3469 => GetString(Str3469Key);
 
@@ -33988,12 +34248,12 @@ namespace StockSharp.Localization
 		public static string Str3654 => GetString(Str3654Key);
 
 		/// <summary>
-		/// Securities search
+		/// Search
 		/// </summary>
 		public const string Str3657Key = nameof(Str3657);
 
 		/// <summary>
-		/// Securities search
+		/// Search
 		/// </summary>
 		public static string Str3657 => GetString(Str3657Key);
 
@@ -35546,16 +35806,6 @@ namespace StockSharp.Localization
 		/// Active
 		/// </summary>
 		public static string XamlStr23 => GetString(XamlStr23Key);
-
-		/// <summary>
-		/// English name:
-		/// </summary>
-		public const string XamlStr27Key = nameof(XamlStr27);
-
-		/// <summary>
-		/// English name:
-		/// </summary>
-		public static string XamlStr27 => GetString(XamlStr27Key);
 
 		/// <summary>
 		/// Associations
@@ -39348,16 +39598,6 @@ namespace StockSharp.Localization
 		public static string XamlStr616 => GetString(XamlStr616Key);
 
 		/// <summary>
-		/// Russian name:
-		/// </summary>
-		public const string XamlStr619Key = nameof(XamlStr619);
-
-		/// <summary>
-		/// Russian name:
-		/// </summary>
-		public static string XamlStr619 => GetString(XamlStr619Key);
-
-		/// <summary>
 		/// Manual selection mode when the application starts
 		/// </summary>
 		public const string XamlStr620Key = nameof(XamlStr620);
@@ -40238,12 +40478,12 @@ namespace StockSharp.Localization
 		public static string XamlStr763 => GetString(XamlStr763Key);
 
 		/// <summary>
-		/// Strategy type:
+		/// Strategy type
 		/// </summary>
 		public const string XamlStr765Key = nameof(XamlStr765);
 
 		/// <summary>
-		/// Strategy type:
+		/// Strategy type
 		/// </summary>
 		public static string XamlStr765 => GetString(XamlStr765Key);
 
@@ -41448,6 +41688,16 @@ namespace StockSharp.Localization
 		public static string TemplateTxtNews => GetString(TemplateTxtNewsKey);
 
 		/// <summary>
+		/// Board state txt export template.
+		/// </summary>
+		public const string TemplateTxtBoardKey = nameof(TemplateTxtBoard);
+
+		/// <summary>
+		/// Board state txt export template.
+		/// </summary>
+		public static string TemplateTxtBoard => GetString(TemplateTxtBoardKey);
+
+		/// <summary>
 		/// Indicator's value txt export template.
 		/// </summary>
 		public const string TemplateTxtIndicatorKey = nameof(TemplateTxtIndicator);
@@ -41546,6 +41796,16 @@ namespace StockSharp.Localization
 		/// News template
 		/// </summary>
 		public static string TemplateNews => GetString(TemplateNewsKey);
+
+		/// <summary>
+		/// Board template.
+		/// </summary>
+		public const string TemplateBoardKey = nameof(TemplateBoard);
+
+		/// <summary>
+		/// Board template
+		/// </summary>
+		public static string TemplateBoard => GetString(TemplateBoardKey);
 
 		/// <summary>
 		/// Indicator template.
@@ -41936,7 +42196,7 @@ namespace StockSharp.Localization
 		/// Open the window to get historical data from Finam website.
 		/// </summary>
 		public static string LoadHistoryDataQuestion => GetString(LoadHistoryDataQuestionKey);
-		
+
 		/// <summary>
 		/// Clipboard (as csv).
 		/// </summary>
@@ -42048,22 +42308,22 @@ namespace StockSharp.Localization
 		public static string BitStamp => GetString(BitStampKey);
 
 		/// <summary>
-		/// Fusion
+		/// Fusion (Blackwood)
 		/// </summary>
 		public const string FusionKey = nameof(Fusion);
 
 		/// <summary>
-		/// Fusion
+		/// Fusion (Blackwood)
 		/// </summary>
 		public static string Fusion => GetString(FusionKey);
 
 		/// <summary>
-		/// BTCE
+		/// WEX (BTC-e)
 		/// </summary>
 		public const string BtceKey = nameof(Btce);
 
 		/// <summary>
-		/// BTCE
+		/// WEX (BTC-e)
 		/// </summary>
 		public static string Btce => GetString(BtceKey);
 
@@ -42248,12 +42508,12 @@ namespace StockSharp.Localization
 		public static string HFT => GetString(HFTKey);
 
 		/// <summary>
-		/// SmartCOM
+		/// SmartCOM (ITI Capital)
 		/// </summary>
 		public const string SmartCOMKey = nameof(SmartCOM);
 
 		/// <summary>
-		/// SmartCOM
+		/// SmartCOM (ITI Capital)
 		/// </summary>
 		public static string SmartCOM => GetString(SmartCOMKey);
 
@@ -43548,14 +43808,14 @@ namespace StockSharp.Localization
 		public static string ModelCode => GetString(ModelCodeKey);
 
 		/// <summary>
-		/// Expression '{0}' do not contains any security identifiers. Format should be AAPL@NASDAQ.
+		/// Expression '{0}' do not contains any identifiers.
 		/// </summary>
-		public const string NoSecIdsFoundKey = nameof(NoSecIdsFound);
+		public const string NoIdsFoundKey = nameof(NoIdsFound);
 
 		/// <summary>
-		/// Expression '{0}' do not contains any security identifiers. Format should be AAPL@NASDAQ.
+		/// Expression '{0}' do not contains any identifiers.
 		/// </summary>
-		public static string NoSecIdsFound => GetString(NoSecIdsFoundKey);
+		public static string NoIdsFound => GetString(NoIdsFoundKey);
 
 		/// <summary>
 		/// New version of the application available. Download updates?
@@ -45968,12 +46228,12 @@ namespace StockSharp.Localization
 		public static string StorageAlreadyExist => GetString(StorageAlreadyExistKey);
 
 		/// <summary>
-		/// Ingore non id
+		/// Ignore non id
 		/// </summary>
 		public const string IgnoreNonIdSecuritiesKey = nameof(IgnoreNonIdSecurities);
 
 		/// <summary>
-		/// Ingore non id
+		/// Ignore non id
 		/// </summary>
 		public static string IgnoreNonIdSecurities => GetString(IgnoreNonIdSecuritiesKey);
 
@@ -46606,7 +46866,7 @@ namespace StockSharp.Localization
 		/// Poloniex
 		/// </summary>
 		public static string Poloniex => GetString(PoloniexKey);
-		
+
 		/// <summary>
 		/// Restore positions
 		/// </summary>
@@ -46616,7 +46876,7 @@ namespace StockSharp.Localization
 		/// Restore positions
 		/// </summary>
 		public static string RestorePositions => GetString(RestorePositionsKey);
-		
+
 		/// <summary>
 		/// Restore positions when strategy starts
 		/// </summary>
@@ -46626,7 +46886,7 @@ namespace StockSharp.Localization
 		/// RRestore positions when strategy starts
 		/// </summary>
 		public static string RestorePositionsWhenStrategyStarts => GetString(RestorePositionsWhenStrategyStartsKey);
-	
+
 		/// <summary>
 		/// Warranty provisions
 		/// </summary>
@@ -46636,7 +46896,7 @@ namespace StockSharp.Localization
 		/// Warranty provisions
 		/// </summary>
 		public static string WarrantyProvisions => GetString(WarrantyProvisionsKey);
-		
+
 		/// <summary>
 		/// Warranty on one contract for testing
 		/// </summary>
@@ -46646,7 +46906,7 @@ namespace StockSharp.Localization
 		/// Warranty on one contract for testing
 		/// </summary>
 		public static string WarrantyOnOneContractForTesting => GetString(WarrantyOnOneContractForTestingKey);
-		
+
 		/// <summary>
 		/// The minimum size of the spread in the price steps for placing orders
 		/// </summary>
@@ -46666,7 +46926,7 @@ namespace StockSharp.Localization
 		/// Indent in the price steps from the edge of the order glass. more 0 - far from the spread, less0 - the spread of the spread
 		/// </summary>
 		public static string IndentThePriceSteps => GetString(IndentThePriceStepsKey);
-		
+
 		/// <summary>
 		/// Stop in seconds how much to keep open position
 		/// </summary>
@@ -46676,7 +46936,7 @@ namespace StockSharp.Localization
 		/// Stop in seconds how much to keep open position
 		/// </summary>
 		public static string StopSecondsOpenPosition => GetString(StopSecondsOpenPositionKey);
-		
+
 		/// <summary>
 		/// Stop order closing order type
 		/// </summary>
@@ -46696,7 +46956,7 @@ namespace StockSharp.Localization
 		/// A shift in the price steps from the edge of the spread in price steps. To buy at a value of more 0 shifts the spread inside, less0 away from the spread.
 		/// </summary>
 		public static string ShiftThePriceStepsFromTheEdge => GetString(ShiftThePriceStepsFromTheEdgeKey);
-		
+
 		/// <summary>
 		/// Timeout (sec)
 		/// </summary>
@@ -46706,7 +46966,7 @@ namespace StockSharp.Localization
 		/// Timeout (sec)
 		/// </summary>
 		public static string TimeOutSecond => GetString(TimeOutSecondKey);
-		
+
 		/// <summary>
 		/// The interval in seconds, not more than which you can rearrange orders.
 		/// </summary>
@@ -46716,7 +46976,7 @@ namespace StockSharp.Localization
 		/// The interval in seconds, not more than which you can rearrange orders.
 		/// </summary>
 		public static string IntervalInSeconds => GetString(IntervalInSecondsKey);
-		
+
 		/// <summary>
 		/// Stop and close positions
 		/// </summary>
@@ -47398,14 +47658,14 @@ namespace StockSharp.Localization
 		public static string UnknownTransactions => GetString(UnknownTransactionsKey);
 
 		/// <summary>
-		/// Support process {0} generated by third-party software.
+		/// Support executions processing, generated by third-party software.
 		/// </summary>
-		public const string UnknownTransactonsDescKey = nameof(UnknownTransactonsDesc);
+		public const string UnknownTransactionsDescKey = nameof(UnknownTransactionsDesc);
 
 		/// <summary>
-		/// Support process {0} generated by third-party software.
+		/// Support executions processing, generated by third-party software.
 		/// </summary>
-		public static string UnknownTransactonsDesc => GetString(UnknownTransactonsDescKey);
+		public static string UnknownTransactionsDesc => GetString(UnknownTransactionsDescKey);
 
 		/// <summary>
 		/// Dividend
@@ -47968,6 +48228,16 @@ namespace StockSharp.Localization
 		public static string QuikPreTrade => GetString(QuikPreTradeKey);
 
 		/// <summary>
+		/// QUIK (drop copy)
+		/// </summary>
+		public const string QuikDropCopyKey = nameof(QuikDropCopy);
+
+		/// <summary>
+		/// QUIK (drop copy)
+		/// </summary>
+		public static string QuikDropCopy => GetString(QuikDropCopyKey);
+
+		/// <summary>
 		/// Exante
 		/// </summary>
 		public const string ExanteKey = nameof(Exante);
@@ -48266,5 +48536,2075 @@ namespace StockSharp.Localization
 		/// User id.
 		/// </summary>
 		public static string UserId => GetString(UserIdKey);
+
+		/// <summary>
+		/// DLL
+		/// </summary>
+		public const string DllKey = nameof(Dll);
+
+		/// <summary>
+		/// DLL
+		/// </summary>
+		public static string Dll => GetString(DllKey);
+
+		/// <summary>
+		/// The element which is using compiled strategy, based on S#.API.
+		/// </summary>
+		public const string DllDescKey = nameof(DllDesc);
+
+		/// <summary>
+		/// The element which is using compiled strategy, based on S#.API.
+		/// </summary>
+		public static string DllDesc => GetString(DllDescKey);
+
+		/// <summary>
+		/// Options hedging diagram element.
+		/// </summary>
+		public const string OptionsHedgeDiagramElementKey = nameof(OptionsHedgeDiagramElement);
+
+		/// <summary>
+		/// Options hedging diagram element.
+		/// </summary>
+		public static string OptionsHedgeDiagramElement => GetString(OptionsHedgeDiagramElementKey);
+
+		/// <summary>
+		/// Options quoting diagram element.
+		/// </summary>
+		public const string OptionsQuotingDiagramElementKey = nameof(OptionsQuotingDiagramElement);
+
+		/// <summary>
+		/// Options quoting diagram element.
+		/// </summary>
+		public static string OptionsQuotingDiagramElement => GetString(OptionsQuotingDiagramElementKey);
+
+		/// <summary>
+		/// Filtering derivatives by underlying asset diagram element.
+		/// </summary>
+		public const string OptionsStrikesDiagramElementKey = nameof(OptionsStrikesDiagramElement);
+
+		/// <summary>
+		/// Filtering derivatives by underlying asset diagram element.
+		/// </summary>
+		public static string OptionsStrikesDiagramElement => GetString(OptionsStrikesDiagramElementKey);
+
+		/// <summary>
+		/// The Black-Scholes "Greeks" evaluation element.
+		/// </summary>
+		public const string OptionsBlackScholesDiagramElementKey = nameof(OptionsBlackScholesDiagramElement);
+
+		/// <summary>
+		/// The Black-Scholes "Greeks" evaluation element.
+		/// </summary>
+		public static string OptionsBlackScholesDiagramElement => GetString(OptionsBlackScholesDiagramElementKey);
+
+		/// <summary>
+		/// Basket security '{0}' do not contains legs.
+		/// </summary>
+		public const string SecurityDoNotContainsLegsKey = nameof(SecurityDoNotContainsLegs);
+
+		/// <summary>
+		/// Basket security '{0}' do not contains legs.
+		/// </summary>
+		public static string SecurityDoNotContainsLegs => GetString(SecurityDoNotContainsLegsKey);
+
+		/// <summary>
+		/// Basket
+		/// </summary>
+		public const string BasketKey = nameof(Basket);
+
+		/// <summary>
+		/// Basket
+		/// </summary>
+		public static string Basket => GetString(BasketKey);
+
+		/// <summary>
+		/// Basket type code.
+		/// </summary>
+		public const string BasketCodeKey = nameof(BasketCode);
+
+		/// <summary>
+		/// Basket type code.
+		/// </summary>
+		public static string BasketCode => GetString(BasketCodeKey);
+
+		/// <summary>
+		/// Expression
+		/// </summary>
+		public const string ExpressionKey = nameof(Expression);
+
+		/// <summary>
+		/// Expression
+		/// </summary>
+		public static string Expression => GetString(ExpressionKey);
+
+		/// <summary>
+		/// The mathematical formula of index.
+		/// </summary>
+		public const string ExpressionDescKey = nameof(ExpressionDesc);
+
+		/// <summary>
+		/// The mathematical formula of index.
+		/// </summary>
+		public static string ExpressionDesc => GetString(ExpressionDescKey);
+
+		/// <summary>
+		/// Volume trigger causes switch to the next contract.
+		/// </summary>
+		public const string VolumeTriggerKey = nameof(VolumeTrigger);
+
+		/// <summary>
+		/// Volume trigger causes switch to the next contract.
+		/// </summary>
+		public static string VolumeTrigger => GetString(VolumeTriggerKey);
+
+		/// <summary>
+		/// Add folder.
+		/// </summary>
+		public const string AddFolderKey = nameof(AddFolder);
+
+		/// <summary>
+		/// Add folder.
+		/// </summary>
+		public static string AddFolder => GetString(AddFolderKey);
+
+		/// <summary>
+		/// Asset type
+		/// </summary>
+		public const string AssetTypeKey = nameof(AssetType);
+
+		/// <summary>
+		/// Asset type
+		/// </summary>
+		public static string AssetType => GetString(AssetTypeKey);
+
+		/// <summary>
+		/// To close the tab {0} strategy must be stopped. Stop strategy?
+		/// </summary>
+		public const string StopStrategyOnTabClosingKey = nameof(StopStrategyOnTabClosing);
+
+		/// <summary>
+		/// To close the tab {0} strategy must be stopped. Stop strategy?
+		/// </summary>
+		public static string StopStrategyOnTabClosing => GetString(StopStrategyOnTabClosingKey);
+
+		/// <summary>
+		/// Commission (taker)
+		/// </summary>
+		public const string CommissionTakerKey = nameof(CommissionTaker);
+
+		/// <summary>
+		/// Commission (taker)
+		/// </summary>
+		public static string CommissionTaker => GetString(CommissionTakerKey);
+
+		/// <summary>
+		/// Commission (maker)
+		/// </summary>
+		public const string CommissionMakerKey = nameof(CommissionMaker);
+
+		/// <summary>
+		/// Commission (maker)
+		/// </summary>
+		public static string CommissionMaker => GetString(CommissionMakerKey);
+
+		/// <summary>
+		/// Special days
+		/// </summary>
+		public const string SpecialDaysKey = nameof(SpecialDays);
+
+		/// <summary>
+		/// Special days
+		/// </summary>
+		public static string SpecialDays => GetString(SpecialDaysKey);
+
+		/// <summary>
+		/// Special working days and holidays.
+		/// </summary>
+		public const string SpecialDaysDescKey = nameof(SpecialDaysDesc);
+
+		/// <summary>
+		/// Special working days and holidays.
+		/// </summary>
+		public static string SpecialDaysDesc => GetString(SpecialDaysDescKey);
+
+		/// <summary>
+		/// LMAX location
+		/// </summary>
+		public const string LmaxLocationKey = nameof(LmaxLocation);
+
+		/// <summary>
+		/// LMAX location
+		/// </summary>
+		public static string LmaxLocation => GetString(LmaxLocationKey);
+
+		/// <summary>
+		/// LMAX exchange location.
+		/// </summary>
+		public const string LmaxLocationDescKey = nameof(LmaxLocationDesc);
+
+		/// <summary>
+		/// LMAX exchange location.
+		/// </summary>
+		public static string LmaxLocationDesc => GetString(LmaxLocationDescKey);
+
+		/// <summary>
+		/// London
+		/// </summary>
+		public const string LondonKey = nameof(London);
+
+		/// <summary>
+		/// London
+		/// </summary>
+		public static string London => GetString(LondonKey);
+
+		/// <summary>
+		/// New York
+		/// </summary>
+		public const string NewYorkKey = nameof(NewYork);
+
+		/// <summary>
+		/// New York
+		/// </summary>
+		public static string NewYork => GetString(NewYorkKey);
+
+		/// <summary>
+		/// Tokyo
+		/// </summary>
+		public const string TokyoKey = nameof(Tokyo);
+
+		/// <summary>
+		/// Tokyo
+		/// </summary>
+		public static string Tokyo => GetString(TokyoKey);
+
+		/// <summary>
+		/// Premium service
+		/// </summary>
+		public const string PremiumServiceKey = nameof(PremiumService);
+
+		/// <summary>
+		/// Premium service
+		/// </summary>
+		public static string PremiumService => GetString(PremiumServiceKey);
+
+		/// <summary>
+		/// Securities associations
+		/// </summary>
+		public const string SecuritiesAssociationsKey = nameof(SecuritiesAssociations);
+
+		/// <summary>
+		/// Securities associations
+		/// </summary>
+		public static string SecuritiesAssociations => GetString(SecuritiesAssociationsKey);
+
+		/// <summary>
+		/// Futures section
+		/// </summary>
+		public const string FuturesSectionKey = nameof(FuturesSection);
+
+		/// <summary>
+		/// Futures section
+		/// </summary>
+		public static string FuturesSection => GetString(FuturesSectionKey);
+
+		/// <summary>
+		/// Spot section
+		/// </summary>
+		public const string SpotSectionKey = nameof(SpotSection);
+
+		/// <summary>
+		/// Spot section
+		/// </summary>
+		public static string SpotSection => GetString(SpotSectionKey);
+
+		/// <summary>
+		/// Spot
+		/// </summary>
+		public const string SpotKey = nameof(Spot);
+
+		/// <summary>
+		/// Spot
+		/// </summary>
+		public static string Spot => GetString(SpotKey);
+
+		/// <summary>
+		/// User name (hist)
+		/// </summary>
+		public const string HistoricalUserNameKey = nameof(HistoricalUserName);
+
+		/// <summary>
+		/// User name (hist)
+		/// </summary>
+		public static string HistoricalUserName => GetString(HistoricalUserNameKey);
+
+		/// <summary>
+		/// Additional login. User id used for authentication with the history plant.
+		/// </summary>
+		public const string HistoricalUserNameDescKey = nameof(HistoricalUserNameDesc);
+
+		/// <summary>
+		/// Additional login. User id used for authentication with the history plant.
+		/// </summary>
+		public static string HistoricalUserNameDesc => GetString(HistoricalUserNameDescKey);
+
+		/// <summary>
+		/// Password (hist)
+		/// </summary>
+		public const string HistoricalPasswordKey = nameof(HistoricalPassword);
+
+		/// <summary>
+		/// Password (hist)
+		/// </summary>
+		public static string HistoricalPassword => GetString(HistoricalPasswordKey);
+
+		/// <summary>
+		/// Additional password. Password used for authentication with the history plant.
+		/// </summary>
+		public const string HistoricalPasswordDescKey = nameof(HistoricalPasswordDesc);
+
+		/// <summary>
+		/// Additional password. Password used for authentication with the history plant.
+		/// </summary>
+		public static string HistoricalPasswordDesc => GetString(HistoricalPasswordDescKey);
+
+		/// <summary>
+		/// IDAX
+		/// </summary>
+		public const string IdaxKey = nameof(Idax);
+
+		/// <summary>
+		/// IDAX
+		/// </summary>
+		public static string Idax => GetString(IdaxKey);
+
+		/// <summary>
+		/// DigiFinex
+		/// </summary>
+		public const string DigifinexKey = nameof(Digifinex);
+
+		/// <summary>
+		/// DigiFinex
+		/// </summary>
+		public static string Digifinex => GetString(DigifinexKey);
+
+		/// <summary>
+		/// TradeOgre
+		/// </summary>
+		public const string TradeOgreKey = nameof(TradeOgre);
+
+		/// <summary>
+		/// TradeOgre
+		/// </summary>
+		public static string TradeOgre => GetString(TradeOgreKey);
+
+		/// <summary>
+		/// CoinCap
+		/// </summary>
+		public const string CoinCapKey = nameof(CoinCap);
+
+		/// <summary>
+		/// CoinCap
+		/// </summary>
+		public static string CoinCap => GetString(CoinCapKey);
+
+		/// <summary>
+		/// Low
+		/// </summary>
+		public const string LowKey = nameof(Low);
+
+		/// <summary>
+		/// Low
+		/// </summary>
+		public static string Low => GetString(LowKey);
+
+		/// <summary>
+		/// High
+		/// </summary>
+		public const string HighKey = nameof(High);
+
+		/// <summary>
+		/// High
+		/// </summary>
+		public static string High => GetString(HighKey);
+
+		/// <summary>
+		/// Priority
+		/// </summary>
+		public const string PriorityKey = nameof(Priority);
+
+		/// <summary>
+		/// Priority
+		/// </summary>
+		public static string Priority => GetString(PriorityKey);
+
+		/// <summary>
+		/// News priority.
+		/// </summary>
+		public const string NewsPriorityKey = nameof(NewsPriority);
+
+		/// <summary>
+		/// News priority.
+		/// </summary>
+		public static string NewsPriority => GetString(NewsPriorityKey);
+
+		/// <summary>
+		/// Coinigy
+		/// </summary>
+		public const string CoinigyKey = nameof(Coinigy);
+
+		/// <summary>
+		/// Coinigy
+		/// </summary>
+		public static string Coinigy => GetString(CoinigyKey);
+
+		/// <summary>
+		/// Websocket
+		/// </summary>
+		public const string WebSocketKey = nameof(WebSocket);
+
+		/// <summary>
+		/// Websocket
+		/// </summary>
+		public static string WebSocket => GetString(WebSocketKey);
+
+		/// <summary>
+		/// Websocket id.
+		/// </summary>
+		public const string WebSocketIdKey = nameof(WebSocketId);
+
+		/// <summary>
+		/// Websocket id.
+		/// </summary>
+		public static string WebSocketId => GetString(WebSocketIdKey);
+
+		/// <summary>
+		/// Swap section.
+		/// </summary>
+		public const string SwapSectionKey = nameof(SwapSection);
+
+		/// <summary>
+		/// Swap section.
+		/// </summary>
+		public static string SwapSection => GetString(SwapSectionKey);
+
+		/// <summary>
+		/// Colocation
+		/// </summary>
+		public const string ColocationKey = nameof(Colocation);
+
+		/// <summary>
+		/// Colocation
+		/// </summary>
+		public static string Colocation => GetString(ColocationKey);
+
+		/// <summary>
+		/// Select data types
+		/// </summary>
+		public const string SelectDataTypesKey = nameof(SelectDataTypes);
+
+		/// <summary>
+		/// Select data types
+		/// </summary>
+		public static string SelectDataTypes => GetString(SelectDataTypesKey);
+
+		/// <summary>
+		/// Expand all
+		/// </summary>
+		public const string ExpandAllKey = nameof(ExpandAll);
+
+		/// <summary>
+		/// Expand all
+		/// </summary>
+		public static string ExpandAll => GetString(ExpandAllKey);
+
+		/// <summary>
+		/// Collapse all
+		/// </summary>
+		public const string CollapseAllKey = nameof(CollapseAll);
+
+		/// <summary>
+		/// Collapse all
+		/// </summary>
+		public static string CollapseAll => GetString(CollapseAllKey);
+
+		/// <summary>
+		/// Market on close (pit)
+		/// </summary>
+		public const string MarketOnPitCloseKey = nameof(MarketOnPitClose);
+
+		/// <summary>
+		/// Market on close (pit)
+		/// </summary>
+		public static string MarketOnPitClose => GetString(MarketOnPitCloseKey);
+
+		/// <summary>
+		/// Market on open (pit)
+		/// </summary>
+		public const string MarketOnPitOpenKey = nameof(MarketOnPitOpen);
+
+		/// <summary>
+		/// Market on open (pit)
+		/// </summary>
+		public static string MarketOnPitOpen => GetString(MarketOnPitOpenKey);
+
+		/// <summary>
+		/// Market-&gt;Limit
+		/// </summary>
+		public const string MarketToLimitKey = nameof(MarketToLimit);
+
+		/// <summary>
+		/// Market-&gt;Limit
+		/// </summary>
+		public static string MarketToLimit => GetString(MarketToLimitKey);
+
+		/// <summary>
+		/// Execution start time.
+		/// </summary>
+		public const string ExecutionStartKey = nameof(ExecutionStart);
+
+		/// <summary>
+		/// Execution start time.
+		/// </summary>
+		public static string ExecutionStart => GetString(ExecutionStartKey);
+
+		/// <summary>
+		/// Execution end time.
+		/// </summary>
+		public const string ExecutionEndKey = nameof(ExecutionEnd);
+
+		/// <summary>
+		/// Execution end time.
+		/// </summary>
+		public static string ExecutionEnd => GetString(ExecutionEndKey);
+
+		/// <summary>
+		/// End
+		/// </summary>
+		public const string EndKey = nameof(End);
+
+		/// <summary>
+		/// End
+		/// </summary>
+		public static string End => GetString(EndKey);
+
+		/// <summary>
+		/// Price format.
+		/// </summary>
+		public const string PriceTextFormatKey = nameof(PriceTextFormat);
+
+		/// <summary>
+		/// Price format.
+		/// </summary>
+		public static string PriceTextFormat => GetString(PriceTextFormatKey);
+
+		/// <summary>
+		/// Volume format.
+		/// </summary>
+		public const string VolumeTextFormatKey = nameof(VolumeTextFormat);
+
+		/// <summary>
+		/// Volume format.
+		/// </summary>
+		public static string VolumeTextFormat => GetString(VolumeTextFormatKey);
+
+		/// <summary>
+		/// Market data finished: sec='{0}' msg='{1}'.
+		/// </summary>
+		public const string SubscriptionFinishedKey = nameof(SubscriptionFinished);
+
+		/// <summary>
+		/// Market data finished: sec='{0}' msg='{1}'.
+		/// </summary>
+		public static string SubscriptionFinished => GetString(SubscriptionFinishedKey);
+
+		/// <summary>
+		/// Subscription '{0}' to {1} unexpected cancelled with error '{2}'.
+		/// </summary>
+		public const string SubscriptionUnexpectedCancelledKey = nameof(SubscriptionUnexpectedCancelled);
+
+		/// <summary>
+		/// Subscription '{0}' to {1} unexpected cancelled with error '{2}'.
+		/// </summary>
+		public static string SubscriptionUnexpectedCancelled => GetString(SubscriptionUnexpectedCancelledKey);
+
+		/// <summary>
+		/// Manual
+		/// </summary>
+		public const string ManualKey = nameof(Manual);
+
+		/// <summary>
+		/// Manual
+		/// </summary>
+		public static string Manual => GetString(ManualKey);
+
+		/// <summary>
+		/// Is order manual.
+		/// </summary>
+		public const string IsOrderManualKey = nameof(IsOrderManual);
+
+		/// <summary>
+		/// Is order manual.
+		/// </summary>
+		public static string IsOrderManual => GetString(IsOrderManualKey);
+
+		/// <summary>
+		/// LBank
+		/// </summary>
+		public const string LBankKey = nameof(LBank);
+
+		/// <summary>
+		/// LBank
+		/// </summary>
+		public static string LBank => GetString(LBankKey);
+
+		/// <summary>
+		/// BitMax
+		/// </summary>
+		public const string BitMaxKey = nameof(BitMax);
+
+		/// <summary>
+		/// BitMax
+		/// </summary>
+		public static string BitMax => GetString(BitMaxKey);
+
+		/// <summary>
+		/// BW
+		/// </summary>
+		public const string BWKey = nameof(BW);
+
+		/// <summary>
+		/// BW
+		/// </summary>
+		public static string BW => GetString(BWKey);
+
+		/// <summary>
+		/// Bibox
+		/// </summary>
+		public const string BiboxKey = nameof(Bibox);
+
+		/// <summary>
+		/// Bibox
+		/// </summary>
+		public static string Bibox => GetString(BiboxKey);
+
+		/// <summary>
+		/// Bit-Z
+		/// </summary>
+		public const string BitZKey = nameof(BitZ);
+
+		/// <summary>
+		/// Bit-Z
+		/// </summary>
+		public static string BitZ => GetString(BitZKey);
+
+		/// <summary>
+		/// ZB.COM
+		/// </summary>
+		public const string ZBKey = nameof(ZB);
+
+		/// <summary>
+		/// ZB.COM
+		/// </summary>
+		public static string ZB => GetString(ZBKey);
+
+		/// <summary>
+		/// CoinBene
+		/// </summary>
+		public const string CoinBeneKey = nameof(CoinBene);
+
+		/// <summary>
+		/// CoinBene
+		/// </summary>
+		public static string CoinBene => GetString(CoinBeneKey);
+
+		/// <summary>
+		/// E*TRADE
+		/// </summary>
+		public const string ETradeKey = nameof(ETrade);
+
+		/// <summary>
+		/// E*TRADE
+		/// </summary>
+		public static string ETrade => GetString(ETradeKey);
+
+		/// <summary>
+		/// Mark
+		/// </summary>
+		public const string MarkKey = nameof(Mark);
+
+		/// <summary>
+		/// Mark
+		/// </summary>
+		public static string Mark => GetString(MarkKey);
+
+		/// <summary>
+		/// Post-only
+		/// </summary>
+		public const string PostOnlyKey = nameof(PostOnly);
+
+		/// <summary>
+		/// Post-only
+		/// </summary>
+		public static string PostOnly => GetString(PostOnlyKey);
+
+		/// <summary>
+		/// Post-only order.
+		/// </summary>
+		public const string PostOnlyOrderKey = nameof(PostOnlyOrder);
+
+		/// <summary>
+		/// Post-only order.
+		/// </summary>
+		public static string PostOnlyOrder => GetString(PostOnlyOrderKey);
+
+		/// <summary>
+		/// Reduce
+		/// </summary>
+		public const string ReduceKey = nameof(Reduce);
+
+		/// <summary>
+		/// Reduce
+		/// </summary>
+		public static string Reduce => GetString(ReduceKey);
+
+		/// <summary>
+		/// Reduce position only.
+		/// </summary>
+		public const string ReducePositionKey = nameof(ReducePosition);
+
+		/// <summary>
+		/// Reduce position only.
+		/// </summary>
+		public static string ReducePosition => GetString(ReducePositionKey);
+
+		/// <summary>
+		/// OCO
+		/// </summary>
+		public const string OcoKey = nameof(Oco);
+
+		/// <summary>
+		/// OCO
+		/// </summary>
+		public static string Oco => GetString(OcoKey);
+
+		/// <summary>
+		/// One Cancels Other.
+		/// </summary>
+		public const string OcoDescKey = nameof(OcoDesc);
+
+		/// <summary>
+		/// One Cancels Other.
+		/// </summary>
+		public static string OcoDesc => GetString(OcoDescKey);
+
+		/// <summary>
+		/// SwissQuote
+		/// </summary>
+		public const string SwissQuoteKey = nameof(SwissQuote);
+
+		/// <summary>
+		/// SwissQuote
+		/// </summary>
+		public static string SwissQuote => GetString(SwissQuoteKey);
+
+		/// <summary>
+		/// X Open Hub
+		/// </summary>
+		public const string XOpenHubKey = nameof(XOpenHub);
+
+		/// <summary>
+		/// X Open Hub
+		/// </summary>
+		public static string XOpenHub => GetString(XOpenHubKey);
+
+		/// <summary>
+		/// SuperDerivatives
+		/// </summary>
+		public const string SuperDerivativesKey = nameof(SuperDerivatives);
+
+		/// <summary>
+		/// SuperDerivatives
+		/// </summary>
+		public static string SuperDerivatives => GetString(SuperDerivativesKey);
+
+		/// <summary>
+		/// Tradier
+		/// </summary>
+		public const string TradierKey = nameof(Tradier);
+
+		/// <summary>
+		/// Tradier
+		/// </summary>
+		public static string Tradier => GetString(TradierKey);
+
+		/// <summary>
+		/// Subscribe on signal
+		/// </summary>
+		public const string SubscribeOnSignalKey = nameof(SubscribeOnSignal);
+
+		/// <summary>
+		/// Subscribe on signal
+		/// </summary>
+		public static string SubscribeOnSignal => GetString(SubscribeOnSignalKey);
+
+		/// <summary>
+		/// Data types
+		/// </summary>
+		public const string DataTypesKey = nameof(DataTypes);
+
+		/// <summary>
+		/// Data types
+		/// </summary>
+		public static string DataTypes => GetString(DataTypesKey);
+
+		/// <summary>
+		/// Market-data types
+		/// </summary>
+		public const string MarketDataTypesKey = nameof(MarketDataTypes);
+
+		/// <summary>
+		/// Market-data types
+		/// </summary>
+		public static string MarketDataTypes => GetString(MarketDataTypesKey);
+
+		/// <summary>
+		/// To send changes by the order book. If disabled, the order book is sent entirely. The default is enabled.
+		/// </summary>
+		public const string IncrementalDepthUpdatesKey = nameof(IncrementalDepthUpdates);
+
+		/// <summary>
+		/// To send changes by the order book. If disabled, the order book is sent entirely. The default is enabled.
+		/// </summary>
+		public static string IncrementalDepthUpdates => GetString(IncrementalDepthUpdatesKey);
+
+		/// <summary>
+		/// Indicators
+		/// </summary>
+		public const string IndicatorsKey = nameof(Indicators);
+
+		/// <summary>
+		/// Indicators
+		/// </summary>
+		public static string Indicators => GetString(IndicatorsKey);
+
+		/// <summary>
+		/// Subscriptions
+		/// </summary>
+		public const string SubscriptionsKey = nameof(Subscriptions);
+
+		/// <summary>
+		/// Subscriptions
+		/// </summary>
+		public static string Subscriptions => GetString(SubscriptionsKey);
+
+		/// <summary>
+		/// Data type must be '{0}'.
+		/// </summary>
+		public const string DataTypeMustBeKey = nameof(DataTypeMustBe);
+
+		/// <summary>
+		/// Data type must be '{0}'.
+		/// </summary>
+		public static string DataTypeMustBe => GetString(DataTypeMustBeKey);
+
+		/// <summary>
+		/// Security must be '{0}'.
+		/// </summary>
+		public const string SecurityMustBeKey = nameof(SecurityMustBe);
+
+		/// <summary>
+		/// Security must be '{0}'.
+		/// </summary>
+		public static string SecurityMustBe => GetString(SecurityMustBeKey);
+
+		/// <summary>
+		/// TWIME
+		/// </summary>
+		public const string TwimeKey = nameof(Twime);
+
+		/// <summary>
+		/// TWIME
+		/// </summary>
+		public static string Twime => GetString(TwimeKey);
+
+		/// <summary>
+		/// File name format
+		/// </summary>
+		public const string FileNameFormatKey = nameof(FileNameFormat);
+
+		/// <summary>
+		/// File name format
+		/// </summary>
+		public static string FileNameFormat => GetString(FileNameFormatKey);
+
+		/// <summary>
+		/// Min volume
+		/// </summary>
+		public const string MinVolumeKey = nameof(MinVolume);
+
+		/// <summary>
+		/// Min volume
+		/// </summary>
+		public static string MinVolume => GetString(MinVolumeKey);
+
+		/// <summary>
+		/// Minimum volume allowed in order.
+		/// </summary>
+		public const string MinVolumeDescKey = nameof(MinVolumeDesc);
+
+		/// <summary>
+		/// Minimum volume allowed in order.
+		/// </summary>
+		public static string MinVolumeDesc => GetString(MinVolumeDescKey);
+
+		/// <summary>
+		/// Shortable
+		/// </summary>
+		public const string ShortableKey = nameof(Shortable);
+
+		/// <summary>
+		/// Shortable
+		/// </summary>
+		public static string Shortable => GetString(ShortableKey);
+
+		/// <summary>
+		/// Can have short positions.
+		/// </summary>
+		public const string ShortableDescKey = nameof(ShortableDesc);
+
+		/// <summary>
+		/// Can have short positions.
+		/// </summary>
+		public static string ShortableDesc => GetString(ShortableDescKey);
+
+		/// <summary>
+		/// The interval between data updates.
+		/// </summary>
+		public const string IntervalDataUpdatesKey = nameof(IntervalDataUpdates);
+
+		/// <summary>
+		/// The interval between data updates.
+		/// </summary>
+		public static string IntervalDataUpdates => GetString(IntervalDataUpdatesKey);
+
+		/// <summary>
+		/// Zero
+		/// </summary>
+		public const string ZeroKey = nameof(Zero);
+
+		/// <summary>
+		/// Zero
+		/// </summary>
+		public static string Zero => GetString(ZeroKey);
+
+		/// <summary>
+		/// Connector
+		/// </summary>
+		public const string ConnectorKey = nameof(Connector);
+
+		/// <summary>
+		/// Connector
+		/// </summary>
+		public static string Connector => GetString(ConnectorKey);
+
+		/// <summary>
+		/// Volume {0} of order '{1}' is less than minimum allowed {2}.
+		/// </summary>
+		public const string OrderVolumeLessMinKey = nameof(OrderVolumeLessMin);
+
+		/// <summary>
+		/// Volume {0} of order '{1}' is less than minimum allowed {2}.
+		/// </summary>
+		public static string OrderVolumeLessMin => GetString(OrderVolumeLessMinKey);
+
+		/// <summary>
+		/// Show strategy socket
+		/// </summary>
+		public const string ShowStrategySocketKey = nameof(ShowStrategySocket);
+
+		/// <summary>
+		/// Show strategy socket
+		/// </summary>
+		public static string ShowStrategySocket => GetString(ShowStrategySocketKey);
+
+		/// <summary>
+		/// Show position socket
+		/// </summary>
+		public const string ShowPositionSocketKey = nameof(ShowPositionSocket);
+
+		/// <summary>
+		/// Show position socket
+		/// </summary>
+		public static string ShowPositionSocket => GetString(ShowPositionSocketKey);
+
+		/// <summary>
+		/// Encrypted scheme
+		/// </summary>
+		public const string EncryptedSchemaKey = nameof(EncryptedSchema);
+
+		/// <summary>
+		/// Encrypted scheme
+		/// </summary>
+		public static string EncryptedSchema => GetString(EncryptedSchemaKey);
+
+		/// <summary>
+		/// Standalone app
+		/// </summary>
+		public const string StandaloneAppKey = nameof(StandaloneApp);
+
+		/// <summary>
+		/// Standalone app
+		/// </summary>
+		public static string StandaloneApp => GetString(StandaloneAppKey);
+
+		/// <summary>
+		/// Min volume (under)
+		/// </summary>
+		public const string UnderlyingMinVolumeKey = nameof(UnderlyingMinVolume);
+
+		/// <summary>
+		/// Min volume (under)
+		/// </summary>
+		public static string UnderlyingMinVolume => GetString(UnderlyingMinVolumeKey);
+
+		/// <summary>
+		/// Minimum volume allowed in order for underlying security.
+		/// </summary>
+		public const string UnderlyingMinVolumeDescKey = nameof(UnderlyingMinVolumeDesc);
+
+		/// <summary>
+		/// Minimum volume allowed in order for underlying security.
+		/// </summary>
+		public static string UnderlyingMinVolumeDesc => GetString(UnderlyingMinVolumeDescKey);
+
+		/// <summary>
+		/// Shift {0}
+		/// </summary>
+		public const string ShiftIsKey = nameof(ShiftIs);
+
+		/// <summary>
+		/// Shift {0}
+		/// </summary>
+		public static string ShiftIs => GetString(ShiftIsKey);
+
+		/// <summary>
+		/// Take {0}
+		/// </summary>
+		public const string TakeIsKey = nameof(TakeIs);
+
+		/// <summary>
+		/// Take {0}
+		/// </summary>
+		public static string TakeIs => GetString(TakeIsKey);
+
+		/// <summary>
+		/// Stop {0}
+		/// </summary>
+		public const string StopIsKey = nameof(StopIs);
+
+		/// <summary>
+		/// Stop {0}
+		/// </summary>
+		public static string StopIs => GetString(StopIsKey);
+
+		/// <summary>
+		/// Identifiers '{0}' and '{1}' are the same.
+		/// </summary>
+		public const string IdentifiersAreSameKey = nameof(IdentifiersAreSame);
+
+		/// <summary>
+		/// Identifiers '{0}' and '{1}' are the same.
+		/// </summary>
+		public static string IdentifiersAreSame => GetString(IdentifiersAreSameKey);
+
+		/// <summary>
+		/// For security {0} and type {1} adapter is already specified.
+		/// </summary>
+		public const string SecIdDataTypeAlreadyAdapterKey = nameof(SecIdDataTypeAlreadyAdapter);
+
+		/// <summary>
+		/// For security {0} and type {1} adapter is already specified.
+		/// </summary>
+		public static string SecIdDataTypeAlreadyAdapter => GetString(SecIdDataTypeAlreadyAdapterKey);
+
+		/// <summary>
+		/// Order {0} has balance {1}.
+		/// </summary>
+		public const string OrderHasBalanceKey = nameof(OrderHasBalance);
+
+		/// <summary>
+		/// Order {0} has balance {1}.
+		/// </summary>
+		public static string OrderHasBalance => GetString(OrderHasBalanceKey);
+
+		/// <summary>
+		/// Order {0} has state {1}.
+		/// </summary>
+		public const string OrderHasStateKey = nameof(OrderHasState);
+
+		/// <summary>
+		/// Order {0} has state {1}.
+		/// </summary>
+		public static string OrderHasState => GetString(OrderHasStateKey);
+
+		/// <summary>
+		/// Zero price
+		/// </summary>
+		public const string ZeroPriceKey = nameof(ZeroPrice);
+
+		/// <summary>
+		/// Zero price
+		/// </summary>
+		public static string ZeroPrice => GetString(ZeroPriceKey);
+
+		/// <summary>
+		/// Zero price makes market order.
+		/// </summary>
+		public const string ZeroAsMarketKey = nameof(ZeroAsMarket);
+
+		/// <summary>
+		/// Zero price makes market order.
+		/// </summary>
+		public static string ZeroAsMarket => GetString(ZeroAsMarketKey);
+
+		/// <summary>
+		/// Send values only when the indicator is formed.
+		/// </summary>
+		public const string SendOnlyFormedIndicatorsKey = nameof(SendOnlyFormedIndicators);
+
+		/// <summary>
+		/// Send values only when the indicator is formed.
+		/// </summary>
+		public static string SendOnlyFormedIndicators => GetString(SendOnlyFormedIndicatorsKey);
+
+		/// <summary>
+		/// Final
+		/// </summary>
+		public const string FinalKey = nameof(Final);
+
+		/// <summary>
+		/// Final
+		/// </summary>
+		public static string Final => GetString(FinalKey);
+
+		/// <summary>
+		/// Formed
+		/// </summary>
+		public const string FormedKey = nameof(Formed);
+
+		/// <summary>
+		/// Formed
+		/// </summary>
+		public static string Formed => GetString(FormedKey);
+
+		/// <summary>
+		/// Send only final values.
+		/// </summary>
+		public const string SendOnlyFinalKey = nameof(SendOnlyFinal);
+
+		/// <summary>
+		/// Send only final values.
+		/// </summary>
+		public static string SendOnlyFinal => GetString(SendOnlyFinalKey);
+
+		/// <summary>
+		/// Show non formed indicators values.
+		/// </summary>
+		public const string ShowNonFormedIndicatorsKey = nameof(ShowNonFormedIndicators);
+
+		/// <summary>
+		/// Show non formed indicators values.
+		/// </summary>
+		public static string ShowNonFormedIndicators => GetString(ShowNonFormedIndicatorsKey);
+
+		/// <summary>
+		/// Non formed
+		/// </summary>
+		public const string NonFormedKey = nameof(NonFormed);
+
+		/// <summary>
+		/// Non formed
+		/// </summary>
+		public static string NonFormed => GetString(NonFormedKey);
+
+		/// <summary>
+		/// Cannot provide short position on account {0} to register order {1}. Currently position is {2}, order size is {3}.
+		/// </summary>
+		public const string CannotShortPositionKey = nameof(CannotShortPosition);
+
+		/// <summary>
+		/// Cannot provide short position on account {0} to register order {1}. Currently position is {2}, order size is {3}.
+		/// </summary>
+		public static string CannotShortPosition => GetString(CannotShortPositionKey);
+
+		/// <summary>
+		/// Native ID
+		/// </summary>
+		public const string NativeIdKey = nameof(NativeId);
+
+		/// <summary>
+		/// Native ID
+		/// </summary>
+		public static string NativeId => GetString(NativeIdKey);
+
+		/// <summary>
+		/// Native (internal) trading system security id.
+		/// </summary>
+		public const string NativeIdDescKey = nameof(NativeIdDesc);
+
+		/// <summary>
+		/// Native (internal) trading system security id.
+		/// </summary>
+		public static string NativeIdDesc => GetString(NativeIdDescKey);
+
+		/// <summary>
+		/// Adapter
+		/// </summary>
+		public const string AdapterKey = nameof(Adapter);
+
+		/// <summary>
+		/// Adapter
+		/// </summary>
+		public static string Adapter => GetString(AdapterKey);
+
+		/// <summary>
+		/// Adapter for field {0} isn't specified.
+		/// </summary>
+		public const string AdapterNotSpecifiedKey = nameof(AdapterNotSpecified);
+
+		/// <summary>
+		/// Adapter for field {0} isn't specified.
+		/// </summary>
+		public static string AdapterNotSpecified => GetString(AdapterNotSpecifiedKey);
+
+		/// <summary>
+		/// Face value
+		/// </summary>
+		public const string FaceValueKey = nameof(FaceValue);
+
+		/// <summary>
+		/// Face value
+		/// </summary>
+		public static string FaceValue => GetString(FaceValueKey);
+
+		/// <summary>
+		/// Face value.
+		/// </summary>
+		public const string FaceValueDescKey = nameof(FaceValueDesc);
+
+		/// <summary>
+		/// Face value.
+		/// </summary>
+		public static string FaceValueDesc => GetString(FaceValueDescKey);
+
+		/// <summary>
+		/// Coupon value.
+		/// </summary>
+		public const string CouponValueKey = nameof(CouponValue);
+
+		/// <summary>
+		/// Coupon value.
+		/// </summary>
+		public static string CouponValue => GetString(CouponValueKey);
+
+		/// <summary>
+		/// Coupon date.
+		/// </summary>
+		public const string CouponDateKey = nameof(CouponDate);
+
+		/// <summary>
+		/// Coupon date.
+		/// </summary>
+		public static string CouponDate => GetString(CouponDateKey);
+
+		/// <summary>
+		/// Coupon period.
+		/// </summary>
+		public const string CouponPeriodKey = nameof(CouponPeriod);
+
+		/// <summary>
+		/// Coupon period.
+		/// </summary>
+		public static string CouponPeriod => GetString(CouponPeriodKey);
+
+		/// <summary>
+		/// Market price (yesterday).
+		/// </summary>
+		public const string MarketPriceYesterdayKey = nameof(MarketPriceYesterday);
+
+		/// <summary>
+		/// Market price (yesterday).
+		/// </summary>
+		public static string MarketPriceYesterday => GetString(MarketPriceYesterdayKey);
+
+		/// <summary>
+		/// Market price (today).
+		/// </summary>
+		public const string MarketPriceTodayKey = nameof(MarketPriceToday);
+
+		/// <summary>
+		/// Market price (today).
+		/// </summary>
+		public static string MarketPriceToday => GetString(MarketPriceTodayKey);
+
+		/// <summary>
+		/// VWAP (prev).
+		/// </summary>
+		public const string VWAPPrevKey = nameof(VWAPPrev);
+
+		/// <summary>
+		/// VWAP (prev).
+		/// </summary>
+		public static string VWAPPrev => GetString(VWAPPrevKey);
+
+		/// <summary>
+		/// Yield by VWAP.
+		/// </summary>
+		public const string YieldVWAPKey = nameof(YieldVWAP);
+
+		/// <summary>
+		/// Yield by VWAP.
+		/// </summary>
+		public static string YieldVWAP => GetString(YieldVWAPKey);
+
+		/// <summary>
+		/// Yield by VWAP (prev).
+		/// </summary>
+		public const string YieldVWAPPrevKey = nameof(YieldVWAPPrev);
+
+		/// <summary>
+		/// Yield by VWAP (prev).
+		/// </summary>
+		public static string YieldVWAPPrev => GetString(YieldVWAPPrevKey);
+
+		/// <summary>
+		/// You are running the application the first time. Would you like establish a connection with our simulation server and start trading now?
+		/// </summary>
+		public const string SetupStockSharpConnectionFirstTimeKey = nameof(SetupStockSharpConnectionFirstTime);
+
+		/// <summary>
+		/// You are running the application the first time. Would you like establish a connection with our simulation server and start trading now?
+		/// </summary>
+		public static string SetupStockSharpConnectionFirstTime => GetString(SetupStockSharpConnectionFirstTimeKey);
+
+		/// <summary>
+		/// Order state
+		/// </summary>
+		public const string OrderStateKey = nameof(OrderState);
+
+		/// <summary>
+		/// Order state
+		/// </summary>
+		public static string OrderState => GetString(OrderStateKey);
+
+		/// <summary>
+		/// Pending
+		/// </summary>
+		public const string PendingKey = nameof(Pending);
+
+		/// <summary>
+		/// Pending
+		/// </summary>
+		public static string Pending => GetString(PendingKey);
+
+		/// <summary>
+		/// Order not passed.
+		/// </summary>
+		public const string OrderNotPassedKey = nameof(OrderNotPassed);
+
+		/// <summary>
+		/// Order not passed.
+		/// </summary>
+		public static string OrderNotPassed => GetString(OrderNotPassedKey);
+
+		/// <summary>
+		/// Time out
+		/// </summary>
+		public const string TimeOutKey = nameof(TimeOut);
+
+		/// <summary>
+		/// Time out
+		/// </summary>
+		public static string TimeOut => GetString(TimeOutKey);
+
+		/// <summary>
+		/// Sign in
+		/// </summary>
+		public const string SignInKey = nameof(SignIn);
+
+		/// <summary>
+		/// Sign in
+		/// </summary>
+		public static string SignIn => GetString(SignInKey);
+
+		/// <summary>
+		/// Copyright
+		/// </summary>
+		public const string CopyrightKey = nameof(Copyright);
+
+		/// <summary>
+		/// Copyright
+		/// </summary>
+		public static string Copyright => GetString(CopyrightKey);
+
+		/// <summary>
+		/// Subscription '{0}' not supported by established connection.
+		/// </summary>
+		public const string SubscriptionNotSupportedKey = nameof(SubscriptionNotSupported);
+
+		/// <summary>
+		/// Subscription '{0}' not supported by established connection.
+		/// </summary>
+		public static string SubscriptionNotSupported => GetString(SubscriptionNotSupportedKey);
+
+		/// <summary>
+		/// Codes mapping
+		/// </summary>
+		public const string CodesMappingKey = nameof(CodesMapping);
+
+		/// <summary>
+		/// Codes mapping
+		/// </summary>
+		public static string CodesMapping => GetString(CodesMappingKey);
+
+		/// <summary>
+		/// Extra conditions
+		/// </summary>
+		public const string ExtraConditionsKey = nameof(ExtraConditions);
+
+		/// <summary>
+		/// Extra conditions
+		/// </summary>
+		public static string ExtraConditions => GetString(ExtraConditionsKey);
+
+		/// <summary>
+		/// Suspicious action.
+		/// </summary>
+		public const string SuspiciousActionKey = nameof(SuspiciousAction);
+
+		/// <summary>
+		/// Suspicious action.
+		/// </summary>
+		public static string SuspiciousAction => GetString(SuspiciousActionKey);
+
+		/// <summary>
+		/// Cont-ue
+		/// </summary>
+		public const string Continue2Key = nameof(Continue2);
+
+		/// <summary>
+		/// Cont-ue
+		/// </summary>
+		public static string Continue2 => GetString(Continue2Key);
+
+		/// <summary>
+		/// Overflow
+		/// </summary>
+		public const string OverflowKey = nameof(Overflow);
+
+		/// <summary>
+		/// Overflow
+		/// </summary>
+		public static string Overflow => GetString(OverflowKey);
+
+		/// <summary>
+		/// Max allowed elements per iteration to prevent stack overflow.
+		/// </summary>
+		public const string OverflowLimitKey = nameof(OverflowLimit);
+
+		/// <summary>
+		/// Max allowed elements per iteration to prevent stack overflow.
+		/// </summary>
+		public static string OverflowLimit => GetString(OverflowLimitKey);
+
+		/// <summary>
+		/// Input as trigger
+		/// </summary>
+		public const string InputAsTriggerKey = nameof(InputAsTrigger);
+
+		/// <summary>
+		/// Input as trigger
+		/// </summary>
+		public static string InputAsTrigger => GetString(InputAsTriggerKey);
+
+		/// <summary>
+		/// Raise output value when input updated.
+		/// </summary>
+		public const string InputAsTriggerDescKey = nameof(InputAsTriggerDesc);
+
+		/// <summary>
+		/// Raise output value when input updated.
+		/// </summary>
+		public static string InputAsTriggerDesc => GetString(InputAsTriggerDescKey);
+
+		/// <summary>
+		/// NOT
+		/// </summary>
+		public const string NOTKey = nameof(NOT);
+
+		/// <summary>
+		/// NOT
+		/// </summary>
+		public static string NOT => GetString(NOTKey);
+
+		/// <summary>
+		/// Value for '{0}' wasn't passed.
+		/// </summary>
+		public const string ValueForWasNotPassedKey = nameof(ValueForWasNotPassed);
+
+		/// <summary>
+		/// Value for '{0}' wasn't passed.
+		/// </summary>
+		public static string ValueForWasNotPassed => GetString(ValueForWasNotPassedKey);
+
+		/// <summary>
+		/// Sova Capital
+		/// </summary>
+		public const string SovaCapitalKey = nameof(SovaCapital);
+
+		/// <summary>
+		/// Sova Capital
+		/// </summary>
+		public static string SovaCapital => GetString(SovaCapitalKey);
+
+		/// <summary>
+		/// ETF
+		/// </summary>
+		public const string EtfKey = nameof(Etf);
+
+		/// <summary>
+		/// ETF
+		/// </summary>
+		public static string Etf => GetString(EtfKey);
+
+		/// <summary>
+		/// Test Exchange
+		/// </summary>
+		public const string TestExchangeKey = nameof(TestExchange);
+
+		/// <summary>
+		/// Test Exchange
+		/// </summary>
+		public static string TestExchange => GetString(TestExchangeKey);
+
+		/// <summary>
+		/// Moscow Exchange
+		/// </summary>
+		public const string MoscowExchangeKey = nameof(MoscowExchange);
+
+		/// <summary>
+		/// Moscow Exchange
+		/// </summary>
+		public static string MoscowExchange => GetString(MoscowExchangeKey);
+
+		/// <summary>
+		/// Saint-Petersburg Exchange
+		/// </summary>
+		public const string SaintPetersburgExchangeKey = nameof(SaintPetersburgExchange);
+
+		/// <summary>
+		/// Saint-Petersburg Exchange
+		/// </summary>
+		public static string SaintPetersburgExchange => GetString(SaintPetersburgExchangeKey);
+
+		/// <summary>
+		/// Ukrain Exchange
+		/// </summary>
+		public const string UkrainExchangeKey = nameof(UkrainExchange);
+
+		/// <summary>
+		/// Ukrain Exchange
+		/// </summary>
+		public static string UkrainExchange => GetString(UkrainExchangeKey);
+
+		/// <summary>
+		/// American Stock Exchange
+		/// </summary>
+		public const string AmericanStockExchangeKey = nameof(AmericanStockExchange);
+
+		/// <summary>
+		/// American Stock Exchange
+		/// </summary>
+		public static string AmericanStockExchange => GetString(AmericanStockExchangeKey);
+
+		/// <summary>
+		/// Chicago Mercantile Exchange
+		/// </summary>
+		public const string ChicagoMercantileExchangeKey = nameof(ChicagoMercantileExchange);
+
+		/// <summary>
+		/// Chicago Mercantile Exchange
+		/// </summary>
+		public static string ChicagoMercantileExchange => GetString(ChicagoMercantileExchangeKey);
+
+		/// <summary>
+		/// Chicago Board of Trade
+		/// </summary>
+		public const string ChicagoBoardofTradeKey = nameof(ChicagoBoardofTrade);
+
+		/// <summary>
+		/// Chicago Board of Trade
+		/// </summary>
+		public static string ChicagoBoardofTrade => GetString(ChicagoBoardofTradeKey);
+
+		/// <summary>
+		/// Chicago Climate Exchange
+		/// </summary>
+		public const string ChicagoClimateExchangeKey = nameof(ChicagoClimateExchange);
+
+		/// <summary>
+		/// Chicago Climate Exchange
+		/// </summary>
+		public static string ChicagoClimateExchange => GetString(ChicagoClimateExchangeKey);
+
+		/// <summary>
+		/// New York Mercantile Exchange
+		/// </summary>
+		public const string NewYorkMercantileExchangeKey = nameof(NewYorkMercantileExchange);
+
+		/// <summary>
+		/// New York Mercantile Exchange
+		/// </summary>
+		public static string NewYorkMercantileExchange => GetString(NewYorkMercantileExchangeKey);
+
+		/// <summary>
+		/// New York Stock Exchange
+		/// </summary>
+		public const string NewYorkStockExchangeKey = nameof(NewYorkStockExchange);
+
+		/// <summary>
+		/// New York Stock Exchange
+		/// </summary>
+		public static string NewYorkStockExchange => GetString(NewYorkStockExchangeKey);
+
+		/// <summary>
+		/// NASDAQ
+		/// </summary>
+		public const string NASDAQKey = nameof(NASDAQ);
+
+		/// <summary>
+		/// NASDAQ
+		/// </summary>
+		public static string NASDAQ => GetString(NASDAQKey);
+
+		/// <summary>
+		/// Nasdaq-Liffe Markets
+		/// </summary>
+		public const string NasdaqLiffeMarketsKey = nameof(NasdaqLiffeMarkets);
+
+		/// <summary>
+		/// Nasdaq-Liffe Markets
+		/// </summary>
+		public static string NasdaqLiffeMarkets => GetString(NasdaqLiffeMarketsKey);
+
+		/// <summary>
+		/// London Stock Exchange
+		/// </summary>
+		public const string LondonStockExchangeKey = nameof(LondonStockExchange);
+
+		/// <summary>
+		/// London Stock Exchange
+		/// </summary>
+		public static string LondonStockExchange => GetString(LondonStockExchangeKey);
+
+		/// <summary>
+		/// London Metal Exchange
+		/// </summary>
+		public const string LondonMetalExchangeKey = nameof(LondonMetalExchange);
+
+		/// <summary>
+		/// London Metal Exchange
+		/// </summary>
+		public static string LondonMetalExchange => GetString(LondonMetalExchangeKey);
+
+		/// <summary>
+		/// Tokyo Stock Exchange
+		/// </summary>
+		public const string TokyoStockExchangeKey = nameof(TokyoStockExchange);
+
+		/// <summary>
+		/// Tokyo Stock Exchange
+		/// </summary>
+		public static string TokyoStockExchange => GetString(TokyoStockExchangeKey);
+
+		/// <summary>
+		/// Hong Kong Stock Exchange
+		/// </summary>
+		public const string HongKongStockExchangeKey = nameof(HongKongStockExchange);
+
+		/// <summary>
+		/// Hong Kong Stock Exchange
+		/// </summary>
+		public static string HongKongStockExchange => GetString(HongKongStockExchangeKey);
+
+		/// <summary>
+		/// Hong Kong Futures Exchange
+		/// </summary>
+		public const string HongKongFuturesExchangeKey = nameof(HongKongFuturesExchange);
+
+		/// <summary>
+		/// Hong Kong Futures Exchange
+		/// </summary>
+		public static string HongKongFuturesExchange => GetString(HongKongFuturesExchangeKey);
+
+		/// <summary>
+		/// Shanghai Stock Exchange
+		/// </summary>
+		public const string ShanghaiStockExchangeKey = nameof(ShanghaiStockExchange);
+
+		/// <summary>
+		/// Shanghai Stock Exchange
+		/// </summary>
+		public static string ShanghaiStockExchange => GetString(ShanghaiStockExchangeKey);
+
+		/// <summary>
+		/// Shenzhen Stock Exchange
+		/// </summary>
+		public const string ShenzhenStockExchangeKey = nameof(ShenzhenStockExchange);
+
+		/// <summary>
+		/// Shenzhen Stock Exchange
+		/// </summary>
+		public static string ShenzhenStockExchange => GetString(ShenzhenStockExchangeKey);
+
+		/// <summary>
+		/// Toronto Stock Exchange
+		/// </summary>
+		public const string TorontoStockExchangeKey = nameof(TorontoStockExchange);
+
+		/// <summary>
+		/// Toronto Stock Exchange
+		/// </summary>
+		public static string TorontoStockExchange => GetString(TorontoStockExchangeKey);
+
+		/// <summary>
+		/// Frankfurt Stock Exchange
+		/// </summary>
+		public const string FrankfurtStockExchangeKey = nameof(FrankfurtStockExchange);
+
+		/// <summary>
+		/// Frankfurt Stock Exchange
+		/// </summary>
+		public static string FrankfurtStockExchange => GetString(FrankfurtStockExchangeKey);
+
+		/// <summary>
+		/// Australian Securities Exchange
+		/// </summary>
+		public const string AustralianSecuritiesExchangeKey = nameof(AustralianSecuritiesExchange);
+
+		/// <summary>
+		/// Australian Securities Exchange
+		/// </summary>
+		public static string AustralianSecuritiesExchange => GetString(AustralianSecuritiesExchangeKey);
+
+		/// <summary>
+		/// New Zealand Exchange
+		/// </summary>
+		public const string NewZealandExchangeKey = nameof(NewZealandExchange);
+
+		/// <summary>
+		/// New Zealand Exchange
+		/// </summary>
+		public static string NewZealandExchange => GetString(NewZealandExchangeKey);
+
+		/// <summary>
+		/// Bombay Stock Exchange
+		/// </summary>
+		public const string BombayStockExchangeKey = nameof(BombayStockExchange);
+
+		/// <summary>
+		/// Bombay Stock Exchange
+		/// </summary>
+		public static string BombayStockExchange => GetString(BombayStockExchangeKey);
+
+		/// <summary>
+		/// National Stock Exchange of India
+		/// </summary>
+		public const string NationalStockExchangeofIndiaKey = nameof(NationalStockExchangeofIndia);
+
+		/// <summary>
+		/// National Stock Exchange of India
+		/// </summary>
+		public static string NationalStockExchangeofIndia => GetString(NationalStockExchangeofIndiaKey);
+
+		/// <summary>
+		/// Swiss Exchange
+		/// </summary>
+		public const string SwissExchangeKey = nameof(SwissExchange);
+
+		/// <summary>
+		/// Swiss Exchange
+		/// </summary>
+		public static string SwissExchange => GetString(SwissExchangeKey);
+
+		/// <summary>
+		/// Korea Exchange
+		/// </summary>
+		public const string KoreaExchangeKey = nameof(KoreaExchange);
+
+		/// <summary>
+		/// Korea Exchange
+		/// </summary>
+		public static string KoreaExchange => GetString(KoreaExchangeKey);
+
+		/// <summary>
+		/// Madrid Stock Exchange
+		/// </summary>
+		public const string MadridStockExchangeKey = nameof(MadridStockExchange);
+
+		/// <summary>
+		/// Madrid Stock Exchange
+		/// </summary>
+		public static string MadridStockExchange => GetString(MadridStockExchangeKey);
+
+		/// <summary>
+		/// Johannesburg Stock Exchange
+		/// </summary>
+		public const string JohannesburgStockExchangeKey = nameof(JohannesburgStockExchange);
+
+		/// <summary>
+		/// Johannesburg Stock Exchange
+		/// </summary>
+		public static string JohannesburgStockExchange => GetString(JohannesburgStockExchangeKey);
+
+		/// <summary>
+		/// Singapore Exchange
+		/// </summary>
+		public const string SingaporeExchangeKey = nameof(SingaporeExchange);
+
+		/// <summary>
+		/// Singapore Exchange
+		/// </summary>
+		public static string SingaporeExchange => GetString(SingaporeExchangeKey);
+
+		/// <summary>
+		/// Taiwan Stock Exchange
+		/// </summary>
+		public const string TaiwanStockExchangeKey = nameof(TaiwanStockExchange);
+
+		/// <summary>
+		/// Taiwan Stock Exchange
+		/// </summary>
+		public static string TaiwanStockExchange => GetString(TaiwanStockExchangeKey);
+
+		/// <summary>
+		/// Philippine Stock Exchange
+		/// </summary>
+		public const string PhilippineStockExchangeKey = nameof(PhilippineStockExchange);
+
+		/// <summary>
+		/// Philippine Stock Exchange
+		/// </summary>
+		public static string PhilippineStockExchange => GetString(PhilippineStockExchangeKey);
+
+		/// <summary>
+		/// Bursa Malaysia
+		/// </summary>
+		public const string BursaMalaysiaKey = nameof(BursaMalaysia);
+
+		/// <summary>
+		/// Bursa Malaysia
+		/// </summary>
+		public static string BursaMalaysia => GetString(BursaMalaysiaKey);
+
+		/// <summary>
+		/// Indonesia Stock Exchange
+		/// </summary>
+		public const string IndonesiaStockExchangeKey = nameof(IndonesiaStockExchange);
+
+		/// <summary>
+		/// Indonesia Stock Exchange
+		/// </summary>
+		public static string IndonesiaStockExchange => GetString(IndonesiaStockExchangeKey);
+
+		/// <summary>
+		/// Stock Exchange of Thailand
+		/// </summary>
+		public const string StockExchangeofThailandKey = nameof(StockExchangeofThailand);
+
+		/// <summary>
+		/// Stock Exchange of Thailand
+		/// </summary>
+		public static string StockExchangeofThailand => GetString(StockExchangeofThailandKey);
+
+		/// <summary>
+		/// Colombo Stock Exchange
+		/// </summary>
+		public const string ColomboStockExchangeKey = nameof(ColomboStockExchange);
+
+		/// <summary>
+		/// Colombo Stock Exchange
+		/// </summary>
+		public static string ColomboStockExchange => GetString(ColomboStockExchangeKey);
+
+		/// <summary>
+		/// Tel Aviv Stock Exchange
+		/// </summary>
+		public const string TelAvivStockExchangeKey = nameof(TelAvivStockExchange);
+
+		/// <summary>
+		/// Tel Aviv Stock Exchange
+		/// </summary>
+		public static string TelAvivStockExchange => GetString(TelAvivStockExchangeKey);
+
+		/// <summary>
+		/// Integral
+		/// </summary>
+		public const string IntegralKey = nameof(Integral);
+
+		/// <summary>
+		/// Integral
+		/// </summary>
+		public static string Integral => GetString(IntegralKey);
+
+		/// <summary>
+		/// BTCChina
+		/// </summary>
+		public const string BtcChinaKey = nameof(BtcChina);
+
+		/// <summary>
+		/// BTCChina
+		/// </summary>
+		public static string BtcChina => GetString(BtcChinaKey);
+
+		/// <summary>
+		/// iCBIT
+		/// </summary>
+		public const string IcBitKey = nameof(IcBit);
+
+		/// <summary>
+		/// iCBIT
+		/// </summary>
+		public static string IcBit => GetString(IcBitKey);
+
+		/// <summary>
+		/// Currenex
+		/// </summary>
+		public const string CurrenexKey = nameof(Currenex);
+
+		/// <summary>
+		/// Currenex
+		/// </summary>
+		public static string Currenex => GetString(CurrenexKey);
+
+		/// <summary>
+		/// WIKI
+		/// </summary>
+		public const string WIKIKey = nameof(WIKI);
+
+		/// <summary>
+		/// WIKI
+		/// </summary>
+		public static string WIKI => GetString(WIKIKey);
+
+		/// <summary>
+		/// StockSharp
+		/// </summary>
+		public const string StockSharpKey = nameof(StockSharp);
+
+		/// <summary>
+		/// StockSharp
+		/// </summary>
+		public static string StockSharp => GetString(StockSharpKey);
+
+		/// <summary>
+		/// Upbit
+		/// </summary>
+		public const string UpbitKey = nameof(Upbit);
+
+		/// <summary>
+		/// Upbit
+		/// </summary>
+		public static string Upbit => GetString(UpbitKey);
+
+		/// <summary>
+		/// Selected strategies
+		/// </summary>
+		public const string SelectedStrategiesKey = nameof(SelectedStrategies);
+
+		/// <summary>
+		/// Selected strategies
+		/// </summary>
+		public static string SelectedStrategies => GetString(SelectedStrategiesKey);
+
+		/// <summary>
+		/// Pips
+		/// </summary>
+		public const string PipsKey = nameof(Pips);
+
+		/// <summary>
+		/// Pips
+		/// </summary>
+		public static string Pips => GetString(PipsKey);
+
+		/// <summary>
+		/// Points
+		/// </summary>
+		public const string PointsKey = nameof(Points);
+
+		/// <summary>
+		/// Points
+		/// </summary>
+		public static string Points => GetString(PointsKey);
+
+		/// <summary>
+		/// Show quick orders panel.
+		/// </summary>
+		public const string ShowQuickOrdersPanelKey = nameof(ShowQuickOrdersPanel);
+
+		/// <summary>
+		/// Show quick orders panel.
+		/// </summary>
+		public static string ShowQuickOrdersPanel => GetString(ShowQuickOrdersPanelKey);
+
+		/// <summary>
+		/// Size
+		/// </summary>
+		public const string SizeKey = nameof(Size);
+
+		/// <summary>
+		/// Size
+		/// </summary>
+		public static string Size => GetString(SizeKey);
+
+		/// <summary>
+		/// Rev
+		/// </summary>
+		public const string RevKey = nameof(Rev);
+
+		/// <summary>
+		/// Rev
+		/// </summary>
+		public static string Rev => GetString(RevKey);
+
+		/// <summary>
+		/// FatBTC
+		/// </summary>
+		public const string FatBtcKey = nameof(FatBtc);
+
+		/// <summary>
+		/// FatBTC
+		/// </summary>
+		public static string FatBtc => GetString(FatBtcKey);
+
+		/// <summary>
+		/// LATOKEN
+		/// </summary>
+		public const string LatokenKey = nameof(Latoken);
+
+		/// <summary>
+		/// LATOKEN
+		/// </summary>
+		public static string Latoken => GetString(LatokenKey);
+
+		/// <summary>
+		/// CoinEx
+		/// </summary>
+		public const string CoinExKey = nameof(CoinEx);
+
+		/// <summary>
+		/// CoinEx
+		/// </summary>
+		public static string CoinEx => GetString(CoinExKey);
 	}
 }

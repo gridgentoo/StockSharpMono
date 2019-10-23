@@ -40,44 +40,9 @@ namespace StockSharp.Messages
 	}
 
 	/// <summary>
-	/// Extended interface for specify extra operation with conditional orders.
-	/// </summary>
-	public interface IMessageAdapterExtension
-	{
-		/// <summary>
-		/// Determines whether the adapter support stop-loss orders.
-		/// </summary>
-		bool IsSupportStopLoss { get; }
-
-		/// <summary>
-		/// Determines whether the adapter support take-porift orders.
-		/// </summary>
-		bool IsSupportTakeProfit { get; }
-
-		/// <summary>
-		/// Determines whether the adapter support withdraw orders.
-		/// </summary>
-		bool IsSupportWithdraw { get; }
-
-		/// <summary>
-		/// Create stop order condition.
-		/// </summary>
-		/// <param name="isTakeProfit">Is take-profit of stop-loss.</param>
-		/// <param name="stopPrice">Limit price for activated order. Can be <see langword="null" /> for <see cref="OrderTypes.Market"/>.</param>
-		/// <returns>Order condition. If the connection does not support the order type, the exception <see cref="NotSupportedException" /> will be thrown.</returns>
-		OrderCondition CreateStopCondition(bool isTakeProfit, decimal? stopPrice);
-
-		/// <summary>
-		/// Create withdraw order condition.
-		/// </summary>
-		/// <returns>Order condition. If the connection does not support the order type, the exception <see cref="NotSupportedException" /> will be thrown.</returns>
-		OrderCondition CreateWithdrawCondition(WithdrawInfo info);
-	}
-
-	/// <summary>
 	/// Base message adapter interface which convert messages <see cref="Message"/> to native commands and back.
 	/// </summary>
-	public interface IMessageAdapter : IMessageChannel, IPersistable, ILogReceiver, IMessageAdapterExtension
+	public interface IMessageAdapter : IMessageChannel, IPersistable, ILogReceiver
 	{
 		/// <summary>
 		/// Transaction id generator.
@@ -85,14 +50,19 @@ namespace StockSharp.Messages
 		IdGenerator TransactionIdGenerator { get; }
 
 		/// <summary>
+		/// Possible supported by adapter message types.
+		/// </summary>
+		IEnumerable<MessageTypeInfo> PossibleSupportedMessages { get; set; }
+
+		/// <summary>
 		/// Supported by adapter message types.
 		/// </summary>
-		MessageTypes[] SupportedMessages { get; set; }
+		IEnumerable<MessageTypes> SupportedMessages { get; set; }
 
 		/// <summary>
 		/// Supported by adapter market data types.
 		/// </summary>
-		MarketDataTypes[] SupportedMarketDataTypes { get; set; }
+		IEnumerable<MarketDataTypes> SupportedMarketDataTypes { get; set; }
 
 		/// <summary>
 		/// Description of the class of securities, depending on which will be marked in the <see cref="SecurityMessage.SecurityType"/> and <see cref="SecurityId.BoardCode"/>.
@@ -100,9 +70,9 @@ namespace StockSharp.Messages
 		IDictionary<string, RefPair<SecurityTypes, string>> SecurityClassInfo { get; }
 
 		/// <summary>
-		/// Possible time-frames.
+		/// Possible options for candles building.
 		/// </summary>
-		IEnumerable<TimeSpan> TimeFrames { get; }
+		IEnumerable<Level1Fields> CandlesBuildFrom { get; }
 
 		/// <summary>
 		/// Check possible time-frame by request.
@@ -115,7 +85,7 @@ namespace StockSharp.Messages
 		ReConnectionSettings ReConnectionSettings { get; }
 
 		/// <summary>
-		/// Lifetime ping interval.
+		///  Server check interval for track the connection alive. The value is <see cref="TimeSpan.Zero"/> turned off tracking.
 		/// </summary>
 		TimeSpan HeartbeatInterval { get; set; }
 
@@ -192,7 +162,7 @@ namespace StockSharp.Messages
 		/// <summary>
 		/// Names of extended security fields in <see cref="SecurityMessage"/>.
 		/// </summary>
-		Tuple<string, Type>[] SecurityExtendedFields { get; }
+		IEnumerable<Tuple<string, Type>> SecurityExtendedFields { get; }
 
 		/// <summary>
 		/// Support lookup all securities.
@@ -200,9 +170,40 @@ namespace StockSharp.Messages
 		bool IsSupportSecuritiesLookupAll { get; }
 
 		/// <summary>
+		/// Available options for <see cref="MarketDataMessage.MaxDepth"/>.
+		/// </summary>
+		IEnumerable<int> SupportedOrderBookDepths { get; }
+
+		/// <summary>
+		/// Adapter translates incremental order books.
+		/// </summary>
+		bool IsSupportOrderBookIncrements { get; }
+
+		/// <summary>
+		/// Adapter fills <see cref="ExecutionMessage.PnL"/>.
+		/// </summary>
+		bool IsSupportExecutionsPnL { get; }
+
+		/// <summary>
+		/// Adapter provides news related with specified security.
+		/// </summary>
+		bool IsSecurityNewsOnly { get; }
+
+		/// <summary>
+		/// <see cref="CreateOrderCondition"/> type.
+		/// </summary>
+		/// <remarks>
+		/// If the connection does not support the order type <see cref="OrderTypes.Conditional"/>, it will be returned <see langword="null" />.
+		/// </remarks>
+		Type OrderConditionType { get; }
+
+		/// <summary>
 		/// Create condition for order type <see cref="OrderTypes.Conditional"/>, that supports the adapter.
 		/// </summary>
-		/// <returns>Order condition. If the connection does not support the order type <see cref="OrderTypes.Conditional"/>, it will be returned <see langword="null" />.</returns>
+		/// <returns>Order condition.</returns>
+		/// <remarks>
+		/// If the connection does not support the order type <see cref="OrderTypes.Conditional"/>, it will be returned <see langword="null" />.
+		/// </remarks>
 		OrderCondition CreateOrderCondition();
 
 		/// <summary>
@@ -219,10 +220,28 @@ namespace StockSharp.Messages
 		IOrderLogMarketDepthBuilder CreateOrderLogMarketDepthBuilder(SecurityId securityId);
 
 		/// <summary>
-		/// Get possible time-frames for the specified instrument.
+		/// Get possible args for the specified candle type and instrument.
 		/// </summary>
+		/// <param name="candleType">The type of the message <see cref="CandleMessage"/>.</param>
 		/// <param name="securityId">Security ID.</param>
-		/// <returns>Possible time-frames.</returns>
-		IEnumerable<TimeSpan> GetTimeFrames(SecurityId securityId);
+		/// <param name="from">The initial date from which you need to get data.</param>
+		/// <param name="to">The final date by which you need to get data.</param>
+		/// <returns>Possible args.</returns>
+		IEnumerable<object> GetCandleArgs(Type candleType, SecurityId securityId, DateTimeOffset? from, DateTimeOffset? to);
+
+		/// <summary>
+		/// Get maximum size step allowed for historical download.
+		/// </summary>
+		/// <param name="request">Market data request.</param>
+		/// <param name="iterationInterval">Interval between iterations.</param>
+		/// <returns>Step.</returns>
+		TimeSpan GetHistoryStepSize(MarketDataMessage request, out TimeSpan iterationInterval);
+
+		/// <summary>
+		/// Is for the specified <paramref name="dataType"/> all securities downloading enabled.
+		/// </summary>
+		/// <param name="dataType">Market data type.</param>
+		/// <returns>Check result.</returns>
+		bool IsAllDownloadingSupported(MarketDataTypes dataType);
 	}
 }

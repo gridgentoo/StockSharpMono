@@ -88,7 +88,6 @@ namespace StockSharp.Algo.Strategies.Reporting
 									new XElement("direction", o.Direction),
 									new XElement("time", Format(o.Time)),
 									new XElement("price", o.Price),
-									new XElement("averagePrice", o.GetAveragePrice(strategy.Connector)),
 									new XElement("state", o.State),
 									new XElement("balance", o.Balance),
 									new XElement("volume", o.Volume),
@@ -105,7 +104,7 @@ namespace StockSharp.Algo.Strategies.Reporting
 									new XElement("price", t.Trade.Price),
 									new XElement("volume", t.Trade.Volume),
 									new XElement("order", t.Order.Id),
-									new XElement("PnL", strategy.PnLManager.ProcessMessage(t.ToMessage()).PnL),
+									new XElement("PnL", strategy.PnLManager.ProcessMessage(t.ToMessage())?.PnL),
 									new XElement("slippage", t.Slippage)
 									))),
 						new XElement("stopOrders",

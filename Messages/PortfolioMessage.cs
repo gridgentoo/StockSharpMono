@@ -48,7 +48,7 @@ namespace StockSharp.Messages
 	/// </summary>
 	[DataContract]
 	[Serializable]
-	public class PortfolioMessage : Message
+	public class PortfolioMessage : BaseSubscriptionIdMessage, ISubscriptionMessage
 	{
 		/// <summary>
 		/// Portfolio code name.
@@ -77,6 +77,15 @@ namespace StockSharp.Messages
 		[MainCategory]
 		public string BoardCode { get; set; }
 
+		/// <summary>
+		/// Client code assigned by the broker.
+		/// </summary>
+		[DataMember]
+		[MainCategory]
+		[DisplayNameLoc(LocalizedStrings.ClientCodeKey)]
+		[DescriptionLoc(LocalizedStrings.ClientCodeDescKey)]
+		public string ClientCode { get; set; }
+
 		///// <summary>
 		///// Portfolio state.
 		///// </summary>
@@ -86,26 +95,26 @@ namespace StockSharp.Messages
 		//[MainCategory]
 		//public PortfolioStates? State { get; set; }
 
-		/// <summary>
-		/// ID of the original message <see cref="TransactionId"/> for which this message is a response.
-		/// </summary>
-		[DataMember]
-		public long OriginalTransactionId { get; set; }
-
-		/// <summary>
-		/// Subscription/unsubscription portfolio changes transaction id.
-		/// </summary>
+		/// <inheritdoc />
 		[DataMember]
 		[DisplayNameLoc(LocalizedStrings.TransactionKey)]
 		[DescriptionLoc(LocalizedStrings.TransactionIdKey, true)]
 		[MainCategory]
 		public long TransactionId { get; set; }
 
-		/// <summary>
-		/// Is the message subscription portfolio changes.
-		/// </summary>
+		/// <inheritdoc />
 		[DataMember]
 		public bool IsSubscribe { get; set; }
+
+		/// <summary>
+		/// Internal identifier.
+		/// </summary>
+		[DataMember]
+		public Guid? InternalId { get; set; }
+
+		/// <inheritdoc />
+		[DataMember]
+		public bool IsHistory { get; set; }
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="PortfolioMessage"/>.
@@ -124,10 +133,7 @@ namespace StockSharp.Messages
 		{
 		}
 
-		/// <summary>
-		/// Returns a string that represents the current object.
-		/// </summary>
-		/// <returns>A string that represents the current object.</returns>
+		/// <inheritdoc />
 		public override string ToString()
 		{
 			return base.ToString() + $",Name={PortfolioName}";
@@ -149,15 +155,17 @@ namespace StockSharp.Messages
 		/// <returns>The object, to which copied information.</returns>
 		protected PortfolioMessage CopyTo(PortfolioMessage destination)
 		{
+			base.CopyTo(destination);
+
 			destination.PortfolioName = PortfolioName;
 			destination.Currency = Currency;
 			destination.BoardCode = BoardCode;
-			destination.OriginalTransactionId = OriginalTransactionId;
 			destination.IsSubscribe = IsSubscribe;
 			//destination.State = State;
 			destination.TransactionId = TransactionId;
-
-			this.CopyExtensionInfo(destination);
+			destination.ClientCode = ClientCode;
+			destination.InternalId = InternalId;
+			destination.IsHistory = IsHistory;
 
 			return destination;
 		}

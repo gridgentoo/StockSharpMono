@@ -34,7 +34,7 @@ namespace StockSharp.Algo
 	{
 		private sealed class SubscriptionManager
 		{
-			private readonly SynchronizedDictionary<long, Tuple<MarketDataMessage, Security>> _pendingSubscriptions = new SynchronizedDictionary<long, Tuple<MarketDataMessage, Security>>();
+			private readonly SynchronizedDictionary<long, Tuple<MarketDataMessage, Security>> _requests = new SynchronizedDictionary<long, Tuple<MarketDataMessage, Security>>();
 			private readonly SynchronizedDictionary<MarketDataTypes, CachedSynchronizedSet<Security>> _subscribers = new SynchronizedDictionary<MarketDataTypes, CachedSynchronizedSet<Security>>();
 			private readonly Connector _connector;
 
@@ -47,6 +47,7 @@ namespace StockSharp.Algo
 			{
 				_subscribers.Clear();
 				_registeredPortfolios.Clear();
+				_requests.Clear();
 			}
 
 			private IEnumerable<Security> GetSubscribers(MarketDataTypes type)
@@ -68,14 +69,44 @@ namespace StockSharp.Algo
 
 			public void ProcessRequest(Security security, MarketDataMessage message, bool tryAdd)
 			{
-				if (security == null)
-				{
-					if (message.DataType != MarketDataTypes.News)
-						throw new ArgumentNullException(nameof(security));
-				}
-
 				if (message == null)
 					throw new ArgumentNullException(nameof(message));
+
+				if (!tryAdd)
+				{
+					var msg = (message.IsSubscribe ? LocalizedStrings.SubscriptionSent : LocalizedStrings.UnSubscriptionSent)
+						.Put(security?.Id, message.ToDataTypeString());
+
+					if (message.From != null && message.To != null)
+						msg += LocalizedStrings.Str691Params.Put(message.From.Value, message.To.Value);
+
+					_connector.AddDebugLog(msg + ".");
+				}
+
+				if (security == null)
+				{
+					if (!message.IsSubscribe)
+					{
+						if (message.OriginalTransactionId != 0)
+							security = TryGetSecurity(message.OriginalTransactionId);
+					}
+				}
+
+				if (security == null)
+				{
+					//if (message.DataType != MarketDataTypes.News)
+					//{
+						
+					//}
+
+					if (message.SecurityId != default)
+					{
+						security = _connector.LookupById(message.SecurityId);
+
+						if (security == null)
+							throw new ArgumentException(LocalizedStrings.Str704Params.Put(message.SecurityId));
+					}
+				}
 
 				if (message.TransactionId == 0)
 					message.TransactionId = _connector.TransactionIdGenerator.GetNextId();
@@ -88,10 +119,10 @@ namespace StockSharp.Algo
 				if (tryAdd)
 				{
 					// if the message was looped back via IsBack=true
-					_pendingSubscriptions.TryAdd(message.TransactionId, value);
+					_requests.TryAdd(message.TransactionId, value);
 				}
 				else
-					_pendingSubscriptions.Add(message.TransactionId, value);
+					_requests.Add(message.TransactionId, value);
 
 				_connector.SendInMessage(message);
 			}
@@ -124,37 +155,54 @@ namespace StockSharp.Algo
 				}
 			}
 
-			public Security ProcessResponse(long originalTransactionId, out MarketDataMessage message)
+			public Security TryGetSecurity(long originalTransactionId)
 			{
-				var tuple = _pendingSubscriptions.TryGetValue(originalTransactionId);
+				return _requests.TryGetValue(originalTransactionId)?.Item2;
+			}
 
-				if (tuple == null)
+			public Security ProcessResponse(MarketDataMessage response, out MarketDataMessage originalMsg, out bool unexpectedCancelled)
+			{
+				unexpectedCancelled = false;
+
+				if (!_requests.TryGetValue(response.OriginalTransactionId, out var tuple))
 				{
-					message = null;
+					originalMsg = null;
 					return null;
 				}
 
-				_pendingSubscriptions.Remove(originalTransactionId);
+				//_requests.Remove(response.OriginalTransactionId);
 
 				var subscriber = tuple.Item2;
-				message = tuple.Item1;
+				originalMsg = tuple.Item1;
 
-				if (message.DataType != MarketDataTypes.News)
+				if (originalMsg.DataType.IsSecurityRequired())
 				{
 					lock (_subscribers.SyncRoot)
 					{
-						if (message.IsSubscribe)
-							_subscribers.SafeAdd(message.DataType).Add(subscriber);
+						if (originalMsg.IsSubscribe)
+						{
+							if (response.IsOk())
+								_subscribers.SafeAdd(originalMsg.DataType).Add(subscriber);
+							else
+							{
+								var set = _subscribers.TryGetValue(originalMsg.DataType);
+
+								if (set != null && set.Remove(subscriber))
+								{
+									unexpectedCancelled = true;
+								}
+							}
+						}
 						else
 						{
-							var dict = _subscribers.TryGetValue(message.DataType);
+							var dict = _subscribers.TryGetValue(originalMsg.DataType);
 
 							if (dict != null)
 							{
 								dict.Remove(subscriber);
 
 								if (dict.Count == 0)
-									_subscribers.Remove(message.DataType);
+									_subscribers.Remove(originalMsg.DataType);
 							}
 						}
 					}
@@ -185,34 +233,30 @@ namespace StockSharp.Algo
 		public IEnumerable<CandleSeries> SubscribedCandleSeries => _entityCache.AllCandleSeries;
 
 		/// <inheritdoc />
+		public virtual void SubscribeMarketData(MarketDataMessage message)
+		{
+			SubscribeMarketData(null, message);
+		}
+
+		/// <inheritdoc />
 		public virtual void SubscribeMarketData(Security security, MarketDataMessage message)
 		{
-			var msg = LocalizedStrings.SubscriptionSent.Put(security?.Id,
-				message.DataType + (message.DataType.IsCandleDataType() ? " " + message.Arg : string.Empty));
-
-			if (message.From != null && message.To != null)
-				msg += LocalizedStrings.Str691Params.Put(message.From.Value, message.To.Value);
-
-			this.AddDebugLog(msg + ".");
-
 			_subscriptionManager.ProcessRequest(security, message, false);
+		}
+
+		/// <inheritdoc />
+		public virtual void UnSubscribeMarketData(MarketDataMessage message)
+		{
+			UnSubscribeMarketData(null, message);
 		}
 
 		/// <inheritdoc />
 		public virtual void UnSubscribeMarketData(Security security, MarketDataMessage message)
 		{
-			var msg = LocalizedStrings.UnSubscriptionSent.Put(security?.Id,
-				message.DataType + (message.DataType.IsCandleDataType() ? " " + message.Arg : string.Empty));
-
-			if (message.From != null && message.To != null)
-				msg += LocalizedStrings.Str691Params.Put(message.From.Value, message.To.Value);
-
-			this.AddDebugLog(msg + ".");
-
 			_subscriptionManager.ProcessRequest(security, message, false);
 		}
 
-		private void SubscribeMarketData(Security security, MarketDataTypes type, DateTimeOffset? from = null, DateTimeOffset? to = null, long? count = null, MarketDataTypes? buildFrom = null, Level1Fields? buildField = null, int? maxDepth = null)
+		private void SubscribeMarketData(Security security, MarketDataTypes type, DateTimeOffset? from = null, DateTimeOffset? to = null, long? count = null, MarketDataBuildModes buildMode = MarketDataBuildModes.LoadAndBuild, MarketDataTypes? buildFrom = null, Level1Fields? buildField = null, int? maxDepth = null, IMessageAdapter adapter = null)
 		{
 			SubscribeMarketData(security, new MarketDataMessage
 			{
@@ -221,9 +265,11 @@ namespace StockSharp.Algo
 				From = from,
 				To = to,
 				Count = count,
+				BuildMode = buildMode,
 				BuildFrom = buildFrom,
 				BuildField = buildField,
 				MaxDepth = maxDepth,
+				Adapter = adapter
 			});
 		}
 
@@ -234,30 +280,6 @@ namespace StockSharp.Algo
 				DataType = type,
 				IsSubscribe = false,
 			});
-		}
-
-		/// <inheritdoc />
-		public void RegisterSecurity(Security security, DateTimeOffset? from = null, DateTimeOffset? to = null, long? count = null, MarketDataTypes? buildFrom = null)
-		{
-			SubscribeMarketData(security, MarketDataTypes.Level1, from, to, count, buildFrom);
-		}
-
-		/// <inheritdoc />
-		public void UnRegisterSecurity(Security security)
-		{
-			UnSubscribeMarketData(security, MarketDataTypes.Level1);
-		}
-
-		/// <inheritdoc />
-		public void RegisterMarketDepth(Security security, DateTimeOffset? from = null, DateTimeOffset? to = null, long? count = null, MarketDataTypes? buildFrom = null, int? maxDepth = null)
-		{
-			SubscribeMarketData(security, MarketDataTypes.MarketDepth, from, to, count, buildFrom, null, maxDepth);
-		}
-
-		/// <inheritdoc />
-		public void UnRegisterMarketDepth(Security security)
-		{
-			UnSubscribeMarketData(security, MarketDataTypes.MarketDepth);
 		}
 
 		/// <inheritdoc />
@@ -287,15 +309,182 @@ namespace StockSharp.Algo
 		}
 
 		/// <inheritdoc />
-		public void RegisterTrades(Security security, DateTimeOffset? from = null, DateTimeOffset? to = null, long? count = null, MarketDataTypes? buildFrom = null)
+		public void SubscribeMarketDepth(Security security, DateTimeOffset? from = null, DateTimeOffset? to = null, long? count = null, MarketDataBuildModes buildMode = MarketDataBuildModes.LoadAndBuild, MarketDataTypes? buildFrom = null, int? maxDepth = null, IMessageAdapter adapter = null)
 		{
-			SubscribeMarketData(security, MarketDataTypes.Trades, from, to, count, buildFrom);
+			SubscribeMarketData(security, MarketDataTypes.MarketDepth, from, to, count, buildMode, buildFrom, null, maxDepth, adapter);
 		}
 
 		/// <inheritdoc />
-		public void UnRegisterTrades(Security security)
+		public void UnSubscribeMarketDepth(Security security)
+		{
+			UnSubscribeMarketData(security, MarketDataTypes.MarketDepth);
+		}
+
+		/// <inheritdoc />
+		public void SubscribeTrades(Security security, DateTimeOffset? from = null, DateTimeOffset? to = null, long? count = null, MarketDataBuildModes buildMode = MarketDataBuildModes.LoadAndBuild, MarketDataTypes? buildFrom = null, IMessageAdapter adapter = null)
+		{
+			SubscribeMarketData(security, MarketDataTypes.Trades, from, to, count, buildMode, buildFrom, adapter: adapter);
+		}
+
+		/// <inheritdoc />
+		public void UnSubscribeTrades(Security security)
 		{
 			UnSubscribeMarketData(security, MarketDataTypes.Trades);
+		}
+
+		/// <inheritdoc />
+		public void SubscribeLevel1(Security security, DateTimeOffset? from = null, DateTimeOffset? to = null, long? count = null, MarketDataBuildModes buildMode = MarketDataBuildModes.LoadAndBuild, MarketDataTypes? buildFrom = null, IMessageAdapter adapter = null)
+		{
+			SubscribeMarketData(security, MarketDataTypes.Level1, from, to, count, buildMode, buildFrom, adapter: adapter);
+		}
+
+		/// <inheritdoc />
+		public void UnSubscribeLevel1(Security security)
+		{
+			UnSubscribeMarketData(security, MarketDataTypes.Level1);
+		}
+
+		/// <inheritdoc />
+		public void SubscribeOrderLog(Security security, DateTimeOffset? from = null, DateTimeOffset? to = null, long? count = null, IMessageAdapter adapter = null)
+		{
+			SubscribeMarketData(security, MarketDataTypes.OrderLog, from, to, count, adapter: adapter);
+		}
+
+		/// <inheritdoc />
+		public void UnSubscribeOrderLog(Security security)
+		{
+			UnSubscribeMarketData(security, MarketDataTypes.OrderLog);
+		}
+
+		/// <inheritdoc />
+		public void SubscribeNews(Security security = null, DateTimeOffset? from = null, DateTimeOffset? to = null, long? count = null, IMessageAdapter adapter = null)
+		{
+			SubscribeMarketData(security, MarketDataTypes.News, from, to, count, adapter: adapter);
+		}
+
+		/// <inheritdoc />
+		public void UnSubscribeNews(Security security = null)
+		{
+			UnSubscribeMarketData(security, MarketDataTypes.News);
+		}
+
+		/// <inheritdoc />
+		[Obsolete("Use SubscribeLevel1 method instead.")]
+		public void RegisterSecurity(Security security, DateTimeOffset? from = null, DateTimeOffset? to = null, long? count = null, MarketDataBuildModes buildMode = MarketDataBuildModes.LoadAndBuild, MarketDataTypes? buildFrom = null, IMessageAdapter adapter = null)
+		{
+			SubscribeLevel1(security, from, to, count, buildMode, buildFrom, adapter);
+		}
+
+		/// <inheritdoc />
+		[Obsolete("Use UnSubscribeLevel1 method instead.")]
+		public void UnRegisterSecurity(Security security)
+		{
+			UnSubscribeLevel1(security);
+		}
+
+		/// <inheritdoc />
+		[Obsolete("Use SubscribeMarketDepth method instead.")]
+		public void RegisterMarketDepth(Security security, DateTimeOffset? from = null, DateTimeOffset? to = null, long? count = null, MarketDataBuildModes buildMode = MarketDataBuildModes.LoadAndBuild, MarketDataTypes? buildFrom = null, int? maxDepth = null, IMessageAdapter adapter = null)
+		{
+			SubscribeMarketDepth(security, from, to, count, buildMode, buildFrom, maxDepth, adapter);
+		}
+
+		/// <inheritdoc />
+		[Obsolete("Use UnSubscribeMarketDepth method instead.")]
+		public void UnRegisterMarketDepth(Security security)
+		{
+			UnSubscribeMarketDepth(security);
+		}
+
+		/// <inheritdoc />
+		[Obsolete("Use SubscribeTrades method instead.")]
+		public void RegisterTrades(Security security, DateTimeOffset? from = null, DateTimeOffset? to = null, long? count = null, MarketDataBuildModes buildMode = MarketDataBuildModes.LoadAndBuild, MarketDataTypes? buildFrom = null, IMessageAdapter adapter = null)
+		{
+			SubscribeTrades(security, from, to, count, buildMode, buildFrom, adapter);
+		}
+
+		/// <inheritdoc />
+		[Obsolete("Use UnSubscribeTrades method instead.")]
+		public void UnRegisterTrades(Security security)
+		{
+			UnSubscribeTrades(security);
+		}
+
+		/// <inheritdoc />
+		[Obsolete("Use SubscribeOrderLog method instead.")]
+		public void RegisterOrderLog(Security security, DateTimeOffset? from = null, DateTimeOffset? to = null, long? count = null, IMessageAdapter adapter = null)
+		{
+			SubscribeOrderLog(security, from, to, count, adapter);
+		}
+
+		/// <inheritdoc />
+		[Obsolete("Use UnSubscribeOrderLog method instead.")]
+		public void UnRegisterOrderLog(Security security)
+		{
+			UnSubscribeOrderLog(security);
+		}
+
+		/// <inheritdoc />
+		[Obsolete("Use SubscribeNews method instead.")]
+		public void RegisterNews(Security security = null, IMessageAdapter adapter = null)
+		{
+			SubscribeNews(security, adapter: adapter);
+		}
+
+		/// <inheritdoc />
+		[Obsolete("Use UnSubscribeNews method instead.")]
+		public void UnRegisterNews(Security security = null)
+		{
+			UnSubscribeNews(security);
+		}
+
+		/// <inheritdoc />
+		public void SubscribeBoard(ExchangeBoard board, DateTimeOffset? from = null, DateTimeOffset? to = null, long? count = null, IMessageAdapter adapter = null)
+		{
+			if (board == null)
+				throw new ArgumentNullException(nameof(board));
+
+			SubscribeMarketData(null, MarketDataTypes.Board, from, to, count, adapter: adapter);
+		}
+
+		/// <inheritdoc />
+		public void UnSubscribeBoard(ExchangeBoard board)
+		{
+			if (board == null)
+				throw new ArgumentNullException(nameof(board));
+
+			UnSubscribeMarketData(null, MarketDataTypes.Board);
+		}
+
+		/// <inheritdoc />
+		public void SubscribeOrders(Security security = null, DateTimeOffset? from = null, DateTimeOffset? to = null, long? count = null, IMessageAdapter adapter = null)
+		{
+			var lookupMsg = new OrderStatusMessage
+			{
+				IsSubscribe = true,
+				TransactionId = TransactionIdGenerator.GetNextId(),
+				SecurityId = security?.ToSecurityId() ?? default,
+				From = from,
+				To = to,
+				Adapter = adapter,
+			};
+			_entityCache.AddOrderStatusTransactionId(lookupMsg.TransactionId);
+			
+			this.AddInfoLog("{0} '{1}' for '{2}'.", nameof(SubscribeOrders), lookupMsg, lookupMsg.Adapter);
+			SendInMessage(lookupMsg);
+		}
+
+		/// <inheritdoc />
+		public void UnSubscribeOrders()
+		{
+			var lookupMsg = new OrderStatusMessage
+			{
+				TransactionId = TransactionIdGenerator.GetNextId(),
+				IsSubscribe = false,
+			};
+
+			this.AddInfoLog(nameof(UnSubscribeOrders));
+			SendInMessage(lookupMsg);
 		}
 
 		/// <inheritdoc />
@@ -318,10 +507,7 @@ namespace StockSharp.Algo
 			});
 		}
 
-		/// <summary>
-		/// Unsubscribe from the portfolio changes.
-		/// </summary>
-		/// <param name="portfolio">Portfolio for unsubscription.</param>
+		/// <inheritdoc />
 		public void UnRegisterPortfolio(Portfolio portfolio)
 		{
 			_subscriptionManager.UnRegisterPortfolio(portfolio);
@@ -342,39 +528,67 @@ namespace StockSharp.Algo
 		}
 
 		/// <inheritdoc />
-		public void RegisterOrderLog(Security security, DateTimeOffset? from = null, DateTimeOffset? to = null, long? count = null)
+		public IEnumerable<Subscription> Subscriptions => _subscriptions.CachedValues;
+
+		/// <inheritdoc />
+		public void Subscribe(Subscription subscription)
 		{
-			SubscribeMarketData(security, MarketDataTypes.OrderLog, from, to, count);
+			if (subscription == null)
+				throw new ArgumentNullException(nameof(subscription));
+
+			if (subscription.TransactionId == 0)
+				subscription.TransactionId = TransactionIdGenerator.GetNextId();
+
+			_subscriptions.Add(subscription.TransactionId, subscription);
+
+			if (subscription.DataType.IsMarketData)
+			{
+				if (subscription.DataType.IsCandles)
+					SubscribeCandles(subscription.CandleSeries, transactionId: subscription.TransactionId);
+				else
+					SubscribeMarketData(subscription.Security, subscription.MarketDataMessage);
+			}
+			else if (subscription.DataType == DataType.Transactions)
+			{
+				SubscribeOrders();
+			}
+			else if (subscription.DataType == DataType.PositionChanges)
+			{
+				SubscribePositions();
+			}
+			else
+				throw new ArgumentOutOfRangeException(nameof(subscription), subscription.DataType, LocalizedStrings.Str1219);
 		}
 
 		/// <inheritdoc />
-		public void UnRegisterOrderLog(Security security)
+		public void UnSubscribe(Subscription subscription)
 		{
-			UnSubscribeMarketData(security, MarketDataTypes.OrderLog);
+			if (subscription == null)
+				throw new ArgumentNullException(nameof(subscription));
+
+			var transId = subscription.TransactionId;
+
+			if (subscription.DataType.IsMarketData)
+			{
+				if (subscription.DataType.IsCandles)
+					UnSubscribeCandles(subscription.CandleSeries);
+				else
+					UnSubscribeMarketData(subscription.Security, new MarketDataMessage { OriginalTransactionId = transId });
+			}
+			else if (subscription.DataType == DataType.Transactions)
+			{
+				UnSubscribeOrders();
+			}
+			else if (subscription.DataType == DataType.PositionChanges)
+			{
+				UnSubscribePositions();
+			}
+			else
+				throw new ArgumentOutOfRangeException(nameof(subscription), subscription.DataType, LocalizedStrings.Str1219);
 		}
 
 		/// <inheritdoc />
-		public void RegisterNews()
-		{
-			OnRegisterNews();
-		}
-
-		/// <summary>
-		/// Subscribe on news.
-		/// </summary>
-		protected virtual void OnRegisterNews()
-		{
-			SubscribeMarketData(null, MarketDataTypes.News);
-		}
-
-		/// <inheritdoc />
-		public void UnRegisterNews()
-		{
-			OnUnRegisterNews();
-		}
-
-		/// <inheritdoc />
-		public virtual void RequestNewsStory(News news)
+		public virtual void RequestNewsStory(News news, IMessageAdapter adapter = null)
 		{
 			if (news == null)
 				throw new ArgumentNullException(nameof(news));
@@ -385,15 +599,8 @@ namespace StockSharp.Algo
 				DataType = MarketDataTypes.News,
 				IsSubscribe = true,
 				NewsId = news.Id.To<string>(),
+				Adapter = adapter,
 			});
-		}
-
-		/// <summary>
-		/// Unsubscribe from news.
-		/// </summary>
-		protected virtual void OnUnRegisterNews()
-		{
-			UnSubscribeMarketData(null, MarketDataTypes.News);
 		}
 
 		/// <summary>
@@ -405,8 +612,9 @@ namespace StockSharp.Algo
 		/// <param name="count">Candles count.</param>
 		/// <param name="transactionId">Transaction ID.</param>
 		/// <param name="extensionInfo">Extended information.</param>
+		/// <param name="adapter">Target adapter. Can be <see langword="null" />.</param>
 		public virtual void SubscribeCandles(CandleSeries series, DateTimeOffset? from = null, DateTimeOffset? to = null,
-			long? count = null, long? transactionId = null, IDictionary<string, object> extensionInfo = null)
+			long? count = null, long? transactionId = null, IDictionary<string, object> extensionInfo = null, IMessageAdapter adapter = null)
 		{
 			if (series == null)
 				throw new ArgumentNullException(nameof(series));
@@ -414,6 +622,7 @@ namespace StockSharp.Algo
 			var mdMsg = series.ToMarketDataMessage(true, from, to, count);
 			mdMsg.TransactionId = transactionId ?? TransactionIdGenerator.GetNextId();
 			mdMsg.ExtensionInfo = extensionInfo;
+			mdMsg.Adapter = adapter;
 
 			_entityCache.CreateCandleSeries(mdMsg, series);
 
@@ -435,6 +644,35 @@ namespace StockSharp.Algo
 			mdMsg.TransactionId = TransactionIdGenerator.GetNextId();
 			mdMsg.OriginalTransactionId = originalTransId;
 			UnSubscribeMarketData(series.Security, mdMsg);
+		}
+
+		/// <inheritdoc />
+		public void SubscribePositions(Security security = null, DateTimeOffset? from = null, DateTimeOffset? to = null, long? count = null, IMessageAdapter adapter = null)
+		{
+			var msg = new PortfolioLookupMessage
+			{
+				IsSubscribe = true,
+				TransactionId = TransactionIdGenerator.GetNextId(),
+				Adapter = adapter,
+			};
+			
+			_portfolioLookups.Add(msg.TransactionId, new LookupInfo<PortfolioLookupMessage, Portfolio>(msg));
+
+			this.AddInfoLog(nameof(SubscribePositions));
+			SendInMessage(msg);
+		}
+
+		/// <inheritdoc />
+		public void UnSubscribePositions()
+		{
+			var msg = new PortfolioLookupMessage
+			{
+				IsSubscribe = false,
+				TransactionId = TransactionIdGenerator.GetNextId(),
+			};
+
+			this.AddInfoLog(nameof(UnSubscribePositions));
+			SendInMessage(msg);
 		}
 	}
 }

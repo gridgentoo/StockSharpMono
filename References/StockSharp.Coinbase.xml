@@ -9,6 +9,11 @@
             The message adapter for <see cref="N:StockSharp.Coinbase"/>.
             </summary>
         </member>
+        <member name="P:StockSharp.Coinbase.CoinbaseMessageAdapter.AllTimeFrames">
+            <summary>
+            Possible time-frames.
+            </summary>
+        </member>
         <member name="P:StockSharp.Coinbase.CoinbaseMessageAdapter.Key">
             <summary>
             Key.
@@ -19,28 +24,24 @@
             Secret.
             </summary>
         </member>
+        <member name="P:StockSharp.Coinbase.CoinbaseMessageAdapter.Passphrase">
+            <summary>
+            Passphrase.
+            </summary>
+        </member>
         <member name="P:StockSharp.Coinbase.CoinbaseMessageAdapter.BalanceCheckInterval">
             <summary>
             Balance check interval. Required in case of deposit and withdraw actions.
             </summary>
         </member>
         <member name="M:StockSharp.Coinbase.CoinbaseMessageAdapter.Save(Ecng.Serialization.SettingsStorage)">
-            <summary>
-            Save settings.
-            </summary>
-            <param name="storage">Settings storage.</param>
+            <inheritdoc />
         </member>
         <member name="M:StockSharp.Coinbase.CoinbaseMessageAdapter.Load(Ecng.Serialization.SettingsStorage)">
-            <summary>
-            Load settings.
-            </summary>
-            <param name="storage">Settings storage.</param>
+            <inheritdoc />
         </member>
         <member name="M:StockSharp.Coinbase.CoinbaseMessageAdapter.ToString">
-            <summary>
-            Returns a string that represents the current object.
-            </summary>
-            <returns>A string that represents the current object.</returns>
+            <inheritdoc />
         </member>
         <member name="M:StockSharp.Coinbase.CoinbaseMessageAdapter.#ctor(Ecng.Common.IdGenerator)">
             <summary>
@@ -61,14 +62,9 @@
             Initializes a new instance of the <see cref="T:StockSharp.Coinbase.CoinbaseOrderCondition"/>.
             </summary>
         </member>
-        <member name="P:StockSharp.Coinbase.CoinbaseOrderCondition.IsWithdraw">
+        <member name="P:StockSharp.Coinbase.CoinbaseOrderCondition.StopPrice">
             <summary>
-            Withdraw.
-            </summary>
-        </member>
-        <member name="P:StockSharp.Coinbase.CoinbaseOrderCondition.WithdrawInfo">
-            <summary>
-            Withdraw info.
+            Activation price, when reached an order will be placed.
             </summary>
         </member>
         <member name="T:StockSharp.Coinbase.CoinbaseTrader">
@@ -89,6 +85,11 @@
         <member name="P:StockSharp.Coinbase.CoinbaseTrader.Secret">
             <summary>
             Secret.
+            </summary>
+        </member>
+        <member name="P:StockSharp.Coinbase.CoinbaseTrader.Passphrase">
+            <summary>
+            Passphrase.
             </summary>
         </member>
         <member name="P:StockSharp.Coinbase.CoinbaseTrader.BalanceCheckInterval">

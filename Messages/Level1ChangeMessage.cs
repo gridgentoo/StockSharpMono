@@ -320,7 +320,7 @@ namespace StockSharp.Messages
 		HighBidPrice,
 
 		/// <summary>
-		/// Maximum ask during the session.
+		/// Minimum ask during the session.
 		/// </summary>
 		[EnumMember]
 		[Display(ResourceType = typeof(LocalizedStrings), Name = LocalizedStrings.Str320Key)]
@@ -654,6 +654,90 @@ namespace StockSharp.Messages
 		[EnumMember]
 		[Display(ResourceType = typeof(LocalizedStrings), Name = LocalizedStrings.BeforeSplitKey)]
 		BeforeSplit,
+
+		/// <summary>
+		/// Commission (taker).
+		/// </summary>
+		[EnumMember]
+		[Display(ResourceType = typeof(LocalizedStrings), Name = LocalizedStrings.CommissionTakerKey)]
+		CommissionTaker,
+
+		/// <summary>
+		/// Commission (maker).
+		/// </summary>
+		[EnumMember]
+		[Display(ResourceType = typeof(LocalizedStrings), Name = LocalizedStrings.CommissionMakerKey)]
+		CommissionMaker,
+
+		/// <summary>
+		/// Minimum volume allowed in order.
+		/// </summary>
+		[EnumMember]
+		[Display(ResourceType = typeof(LocalizedStrings), Name = LocalizedStrings.MinVolumeKey)]
+		MinVolume,
+
+		/// <summary>
+		/// Minimum volume allowed in order for underlying security.
+		/// </summary>
+		[EnumMember]
+		[Display(ResourceType = typeof(LocalizedStrings), Name = LocalizedStrings.UnderlyingMinVolumeKey)]
+		UnderlyingMinVolume,
+
+		/// <summary>
+		/// Coupon value.
+		/// </summary>
+		[EnumMember]
+		[Display(ResourceType = typeof(LocalizedStrings), Name = LocalizedStrings.CouponValueKey)]
+		CouponValue,
+
+		/// <summary>
+		/// Coupon date.
+		/// </summary>
+		[EnumMember]
+		[Display(ResourceType = typeof(LocalizedStrings), Name = LocalizedStrings.CouponDateKey)]
+		CouponDate,
+
+		/// <summary>
+		/// Coupon period.
+		/// </summary>
+		[EnumMember]
+		[Display(ResourceType = typeof(LocalizedStrings), Name = LocalizedStrings.CouponPeriodKey)]
+		CouponPeriod,
+
+		/// <summary>
+		/// Market price (yesterday).
+		/// </summary>
+		[EnumMember]
+		[Display(ResourceType = typeof(LocalizedStrings), Name = LocalizedStrings.MarketPriceYesterdayKey)]
+		MarketPriceYesterday,
+
+		/// <summary>
+		/// Market price (today).
+		/// </summary>
+		[EnumMember]
+		[Display(ResourceType = typeof(LocalizedStrings), Name = LocalizedStrings.MarketPriceTodayKey)]
+		MarketPriceToday,
+
+		/// <summary>
+		/// VWAP (prev).
+		/// </summary>
+		[EnumMember]
+		[Display(ResourceType = typeof(LocalizedStrings), Name = LocalizedStrings.VWAPPrevKey)]
+		VWAPPrev,
+
+		/// <summary>
+		/// Yield by VWAP.
+		/// </summary>
+		[EnumMember]
+		[Display(ResourceType = typeof(LocalizedStrings), Name = LocalizedStrings.YieldVWAPKey)]
+		YieldVWAP,
+
+		/// <summary>
+		/// Yield by VWAP (prev).
+		/// </summary>
+		[EnumMember]
+		[Display(ResourceType = typeof(LocalizedStrings), Name = LocalizedStrings.YieldVWAPPrevKey)]
+		YieldVWAPPrev,
 	}
 
 	/// <summary>
@@ -663,11 +747,9 @@ namespace StockSharp.Messages
 	[Serializable]
 	[DisplayNameLoc(LocalizedStrings.Level1Key)]
 	[DescriptionLoc(LocalizedStrings.Level1MarketDataKey)]
-	public class Level1ChangeMessage : BaseChangeMessage<Level1Fields>
+	public class Level1ChangeMessage : BaseChangeMessage<Level1Fields>, ISecurityIdMessage
 	{
-		/// <summary>
-		/// Security ID.
-		/// </summary>
+		/// <inheritdoc />
 		[DataMember]
 		[DisplayNameLoc(LocalizedStrings.SecurityKey)]
 		[DescriptionLoc(LocalizedStrings.SecurityIdKey, true)]
@@ -688,22 +770,17 @@ namespace StockSharp.Messages
 		/// <returns>Copy.</returns>
 		public override Message Clone()
 		{
-			var msg = new Level1ChangeMessage
+			var clone = new Level1ChangeMessage
 			{
-				LocalTime = LocalTime,
 				SecurityId = SecurityId,
-				ServerTime = ServerTime,
 			};
 
-			msg.Changes.AddRange(Changes);
+			CopyTo(clone);
 
-			return msg;
+			return clone;
 		}
 
-		/// <summary>
-		/// Returns a string that represents the current object.
-		/// </summary>
-		/// <returns>A string that represents the current object.</returns>
+		/// <inheritdoc />
 		public override string ToString()
 		{
 			return base.ToString() + $",Sec={SecurityId},Changes={Changes.Select(c => c.ToString()).Join(",")}";

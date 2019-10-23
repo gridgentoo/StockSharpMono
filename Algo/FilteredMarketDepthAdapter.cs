@@ -33,7 +33,7 @@ namespace StockSharp.Algo
 				orders.ForEach(Process);
 			}
 
-			private IEnumerable<QuoteChange> Filter(IEnumerable<QuoteChange> quotes)
+			private QuoteChange[] Filter(IEnumerable<QuoteChange> quotes)
 			{
 				return quotes
 					.Select(quote =>
@@ -135,11 +135,8 @@ namespace StockSharp.Algo
 		{
 		}
 
-		/// <summary>
-		/// Send message.
-		/// </summary>
-		/// <param name="message">Message.</param>
-		public override void SendInMessage(Message message)
+		/// <inheritdoc />
+		protected override void OnSendInMessage(Message message)
 		{
 			switch (message.Type)
 			{
@@ -160,7 +157,7 @@ namespace StockSharp.Algo
 						clone.DataType = MarketDataTypes.MarketDepth;
 						clone.Arg = null;
 
-						base.SendInMessage(clone);
+						base.OnSendInMessage(clone);
 
 						var data = (Tuple<QuoteChangeMessage, ExecutionMessage[]>)mdMsg.Arg;
 						var info = _filteredMarketDepths.SafeAdd(mdMsg.SecurityId, s => new FilteredMarketDepthInfo(data.Item2));
@@ -173,7 +170,7 @@ namespace StockSharp.Algo
 						var clone = (MarketDataMessage)mdMsg.Clone();
 						clone.DataType = MarketDataTypes.MarketDepth;
 
-						base.SendInMessage(clone);
+						base.OnSendInMessage(clone);
 
 						_filteredMarketDepths.Remove(mdMsg.SecurityId);
 					}
@@ -182,13 +179,10 @@ namespace StockSharp.Algo
 				}
 			}
 
-			base.SendInMessage(message);
+			base.OnSendInMessage(message);
 		}
 
-		/// <summary>
-		/// Process <see cref="MessageAdapterWrapper.InnerAdapter"/> output message.
-		/// </summary>
-		/// <param name="message">The message.</param>
+		/// <inheritdoc />
 		protected override void OnInnerAdapterNewOutMessage(Message message)
 		{
 			if (message.IsBack)

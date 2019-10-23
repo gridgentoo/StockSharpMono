@@ -1,5 +1,104 @@
 StockSharp Designer Change log
 ========================
+## v4.4.17:
+* (bug) Many bug fixes and improvements.
+* (feature) S# paper trading auto connection.
+* (feature) Finam, DukasCopy (history), Oanda (history), MFD supported.
+* (feature) Ability to download historical data.
+* (feature) Tradier source.
+* (feature) Bitmex. Testnet supported.
+* (feature) OpenECry. Certification passed.
+* (bug) Highest, Lowest, Vidya, Envelope, MACD indicators fix.
+* (feature) Sterling. Updated to 11.7 version.
+* (feature) Oanda. Level1 support removed.
+* (feature) QUIK DDE, QUIK Trans2Quik excluded.
+* (feature) CSV connector.
+* (feature) Security. MinVolume, Shortable, UnderlyingSecuityMinVolume and FaceValue properties added.
+* (feature) Deribit. V2 protocol supported.
+* (feature) BitStamp. V2 web sockets supported.
+* (feature) Plaza. Spectra 6.2.20 supported.
+* (feature) InteractiveBrokers. V9.76.01
+* (feature) Diagrams. ProtectPositionDiagramElement. More options added.
+* (feature) Diagrams. DiagramSocketType for OrderState added.
+* (feature) Diagrams. OrderBaseDiagramElement. Trigger for all order's diagram elements.
+* (feature) Diagrams. Font weight set to bold.
+* (bug) Diagram. Update composition item names in palette fixes.
+* (feature) Diagram. Bring link to front on mouse over.
+* (feature) Diagram. IndicatorDiagramElement. IsFinal and IsFormed params added.
+* (feature) Diagram. OrderRegisterDiagramElement. ZeroAsMarket param added.
+* (feature) Diagram. Converter show DateTimeOffset properties.
+* (feature) Diagram. Position, Strategy, StrategyTrades Strategy socket added.
+* (feature) Micex TEAP. Stock32, Stock33, Stock34, Currency32, Currency33, Currency34 interfaces added.
+* (feature) QUIK. 64 bit support.
+* (feature) QUIK. Candles BuildFrom mode supported.
+* (feature) QUIK. Terminal connection lost notification supported.
+
+## v4.4.16:
+* (feature) Alerts. Message made optional for sound based events.
+* (feature) Bithumb. Prime service supported.
+* (feature) OKEX. Support turn on/off sections.
+* (bug) IQFeed. Candles request fixes.
+* (feature) Process non persistable basket securities.
+* (bug) Storage adapter. Fix boards lookup and update.
+* (bug) Reconnection fix.
+* (feature) Digifinex, Idax, TradeOgre, CoinCap, Coinigy, LBank, BitMax, BW, Bibox, CoinBene, BitZ, ZB connectors.
+* (feature) News. Priority property added.
+* (feature) FIX connector. IBKR dialect supported algo orders.
+* (feature) OKEx. Web sockets v3 supported.
+* (feature) Plaza CGate. Spectra 6.2 supported.
+* (feature) TWIME. Spectra 6.2 supported.
+* (feature) Micex TEAP. Interface 31 supported.
+* (feature) Wait flushing data fix.
+* (bug) Statistics parameters. Fix reset state.
+* (bug) MarketDepth. Fix processing quote msgs with empty instrument info.
+* (bug) RSS fixes.
+* (feature) MarketDepth. Dynamic change price/volume text formats.
+* (feature) OpenECry. More order types supported.
+* (feature) OKEX. Position and account swap and margin supported.
+* (bug) Candles compression. Fix for non TF candles compression.
+* (bug) Basket adapter. Fix processing pending connect subscriptions.
+* (bug) Connector. Fix subscribers counter for error responses.
+* (feature) Basket adapter. Support offline mode for dedicated adapters.
+* (feature) Board editor redesign.
+* (bug) MessageAdapter. Fix ReConnectionSettings save/load.
+* (feature) PropertyGridEx. WorkingTime supported.
+* (feature) Order. Manual option added.
+* (bug) Heartbeat. Restore after reconnect.
+* (feature) Deribit. Extended orders.
+* (feature) More options for order registration.
+* (feature) AlphaVantage. Lookup instruments supported.
+* (bug) Quik. Fix hands while instruments lookup https://stocksharp.ru/forum/9238/zavisaet-quik-pri-podklyuchenii/
+* (bug) Fix security lookup.
+
+## v4.4.15:
+* (feature) LiveCoin. Candles support.
+* (feature) Position. SettlementPrice added.
+* (feature) OKEx. V3 protocol supported.
+* (feature) Bitmex. Stop orders extended.
+* (feature) OpenECry. v3.5.14.53
+* (bug) Bitmex. ExecInst fixes.
+* (bug) Candles. Fix duplicate candles subscription.
+* (bug) Market depth. Fix build depths from OL and L1.
+* (feature) MT4, MT5 connectors.
+* (bug) Remove live strategies fixes.
+* (bug) Remove area from chart fixes.
+* (bug) Remove items from solution tree fixes.
+* (feature) Saving and restoring order for items.
+* (bug) Clone source code element fixes.
+* (feature) Candle series settings added to diagram element.
+* (bug) Wrong element names fixes.
+* (feature) Add breaks to multiple elements.
+* (feature) Do not show breaks without settings.
+
+## v4.4.14:
+* (feature) Chart. Multi axes supported.
+* (bug) Finam downloading fix.
+* (feature) Status bar redesign.
+* (bug) Close live tab fix.
+* (bug) Index securities edit fix.
+* (feature) Volume continous securit.
+* (bug) Many bug fixes.
+
 ## v4.4.12:
 * (bug) Fix storage format select.
 * (bug) Fix cross-thread UI issues.

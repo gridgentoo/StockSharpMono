@@ -25,6 +25,7 @@ namespace StockSharp.Algo.Strategies.Testing
 
 	using MoreLinq;
 
+	using StockSharp.Algo.Candles.Compression;
 	using StockSharp.Algo.Storages;
 	using StockSharp.Algo.Testing;
 	using StockSharp.BusinessEntities;
@@ -38,60 +39,14 @@ namespace StockSharp.Algo.Strategies.Testing
 	{
 		private sealed class BasketEmulationAdapter : BasketMessageAdapter
 		{
-			private readonly EmulationSettings _settings;
-			private bool _isInitialized;
+			private readonly HistoryEmulationConnector _parent;
 
-			public BasketEmulationAdapter(IdGenerator transactionIdGenerator, IPortfolioMessageAdapterProvider adapterProvider, IExchangeInfoProvider exchangeInfoProvider, EmulationSettings settings)
-				: base(transactionIdGenerator, adapterProvider, exchangeInfoProvider)
+			public override DateTimeOffset CurrentTime => _parent.CurrentTime;
+
+			public BasketEmulationAdapter(HistoryEmulationConnector parent)
+				: base(parent.TransactionIdGenerator, new CandleBuilderProvider(new InMemoryExchangeInfoProvider()))
 			{
-				_settings = settings;
-			}
-
-			private DateTimeOffset _currentTime;
-
-			public override DateTimeOffset CurrentTime => _currentTime;
-
-			protected override void OnSendInMessage(Message message)
-			{
-				_currentTime = message.LocalTime;
-
-				switch (message.Type)
-				{
-					case MessageTypes.Connect:
-					{
-						if (!_isInitialized)
-						{
-							//CreateInnerAdapters();
-
-							_isInitialized = true;
-						}
-					
-						GetSortedAdapters().ForEach(a => a.SendInMessage(message.Clone()));
-						break;
-					}
-
-					case MessageTypes.OrderRegister:
-					case MessageTypes.OrderReplace:
-					case MessageTypes.OrderPairReplace:
-					case MessageTypes.OrderCancel:
-					case MessageTypes.OrderGroupCancel:
-					case MessageTypes.MarketData:
-						base.OnSendInMessage(message);
-						break;
-
-					case MessageTypes.CandleTimeFrame:
-					case MessageTypes.CandlePnF:
-					case MessageTypes.CandleRange:
-					case MessageTypes.CandleRenko:
-					case MessageTypes.CandleTick:
-					case MessageTypes.CandleVolume:
-						GetSortedAdapters().ForEach(a => a.SendInMessage(message.Clone()));
-						break;
-
-					default:
-						GetSortedAdapters().ForEach(a => a.SendInMessage(message)); //TODO Clone работает не для всех месседжей
-						break;
-				}
+				_parent = parent;
 			}
 
 			protected override void OnInnerAdapterNewOutMessage(IMessageAdapter innerAdapter, Message message)
@@ -100,72 +55,84 @@ namespace StockSharp.Algo.Strategies.Testing
 				{
 					case MessageTypes.Connect:
 					case MessageTypes.Disconnect:
-						base.OnInnerAdapterNewOutMessage(innerAdapter, message);
 						break;
+
+					case MessageTypes.Security:
+					case MessageTypes.Board:
+					case MessageTypes.Level1Change:
+					case MessageTypes.QuoteChange:
+					case MessageTypes.Time:
+					{
+						if (message.Adapter == _parent.MarketDataAdapter)
+							SendMessageToEmulationAdapters(message);
+
+						break;
+					}
+
+					case MessageTypes.CandlePnF:
+					case MessageTypes.CandleRange:
+					case MessageTypes.CandleRenko:
+					case MessageTypes.CandleTick:
+					case MessageTypes.CandleTimeFrame:
+					case MessageTypes.CandleVolume:
+					{
+						if (message.Adapter != _parent.MarketDataAdapter)
+							break;
+
+						SendMessageToEmulationAdapters(message);
+						return;
+					}
 
 					case MessageTypes.Execution:
 					{
-						var execMsg = (ExecutionMessage)message;
-
-						if (execMsg.ExecutionType != ExecutionTypes.Transaction)
+						if (message.Adapter != _parent.MarketDataAdapter)
 						{
-							if (innerAdapter != InnerAdapters.LastOrDefault())
-								return;
+							var execMsg = (ExecutionMessage)message;
+
+							if (execMsg.ExecutionType != ExecutionTypes.Transaction)
+							{
+								if (innerAdapter != InnerAdapters.LastOrDefault())
+									return;
+							}
 						}
+						else
+							SendMessageToEmulationAdapters(message);
 
-						base.OnInnerAdapterNewOutMessage(innerAdapter, message);
-						break;
-					}
-
-					default:
-					{
-						// на выход данные идут только из одного адаптера
-						if (innerAdapter != InnerAdapters.LastOrDefault())
-							return;
-
-						base.OnInnerAdapterNewOutMessage(innerAdapter, message);
 						break;
 					}
 				}
+
+				base.OnInnerAdapterNewOutMessage(innerAdapter, message);
 			}
 
-			//protected override void CreateInnerAdapters()
-			//{
-			//	var tradeIdGenerator = new IncrementalIdGenerator();
-			//	var orderIdGenerator = new IncrementalIdGenerator();
-
-			//	foreach (var session in SessionHolder.InnerSessions)
-			//	{
-			//		if (!session.IsTransactionEnabled)
-			//			continue;
-
-			//		var adapter = (EmulationMessageAdapter)session.CreateTransactionAdapter();
-
-			//		ApplySettings(adapter, tradeIdGenerator, orderIdGenerator);
-			//		AddInnerAdapter(adapter, SessionHolder.InnerSessions[session]);
-			//	}
-			//}
-
-			private void ApplySettings(EmulationMessageAdapter adapter, IncrementalIdGenerator tradeIdGenerator, IncrementalIdGenerator orderIdGenerator)
+			private void SendMessageToEmulationAdapters(Message message)
 			{
-				adapter.Emulator.Settings.Load(_settings.Save());
-				((MarketEmulator)adapter.Emulator).TradeIdGenerator = tradeIdGenerator;
-				((MarketEmulator)adapter.Emulator).OrderIdGenerator = orderIdGenerator;
+				InnerAdapters
+					.OfType<EmulationMessageAdapter>()
+					.ForEach(a => a.SendInMessage(message));
 			}
+		}
 
-			public override void SendOutMessage(Message message)
+		private sealed class OptimizationEmulationConnector : HistoryEmulationConnector
+		{
+			public OptimizationEmulationConnector(ISecurityProvider securityProvider, IEnumerable<Portfolio> portfolios, IStorageRegistry storageRegistry, StorageFormats format, IMarketDataDrive drive) 
+				: base(securityProvider, portfolios, storageRegistry)
 			{
-				// обрабатываем только TimeMsg, которые получены из исторического адаптера
-				// все, что приходит с незаполненным временем добавляется в других местах
-				if (message.Type == MessageTypes.Time && message.LocalTime.IsDefault())
-					return;
+				Adapter = new BasketEmulationAdapter(this);
+				Adapter.InnerAdapters.Add(EmulationAdapter);
+				Adapter.InnerAdapters.Add(HistoryMessageAdapter);
 
-				base.SendOutMessage(message);
+				Adapter.LatencyManager = null;
+				Adapter.CommissionManager = null;
+				Adapter.PnLManager = null;
+				Adapter.SlippageManager = null;
+
+				HistoryMessageAdapter.StorageFormat = format;
+				HistoryMessageAdapter.Drive = drive;
 			}
 		}
 
 		private readonly SynchronizedDictionary<Strategy, Tuple<Portfolio, Security>> _strategyInfo = new SynchronizedDictionary<Strategy, Tuple<Portfolio, Security>>();
-		//private readonly HistoryBasketSessionHolder _basketSessionHolder;
 
 		private EmulationStates _prev = EmulationStates.Stopped;
 
@@ -266,7 +233,7 @@ namespace StockSharp.Algo.Strategies.Testing
 		/// <param name="portfolios">Portfolios, the operation will be performed with.</param>
 		/// <param name="storageRegistry">Market data storage.</param>
 		public BatchEmulation(IEnumerable<Security> securities, IEnumerable<Portfolio> portfolios, IStorageRegistry storageRegistry)
-			: this((ISecurityProvider)new CollectionSecurityProvider(securities), portfolios, storageRegistry)
+			: this(new CollectionSecurityProvider(securities), portfolios, storageRegistry, StorageFormats.Binary, storageRegistry.DefaultDrive)
 		{
 		}
 
@@ -276,7 +243,9 @@ namespace StockSharp.Algo.Strategies.Testing
 		/// <param name="securityProvider">The provider of information about instruments.</param>
 		/// <param name="portfolios">Portfolios, the operation will be performed with.</param>
 		/// <param name="storageRegistry">Market data storage.</param>
-		public BatchEmulation(ISecurityProvider securityProvider, IEnumerable<Portfolio> portfolios, IStorageRegistry storageRegistry)
+		/// <param name="storageFormat">The format of market data. <see cref="StorageFormats.Binary"/> is used by default.</param>
+		/// <param name="drive">The storage which is used by default. By default, <see cref="IStorageRegistry.DefaultDrive"/> is used.</param>
+		public BatchEmulation(ISecurityProvider securityProvider, IEnumerable<Portfolio> portfolios, IStorageRegistry storageRegistry, StorageFormats storageFormat = StorageFormats.Binary, IMarketDataDrive drive = null)
 		{
 			if (securityProvider == null)
 				throw new ArgumentNullException(nameof(securityProvider));
@@ -290,7 +259,7 @@ namespace StockSharp.Algo.Strategies.Testing
 			Strategies = Enumerable.Empty<Strategy>();
 
 			EmulationSettings = new EmulationSettings();
-			EmulationConnector = new HistoryEmulationConnector(securityProvider, portfolios, storageRegistry)
+			EmulationConnector = new OptimizationEmulationConnector(securityProvider, portfolios, storageRegistry, storageFormat, drive)
 			{
 				UpdateSecurityLastQuotes = false,
 				UpdateSecurityByLevel1 = false
@@ -340,7 +309,9 @@ namespace StockSharp.Algo.Strategies.Testing
 
 		private void EmulationConnectorOnMarketTimeChanged(TimeSpan timeSpan)
 		{
-			if (EmulationConnector.CurrentTime < _nextTime && EmulationConnector.CurrentTime < EmulationSettings.StopTime)
+			if (EmulationConnector.CurrentTime < _nextTime && 
+			    EmulationConnector.CurrentTime < EmulationSettings.StopTime || 
+			    EmulationConnector.State != EmulationStates.Started)
 				return;
 
 			_nextTime += _progressStep;
@@ -349,6 +320,7 @@ namespace StockSharp.Algo.Strategies.Testing
 
 		private void EmulationConnectorOnDisconnected()
 		{
+			DisposeAdapters();
 			TryStartNextBatch();
 		}
 
@@ -418,7 +390,7 @@ namespace StockSharp.Algo.Strategies.Testing
 
 			EmulationConnector.ClearCache();
 
-			InitAdapters(_batch);
+			InitAdapters();
 
 			EmulationConnector.HistoryMessageAdapter.StartDate = EmulationSettings.StartTime;
 			EmulationConnector.HistoryMessageAdapter.StopDate = EmulationSettings.StopTime;
@@ -428,39 +400,34 @@ namespace StockSharp.Algo.Strategies.Testing
 			EmulationConnector.Connect();
 		}
 
-		private void InitAdapters(IEnumerable<Strategy> strategies)
+		private void InitAdapters()
 		{
-			//var adapter = EmulationConnector.Adapter;
-			//var adapters = adapter.Portfolios.ToArray();
-
-			//foreach (var pair in adapters)
-			//{
-			//	adapter.Portfolios.Remove(pair.Key);
-			//	adapter.InnerAdapters.Remove(pair.Value);
-			//}
-
-			//adapter.InnerAdapters.RemoveWhere(a => a is EmulationMessageAdapter);
-			//adapter.InnerAdapters.Add(new EmulationMessageAdapter(EmulationConnector.TransactionIdGenerator));
-
+			var adapter = EmulationConnector.Adapter;
+			
 			var id = _currentBatch * EmulationSettings.BatchSize;
+			var portfolios = new List<Portfolio>();
 
-			foreach (var strategy in strategies)
+			foreach (var strategy in _batch)
 			{
 				_strategyInfo[strategy] = new Tuple<Portfolio, Security>(strategy.Portfolio, strategy.Security);
 
 				var portfolio = strategy.Portfolio.Clone();
 				portfolio.Name += "_" + ++id;
-				EmulationConnector.RegisterPortfolio(portfolio);
+				portfolios.Add(portfolio);
+				
+				var strategyAdapter = new EmulationMessageAdapter(EmulationConnector.TransactionIdGenerator);
+				strategyAdapter.Emulator.Settings.Load(EmulationSettings.Save());
 
-				//var strategyAdapter = new EmulationMessageAdapter(EmulationConnector.TransactionIdGenerator);
-
-				//adapter.InnerAdapters.Add(strategyAdapter);
-				//adapter.Portfolios[portfolio.Name] = strategyAdapter;
+				adapter.InnerAdapters.Add(strategyAdapter);
+				adapter.PortfolioAdapterProvider.SetAdapter(portfolio.Name, strategyAdapter.Id);
 
 				strategy.Connector = EmulationConnector;
 				strategy.Portfolio = portfolio;
 				//strategy.Security = EmulationConnector.LookupById(strategy.Security.Id);
 			}
+
+			foreach (var portfolio in portfolios)
+				EmulationConnector.RegisterPortfolio(portfolio);
 		}
 
 		private void ApplySettings()
@@ -515,7 +482,7 @@ namespace StockSharp.Algo.Strategies.Testing
 			MemoryStatistics.Instance.LogLevel = EmulationSettings.LogLevel;
 		}
 
-		private void OnEmulationConnectorOnLookupSecuritiesResult(Exception exception, IEnumerable<Security> securities)
+		private void OnEmulationConnectorOnLookupSecuritiesResult(SecurityLookupMessage message, IEnumerable<Security> securities, Exception exception)
 		{
 			EmulationConnector.LookupSecuritiesResult -= OnEmulationConnectorOnLookupSecuritiesResult;
 
@@ -542,15 +509,25 @@ namespace StockSharp.Algo.Strategies.Testing
 		private void OnEmulationStopped()
 		{
 			foreach (var strategy in _batch)
-			{
 				strategy.Stop();
+		}
 
-				//strategy.GetCandleManager()?.Dispose();
+		private void DisposeAdapters()
+		{
+			var adapter = EmulationConnector.Adapter;
 
-				EmulationConnector
-					.Adapter
-					.AdapterProvider
-					.RemoveAssociation(strategy.Portfolio.Name);
+			foreach (var strategy in _batch)
+			{
+				var strategyAdapter = adapter.PortfolioAdapterProvider.TryGetAdapter(adapter.InnerAdapters, strategy.Portfolio);
+
+				if (strategyAdapter != null)
+				{
+					adapter.InnerAdapters.Remove(strategyAdapter);
+
+					adapter
+						.PortfolioAdapterProvider
+						.RemoveAssociation(strategy.Portfolio.Name);
+				}
 
 				var tuple = _strategyInfo.TryGetValue(strategy);
 

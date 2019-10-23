@@ -7,6 +7,7 @@ namespace StockSharp.Algo.Storages.Binary.Snapshot
 	using Ecng.Interop;
 	using Ecng.Serialization;
 
+	using StockSharp.BusinessEntities;
 	using StockSharp.Messages;
 
 	/// <summary>
@@ -14,15 +15,13 @@ namespace StockSharp.Algo.Storages.Binary.Snapshot
 	/// </summary>
 	public class PositionBinarySnapshotSerializer : ISnapshotSerializer<SecurityId, PositionChangeMessage>
 	{
-		//private const int _snapshotSize = 1024 * 10; // 10kb
-
-		[StructLayout(LayoutKind.Sequential, Pack = 1/*, Size = _snapshotSize*/, CharSet = CharSet.Unicode)]
+		[StructLayout(LayoutKind.Sequential, Pack = 1, CharSet = CharSet.Unicode)]
 		private struct PositionSnapshot
 		{
-			[MarshalAs(UnmanagedType.ByValTStr, SizeConst = 100)]
+			[MarshalAs(UnmanagedType.ByValTStr, SizeConst = Sizes.S100)]
 			public string SecurityId;
 
-			[MarshalAs(UnmanagedType.ByValTStr, SizeConst = 100)]
+			[MarshalAs(UnmanagedType.ByValTStr, SizeConst = Sizes.S100)]
 			public string Portfolio;
 
 			public long LastChangeServerTime;
@@ -43,9 +42,7 @@ namespace StockSharp.Algo.Storages.Binary.Snapshot
 			public byte? State;
 		}
 
-		Version ISnapshotSerializer<SecurityId, PositionChangeMessage>.Version { get; } = new Version(2, 0);
-
-		//int ISnapshotSerializer<SecurityId, PositionChangeMessage>.GetSnapshotSize(Version version) => _snapshotSize;
+		Version ISnapshotSerializer<SecurityId, PositionChangeMessage>.Version { get; } = SnapshotVersions.V20;
 
 		string ISnapshotSerializer<SecurityId, PositionChangeMessage>.Name => "Positions";
 
@@ -59,8 +56,8 @@ namespace StockSharp.Algo.Storages.Binary.Snapshot
 
 			var snapshot = new PositionSnapshot
 			{
-				SecurityId = message.SecurityId.ToStringId(),
-				Portfolio = message.PortfolioName,
+				SecurityId = message.SecurityId.ToStringId().VerifySize(Sizes.S100),
+				Portfolio = message.PortfolioName.VerifySize(Sizes.S100),
 				LastChangeServerTime = message.ServerTime.To<long>(),
 				LastChangeLocalTime = message.LocalTime.To<long>(),
 			};

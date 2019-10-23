@@ -5,7 +5,6 @@ namespace StockSharp.Algo.Candles.Compression
 
 	using Ecng.Collections;
 
-	using StockSharp.Algo.Storages;
 	using StockSharp.Localization;
 	using StockSharp.Logging;
 	using StockSharp.Messages;
@@ -15,47 +14,6 @@ namespace StockSharp.Algo.Candles.Compression
 	/// </summary>
 	public class CandleBuilderMessageAdapter : MessageAdapterWrapper
 	{
-		private sealed class CandleBuildersList : SynchronizedList<ICandleBuilder>
-		{
-			private readonly SynchronizedDictionary<MarketDataTypes, ICandleBuilder> _builders = new SynchronizedDictionary<MarketDataTypes, ICandleBuilder>();
-
-			public ICandleBuilder Get(MarketDataTypes type)
-			{
-				var builder = _builders.TryGetValue(type);
-
-				if (builder == null)
-					throw new ArgumentOutOfRangeException(nameof(type), type, LocalizedStrings.Str1219);
-
-				return builder;
-			}
-
-			protected override void OnAdded(ICandleBuilder item)
-			{
-				_builders.Add(item.CandleType, item);
-				base.OnAdded(item);
-			}
-
-			protected override bool OnRemoving(ICandleBuilder item)
-			{
-				lock (_builders.SyncRoot)
-					_builders.RemoveWhere(p => p.Value == item);
-
-				return base.OnRemoving(item);
-			}
-
-			protected override void OnInserted(int index, ICandleBuilder item)
-			{
-				_builders.Add(item.CandleType, item);
-				base.OnInserted(index, item);
-			}
-
-			protected override bool OnClearing()
-			{
-				_builders.Clear();
-				return base.OnClearing();
-			}
-		}
-
 		private enum SeriesStates
 		{
 			None,
@@ -91,41 +49,32 @@ namespace StockSharp.Algo.Candles.Compression
 			public DateTimeOffset? LastTime { get; set; }
 
 			public CandleMessage CurrentCandleMessage { get; set; }
+
+			public CandleMessage NonFinishedCandle { get; set; }
 		}
 
 		private readonly SynchronizedDictionary<long, SeriesInfo> _seriesByTransactionId = new SynchronizedDictionary<long, SeriesInfo>();
 		private readonly SynchronizedDictionary<SecurityId, CachedSynchronizedList<SeriesInfo>> _seriesBySecurityId = new SynchronizedDictionary<SecurityId, CachedSynchronizedList<SeriesInfo>>();
 		private readonly SynchronizedSet<long> _unsubscriptions = new SynchronizedSet<long>();
-		private readonly CandleBuildersList _candleBuilders;
-		private readonly IExchangeInfoProvider _exchangeInfoProvider;
+		private readonly CandleBuilderProvider _candleBuilderProvider;
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="CandleBuilderMessageAdapter"/>.
 		/// </summary>
 		/// <param name="innerAdapter">Inner message adapter.</param>
-		/// <param name="exchangeInfoProvider">The exchange boards provider.</param>
-		public CandleBuilderMessageAdapter(IMessageAdapter innerAdapter, IExchangeInfoProvider exchangeInfoProvider)
+		/// <param name="candleBuilderProvider">Candle builders provider.</param>
+		public CandleBuilderMessageAdapter(IMessageAdapter innerAdapter, CandleBuilderProvider candleBuilderProvider)
 			: base(innerAdapter)
 		{
-			_exchangeInfoProvider = exchangeInfoProvider ?? throw new ArgumentNullException(nameof(exchangeInfoProvider));
-
-			_candleBuilders = new CandleBuildersList
-			{
-				new TimeFrameCandleBuilder(exchangeInfoProvider),
-				new TickCandleBuilder(exchangeInfoProvider),
-				new VolumeCandleBuilder(exchangeInfoProvider),
-				new RangeCandleBuilder(exchangeInfoProvider),
-				new RenkoCandleBuilder(exchangeInfoProvider),
-				new PnFCandleBuilder(exchangeInfoProvider),
-			};
+			_candleBuilderProvider = candleBuilderProvider ?? throw new ArgumentNullException(nameof(candleBuilderProvider));
 		}
 
 		/// <inheritdoc />
-		public override void SendInMessage(Message message)
+		protected override void OnSendInMessage(Message message)
 		{
 			if (message.IsBack)
 			{
-				base.SendInMessage(message);
+				base.OnSendInMessage(message);
 				return;
 			}
 
@@ -141,7 +90,7 @@ namespace StockSharp.Algo.Candles.Compression
 				{
 					var mdMsg = (MarketDataMessage)message;
 
-					if (mdMsg.DataType != MarketDataTypes.CandleTimeFrame)
+					if (!_candleBuilderProvider.IsRegistered(mdMsg.DataType))
 						break;
 
 					if (mdMsg.IsSubscribe)
@@ -163,69 +112,99 @@ namespace StockSharp.Algo.Candles.Compression
 							return;
 						}
 
-						var originalTf = (TimeSpan)mdMsg.Arg;
-						var timeFrames = InnerAdapter.GetTimeFrames(mdMsg.SecurityId).ToArray();
-
-						if (timeFrames.Contains(originalTf) || InnerAdapter.CheckTimeFrameByRequest)
+						if (mdMsg.DataType == MarketDataTypes.CandleTimeFrame)
 						{
-							this.AddInfoLog("Origin tf: {0}", originalTf);
+							var originalTf = mdMsg.GetTimeFrame();
+							var timeFrames = InnerAdapter.GetTimeFrames(mdMsg.SecurityId, mdMsg.From, mdMsg.To).ToArray();
 
-							var original = (MarketDataMessage)mdMsg.Clone();
-							_seriesByTransactionId.Add(transactionId, new SeriesInfo(original, original)
+							if (timeFrames.Contains(originalTf) || InnerAdapter.CheckTimeFrameByRequest)
 							{
-								State = SeriesStates.Regular,
-								LastTime = original.From,
-							});
-
-							break;
-						}
-
-						if (isLoadOnly)
-						{
-							RaiseNewOutMessage(new MarketDataMessage
-							{
-								OriginalTransactionId = transactionId,
-								IsNotSupported = true,
-							});
-
-							return;
-						}
-
-						if (mdMsg.AllowBuildFromSmallerTimeFrame)
-						{
-							var smaller = timeFrames
-										  .FilterSmallerTimeFrames(originalTf)
-										  .OrderByDescending()
-										  .FirstOr();
-
-							if (smaller != null)
-							{
-								this.AddInfoLog("Smaller tf: {0}->{1}", originalTf, smaller);
+								this.AddInfoLog("Origin tf: {0}", originalTf);
 
 								var original = (MarketDataMessage)mdMsg.Clone();
-
-								var current = (MarketDataMessage)original.Clone();
-								current.Arg = smaller;
-
-								_seriesByTransactionId.Add(transactionId, new SeriesInfo(original, current)
+								_seriesByTransactionId.Add(transactionId, new SeriesInfo(original, original)
 								{
-									State = SeriesStates.SmallTimeFrame,
-									BigTimeFrameCompressor = new BiggerTimeFrameCandleCompressor(original, new TimeFrameCandleBuilder(_exchangeInfoProvider)),
+									State = SeriesStates.Regular,
 									LastTime = original.From,
 								});
 
-								base.SendInMessage(current);
+								break;
+							}
+
+							if (isLoadOnly)
+							{
+								RaiseNewOutMessage(new MarketDataMessage
+								{
+									OriginalTransactionId = transactionId,
+									IsNotSupported = true,
+								});
+
 								return;
 							}
-						}
 
-						if (!TrySubscribeBuild(mdMsg, transactionId))
-						{
-							RaiseNewOutMessage(new MarketDataMessage
+							if (mdMsg.AllowBuildFromSmallerTimeFrame)
 							{
-								OriginalTransactionId = transactionId,
-								IsNotSupported = true,
-							});
+								var smaller = timeFrames
+								              .FilterSmallerTimeFrames(originalTf)
+								              .OrderByDescending()
+								              .FirstOr();
+
+								if (smaller != null)
+								{
+									this.AddInfoLog("Smaller tf: {0}->{1}", originalTf, smaller);
+
+									var original = (MarketDataMessage)mdMsg.Clone();
+
+									var current = (MarketDataMessage)original.Clone();
+									current.Arg = smaller;
+
+									_seriesByTransactionId.Add(transactionId, new SeriesInfo(original, current)
+									{
+										State = SeriesStates.SmallTimeFrame,
+										BigTimeFrameCompressor = new BiggerTimeFrameCandleCompressor(original, (TimeFrameCandleBuilder)_candleBuilderProvider.Get(MarketDataTypes.CandleTimeFrame)),
+										LastTime = original.From,
+									});
+
+									base.OnSendInMessage(current);
+									return;
+								}
+							}
+
+							if (!TrySubscribeBuild(mdMsg, transactionId))
+							{
+								RaiseNewOutMessage(new MarketDataMessage
+								{
+									OriginalTransactionId = transactionId,
+									IsNotSupported = true,
+								});
+							}
+						}
+						else
+						{
+							if (InnerAdapter.IsCandlesSupported(mdMsg))
+							{
+								this.AddInfoLog("Origin arg: {0}", mdMsg.Arg);
+
+								var original = (MarketDataMessage)mdMsg.Clone();
+								_seriesByTransactionId.Add(transactionId, new SeriesInfo(original, original)
+								{
+									State = SeriesStates.Regular,
+									LastTime = original.From,
+								});
+
+								break;
+							}
+							else
+							{
+								if (isLoadOnly || !TrySubscribeBuild(mdMsg, transactionId))
+								{
+									RaiseNewOutMessage(new MarketDataMessage
+									{
+										OriginalTransactionId = transactionId,
+										IsNotSupported = true,
+									});
+								}
+							}
 						}
 						
 						return;
@@ -253,7 +232,7 @@ namespace StockSharp.Algo.Candles.Compression
 							unsubscribe.OriginalTransactionId = series.Current.TransactionId;
 							unsubscribe.IsSubscribe = false;
 
-							base.SendInMessage(unsubscribe);
+							base.OnSendInMessage(unsubscribe);
 
 							return;
 						}
@@ -263,7 +242,7 @@ namespace StockSharp.Algo.Candles.Compression
 				}
 			}
 
-			base.SendInMessage(message);
+			base.OnSendInMessage(message);
 		}
 
 		private MarketDataMessage TryCreateBuildSubscription(MarketDataMessage original, DateTimeOffset? lastTime, Func<long> getTransactionId)
@@ -274,31 +253,15 @@ namespace StockSharp.Algo.Candles.Compression
 			if (getTransactionId == null)
 				throw new ArgumentNullException(nameof(getTransactionId));
 
-			var buildFrom = original.BuildFrom ?? InnerAdapter.SupportedMarketDataTypes.Intersect(CandleHelper.CandleDataSources).OrderBy(t =>
-			{
-				// make priority
-				switch (t)
-				{
-					case MarketDataTypes.Trades:
-						return 0;
-					case MarketDataTypes.Level1:
-						return 1;
-					case MarketDataTypes.OrderLog:
-						return 2;
-					case MarketDataTypes.MarketDepth:
-						return 3;
-					default:
-						return 4;
-				}
-			}).FirstOr();
+			var buildFrom = InnerAdapter.TryGetCandlesBuildFrom(original, _candleBuilderProvider);
 
-			if (buildFrom == null || !InnerAdapter.SupportedMarketDataTypes.Contains(buildFrom.Value))
+			if (buildFrom == null)
 				return null;
 
 			var current = new MarketDataMessage
 			{
 				DataType = buildFrom.Value,
-				From = original.From,
+				From = lastTime,
 				To = original.To,
 				Count = original.Count,
 				MaxDepth = original.MaxDepth,
@@ -330,7 +293,7 @@ namespace StockSharp.Algo.Candles.Compression
 			if (current == null)
 				return false;
 
-			base.SendInMessage(current);
+			base.OnSendInMessage(current);
 			return true;
 		}
 
@@ -514,9 +477,7 @@ namespace StockSharp.Algo.Candles.Compression
 			if (!_seriesByTransactionId.TryGetValue(message.OriginalTransactionId, out var series))
 				return false;
 
-			var isOk = !message.IsNotSupported && message.Error == null;
-
-			if (isOk)
+			if (message.IsOk())
 			{
 				if (series.Current.TransactionId == message.OriginalTransactionId)
 					RaiseNewOutMessage(message);
@@ -547,7 +508,7 @@ namespace StockSharp.Algo.Candles.Compression
 			{
 				RemoveSeries(series);
 
-				if (response != null && (response.Error != null || response.IsNotSupported))
+				if (response != null && !response.IsOk())
 				{
 					response = (MarketDataMessage)response.Clone();
 					response.OriginalTransactionId = original.TransactionId;
@@ -569,8 +530,8 @@ namespace StockSharp.Algo.Candles.Compression
 				{
 					var isLoadOnly = series.Original.BuildMode == MarketDataBuildModes.Load;
 
-					// upgrate to smaller tf only in case failed subscription
-					if (response != null && original.AllowBuildFromSmallerTimeFrame)
+					// upgrade to smaller tf only in case failed subscription
+					if (response != null && original.DataType == MarketDataTypes.CandleTimeFrame && original.AllowBuildFromSmallerTimeFrame)
 					{
 						if (isLoadOnly)
 						{
@@ -579,8 +540,8 @@ namespace StockSharp.Algo.Candles.Compression
 						}
 
 						var smaller = InnerAdapter
-										.TimeFrames
-						                .FilterSmallerTimeFrames((TimeSpan)original.Arg)
+										.GetTimeFrames(original.SecurityId, series.LastTime, original.To)
+						                .FilterSmallerTimeFrames(original.GetTimeFrame())
 						                .OrderByDescending()
 						                .FirstOr();
 
@@ -590,8 +551,9 @@ namespace StockSharp.Algo.Candles.Compression
 							series.Current.Arg = smaller;
 							series.Current.TransactionId = TransactionIdGenerator.GetNextId();
 
-							series.BigTimeFrameCompressor = new BiggerTimeFrameCandleCompressor(original, new TimeFrameCandleBuilder(_exchangeInfoProvider));
+							series.BigTimeFrameCompressor = new BiggerTimeFrameCandleCompressor(original, (TimeFrameCandleBuilder)_candleBuilderProvider.Get(MarketDataTypes.CandleTimeFrame));
 							series.State = SeriesStates.SmallTimeFrame;
+							series.NonFinishedCandle = null;
 
 							// loopback
 							series.Current.IsBack = true;
@@ -630,6 +592,8 @@ namespace StockSharp.Algo.Candles.Compression
 			if (series.State != SeriesStates.Compress)
 				throw new InvalidOperationException(series.State.ToString());
 
+			series.NonFinishedCandle = null;
+
 			var current = TryCreateBuildSubscription(original, series.LastTime, TransactionIdGenerator.GetNextId);
 
 			if (current == null)
@@ -651,7 +615,22 @@ namespace StockSharp.Algo.Candles.Compression
 			if (info.LastTime != null && info.LastTime > candleMsg.OpenTime)
 				return true;
 
+			info.LastTime = candleMsg.OpenTime;
+
+			var nonFinished = info.NonFinishedCandle;
+
+			if (nonFinished != null && nonFinished.OpenTime < candleMsg.OpenTime)
+			{
+				nonFinished.State = CandleStates.Finished;
+				RaiseNewOutMessage(nonFinished);
+				info.NonFinishedCandle = null;
+			}
+
 			SendCandle(info, candleMsg);
+
+			if (candleMsg.State != CandleStates.Finished)
+				info.NonFinishedCandle = (CandleMessage)candleMsg.Clone();
+
 			return true;
 		}
 
@@ -688,13 +667,17 @@ namespace StockSharp.Algo.Candles.Compression
 
 				series.LastTime = time;
 
-				var builder = _candleBuilders.Get(origin.DataType);
+				var builder = _candleBuilderProvider.Get(origin.DataType);
 
 				var result = builder.Process(origin, series.CurrentCandleMessage, transform);
 
 				foreach (var candleMessage in result)
 				{
 					series.CurrentCandleMessage = candleMessage;
+
+					if (series.Original.IsFinished && candleMessage.State != CandleStates.Finished)
+						continue;
+
 					SendCandle(series, candleMessage);
 				}
 			}
@@ -702,11 +685,6 @@ namespace StockSharp.Algo.Candles.Compression
 
 		private void SendCandle(SeriesInfo info, CandleMessage candleMsg)
 		{
-			//if (info.LastTime > candleMsg.OpenTime)
-			//	return;
-
-			info.LastTime = candleMsg.OpenTime;
-
 			var clone = (CandleMessage)candleMsg.Clone();
 			clone.Adapter = candleMsg.Adapter;
 			clone.OriginalTransactionId = info.Original.TransactionId;
@@ -720,7 +698,7 @@ namespace StockSharp.Algo.Candles.Compression
 		/// <returns>Copy.</returns>
 		public override IMessageChannel Clone()
 		{
-			return new CandleBuilderMessageAdapter(InnerAdapter, _exchangeInfoProvider);
+			return new CandleBuilderMessageAdapter(InnerAdapter, _candleBuilderProvider);
 		}
 	}
 }

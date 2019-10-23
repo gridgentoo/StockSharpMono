@@ -43,30 +43,22 @@ namespace StockSharp.Algo.Indicators
 		/// </summary>
 		public decimal Width { get; set; }
 
-		/// <summary>
-		/// To handle the input value.
-		/// </summary>
-		/// <param name="input">The input value.</param>
-		/// <returns>The resulting value.</returns>
+		/// <inheritdoc />
 		protected override IIndicatorValue OnProcess(IIndicatorValue input)
 		{
+			IsFormed = _ma.IsFormed && _dev.IsFormed;
+
 			return new DecimalIndicatorValue(this, _ma.GetCurrentValue() + (Width * _dev.GetCurrentValue()));
 		}
 
-		/// <summary>
-		/// Load settings.
-		/// </summary>
-		/// <param name="settings">Settings storage.</param>
+		/// <inheritdoc />
 		public override void Load(SettingsStorage settings)
 		{
 			base.Load(settings);
 			Width = settings.GetValue<decimal>(nameof(Width));
 		}
 
-		/// <summary>
-		/// Save settings.
-		/// </summary>
-		/// <param name="settings">Settings storage.</param>
+		/// <inheritdoc />
 		public override void Save(SettingsStorage settings)
 		{
 			base.Save(settings);

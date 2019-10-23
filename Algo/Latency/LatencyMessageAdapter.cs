@@ -44,15 +44,12 @@ namespace StockSharp.Algo.Latency
 			set => _latencyManager = value ?? throw new ArgumentNullException(nameof(value));
 		}
 
-		/// <summary>
-		/// Send message.
-		/// </summary>
-		/// <param name="message">Message.</param>
-		public override void SendInMessage(Message message)
+		/// <inheritdoc />
+		protected override void OnSendInMessage(Message message)
 		{
 			if (message.IsBack)
 			{
-				base.SendInMessage(message);
+				base.OnSendInMessage(message);
 				return;
 			}
 
@@ -60,13 +57,10 @@ namespace StockSharp.Algo.Latency
 
 			LatencyManager.ProcessMessage(message);
 
-			base.SendInMessage(message);
+			base.OnSendInMessage(message);
 		}
 
-		/// <summary>
-		/// Process <see cref="MessageAdapterWrapper.InnerAdapter"/> output message.
-		/// </summary>
-		/// <param name="message">The message.</param>
+		/// <inheritdoc />
 		protected override void OnInnerAdapterNewOutMessage(Message message)
 		{
 			if (!message.IsBack)

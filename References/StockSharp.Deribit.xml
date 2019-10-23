@@ -20,22 +20,13 @@
             </summary>
         </member>
         <member name="M:StockSharp.Deribit.DeribitMessageAdapter.Save(Ecng.Serialization.SettingsStorage)">
-            <summary>
-            Save settings.
-            </summary>
-            <param name="storage">Settings storage.</param>
+            <inheritdoc />
         </member>
         <member name="M:StockSharp.Deribit.DeribitMessageAdapter.Load(Ecng.Serialization.SettingsStorage)">
-            <summary>
-            Load settings.
-            </summary>
-            <param name="storage">Settings storage.</param>
+            <inheritdoc />
         </member>
         <member name="M:StockSharp.Deribit.DeribitMessageAdapter.ToString">
-            <summary>
-            Returns a string that represents the current object.
-            </summary>
-            <returns>A string that represents the current object.</returns>
+            <inheritdoc />
         </member>
         <member name="M:StockSharp.Deribit.DeribitMessageAdapter.#ctor(Ecng.Common.IdGenerator)">
             <summary>
@@ -61,6 +52,26 @@
             USD.
             </summary>
         </member>
+        <member name="T:StockSharp.Deribit.DeribitOrderTriggers">
+            <summary>
+            Triggers.
+            </summary>
+        </member>
+        <member name="F:StockSharp.Deribit.DeribitOrderTriggers.Index">
+            <summary>
+            Index price.
+            </summary>
+        </member>
+        <member name="F:StockSharp.Deribit.DeribitOrderTriggers.Mark">
+            <summary>
+            Mark price.
+            </summary>
+        </member>
+        <member name="F:StockSharp.Deribit.DeribitOrderTriggers.Last">
+            <summary>
+            By last price.
+            </summary>
+        </member>
         <member name="T:StockSharp.Deribit.DeribitOrderCondition">
             <summary>
             <see cref="N:StockSharp.Deribit"/> order condition.
@@ -76,9 +87,24 @@
             Activation price, when reached an order will be placed.
             </summary>
         </member>
+        <member name="P:StockSharp.Deribit.DeribitOrderCondition.Trigger">
+            <summary>
+            Trigger field.
+            </summary>
+        </member>
         <member name="P:StockSharp.Deribit.DeribitOrderCondition.Advanced">
             <summary>
             Extended type of order.
+            </summary>
+        </member>
+        <member name="P:StockSharp.Deribit.DeribitOrderCondition.PostOnly">
+            <summary>
+            Post-only order.
+            </summary>
+        </member>
+        <member name="P:StockSharp.Deribit.DeribitOrderCondition.ReduceOnly">
+            <summary>
+            Reduce position only.
             </summary>
         </member>
         <member name="T:StockSharp.Deribit.DeribitTrader">

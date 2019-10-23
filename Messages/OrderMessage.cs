@@ -17,7 +17,8 @@ namespace StockSharp.Messages
 {
 	using System;
 	using System.Runtime.Serialization;
-	
+	using System.Xml.Serialization;
+
 	using StockSharp.Localization;
 
 	/// <summary>
@@ -25,7 +26,7 @@ namespace StockSharp.Messages
 	/// </summary>
 	[DataContract]
 	[Serializable]
-	public abstract class OrderMessage : SecurityMessage
+	public abstract class OrderMessage : SecurityMessage, ITransactionIdMessage
 	{
 		/// <summary>
 		/// Transaction ID.
@@ -85,7 +86,25 @@ namespace StockSharp.Messages
 		[DisplayNameLoc(LocalizedStrings.Str154Key)]
 		[DescriptionLoc(LocalizedStrings.Str155Key)]
 		[CategoryLoc(LocalizedStrings.Str156Key)]
+		[XmlIgnore]
 		public OrderCondition Condition { get; set; }
+
+		/// <summary>
+		/// Copy the message into the <paramref name="destination" />.
+		/// </summary>
+		/// <param name="destination">The object, to which copied information.</param>
+		protected virtual void CopyTo(OrderMessage destination)
+		{
+			base.CopyTo(destination);
+
+			destination.TransactionId = TransactionId;
+			destination.PortfolioName = PortfolioName;
+			destination.OrderType = OrderType;
+			destination.UserOrderId = UserOrderId;
+			destination.BrokerCode = BrokerCode;
+			destination.ClientCode = ClientCode;
+			destination.Condition = Condition?.Clone();
+		}
 
 		/// <summary>
 		/// Initialize <see cref="OrderMessage"/>.

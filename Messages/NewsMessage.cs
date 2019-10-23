@@ -16,18 +16,46 @@ Copyright 2010 by StockSharp, LLC
 namespace StockSharp.Messages
 {
 	using System;
+	using System.ComponentModel.DataAnnotations;
 	using System.Runtime.Serialization;
 
-	using Ecng.Serialization;
-
 	using StockSharp.Localization;
+
+	/// <summary>
+	/// News priorities.
+	/// </summary>
+	[DataContract]
+	[Serializable]
+	public enum NewsPriorities
+	{
+		/// <summary>
+		/// Low.
+		/// </summary>
+		[EnumMember]
+		[Display(ResourceType = typeof(LocalizedStrings), Name = LocalizedStrings.LowKey)]
+		Low,
+
+		/// <summary>
+		/// Regular.
+		/// </summary>
+		[EnumMember]
+		[Display(ResourceType = typeof(LocalizedStrings), Name = LocalizedStrings.Str1629Key)]
+		Regular,
+
+		/// <summary>
+		/// High.
+		/// </summary>
+		[EnumMember]
+		[Display(ResourceType = typeof(LocalizedStrings), Name = LocalizedStrings.HighKey)]
+		High,
+	}
 
 	/// <summary>
 	/// The message contains information about the news.
 	/// </summary>
 	[Serializable]
-	[System.Runtime.Serialization.DataContract]
-	public class NewsMessage : Message
+	[DataContract]
+	public class NewsMessage : BaseSubscriptionIdMessage, IServerTimeMessage
 	{
 		/// <summary>
 		/// News ID.
@@ -55,7 +83,7 @@ namespace StockSharp.Messages
 		[DisplayNameLoc(LocalizedStrings.SecurityKey)]
 		[DescriptionLoc(LocalizedStrings.Str212Key)]
 		[MainCategory]
-		[Nullable]
+		[Ecng.Serialization.Nullable]
 		public SecurityId? SecurityId { get; set; }
 
 		/// <summary>
@@ -85,9 +113,7 @@ namespace StockSharp.Messages
 		[MainCategory]
 		public string Story { get; set; }
 
-		/// <summary>
-		/// Time of news arrival.
-		/// </summary>
+		/// <inheritdoc />
 		[DataMember]
 		[DisplayNameLoc(LocalizedStrings.TimeKey)]
 		[DescriptionLoc(LocalizedStrings.Str220Key)]
@@ -101,13 +127,19 @@ namespace StockSharp.Messages
 		[DisplayNameLoc(LocalizedStrings.Str221Key)]
 		[DescriptionLoc(LocalizedStrings.Str222Key)]
 		[MainCategory]
-		public Uri Url { get; set; }
+		public string Url { get; set; }
 
 		/// <summary>
-		/// ID of the original message <see cref="MarketDataMessage.TransactionId"/> for which this message is a response.
+		/// News priority.
 		/// </summary>
 		[DataMember]
-		public long OriginalTransactionId { get; set; }
+		[Display(
+			ResourceType = typeof(LocalizedStrings),
+			Name = LocalizedStrings.PriorityKey,
+			Description = LocalizedStrings.NewsPriorityKey,
+			GroupName = LocalizedStrings.GeneralKey)]
+		[Ecng.Serialization.Nullable]
+		public NewsPriorities? Priority { get; set; }
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="NewsMessage"/>.
@@ -117,10 +149,7 @@ namespace StockSharp.Messages
 		{
 		}
 
-		/// <summary>
-		/// Returns a string that represents the current object.
-		/// </summary>
-		/// <returns>A string that represents the current object.</returns>
+		/// <inheritdoc />
 		public override string ToString()
 		{
 			return base.ToString() + $",Sec={SecurityId},Head={Headline}";
@@ -132,18 +161,22 @@ namespace StockSharp.Messages
 		/// <returns>Copy.</returns>
 		public override Message Clone()
 		{
-			return new NewsMessage
+			var clone = new NewsMessage
 			{
-				LocalTime = LocalTime,
-				ServerTime = ServerTime,
-				SecurityId = SecurityId,
-				BoardCode = BoardCode,
-				Headline = Headline,
 				Id = Id,
+				BoardCode = BoardCode,
+				SecurityId = SecurityId,
 				Source = Source,
+				Headline = Headline,
 				Story = Story,
-				Url = Url
+				ServerTime = ServerTime,
+				Url = Url,
+				Priority = Priority,
 			};
+
+			CopyTo(clone);
+
+			return clone;
 		}
 	}
 }

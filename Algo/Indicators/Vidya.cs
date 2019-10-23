@@ -45,9 +45,7 @@ namespace StockSharp.Algo.Indicators
 			Length = 15;
 		}
 
-		/// <summary>
-		/// To reset the indicator status to initial. The method is called each time when initial settings are changed (for example, the length of period).
-		/// </summary>
+		/// <inheritdoc />
 		public override void Reset()
 		{
 			_cmo.Length = Length;
@@ -57,17 +55,16 @@ namespace StockSharp.Algo.Indicators
 			base.Reset();
 		}
 
-		/// <summary>
-		/// To handle the input value.
-		/// </summary>
-		/// <param name="input">The input value.</param>
-		/// <returns>The resulting value.</returns>
+		/// <inheritdoc />
 		protected override IIndicatorValue OnProcess(IIndicatorValue input)
 		{
 			var newValue = input.GetValue<decimal>();
 
 			// calc СMO
-			var cmoValue = _cmo.Process(input).GetValue<decimal>();
+			var cmoValue = _cmo.Process(input);
+
+			if (cmoValue.IsEmpty)
+				return new DecimalIndicatorValue(this);
 
 			// calc Vidya
 			if (!IsFormed)
@@ -82,7 +79,7 @@ namespace StockSharp.Algo.Indicators
 				return new DecimalIndicatorValue(this, _prevFinalValue);
 			}
 
-			var curValue = (newValue - _prevFinalValue) * _multiplier * Math.Abs(cmoValue / 100m) + _prevFinalValue;
+			var curValue = (newValue - _prevFinalValue) * _multiplier * Math.Abs(cmoValue.GetValue<decimal>() / 100m) + _prevFinalValue;
 				
 			if (input.IsFinal)
 				_prevFinalValue = curValue;

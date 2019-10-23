@@ -168,7 +168,7 @@ namespace StockSharp.BusinessEntities
 		/// </summary>
 		[Ignore]
 		[XmlIgnore]
-		[DisplayNameLoc(LocalizedStrings.Str257Key)]
+		[DisplayNameLoc(LocalizedStrings.AveragePriceKey)]
 		[DescriptionLoc(LocalizedStrings.Str429Key)]
 		[StatisticsCategory]
 		[Browsable(false)]
@@ -281,6 +281,30 @@ namespace StockSharp.BusinessEntities
 			}
 		}
 
+		private decimal? _settlementPrice;
+
+		/// <summary>
+		/// Settlement price.
+		/// </summary>
+		[DataMember]
+		[DisplayNameLoc(LocalizedStrings.Str312Key)]
+		[DescriptionLoc(LocalizedStrings.SettlementPriceKey)]
+		[StatisticsCategory]
+		[Nullable]
+		[Browsable(false)]
+		public decimal? SettlementPrice
+		{
+			get => _settlementPrice;
+			set
+			{
+				if (_settlementPrice == value)
+					return;
+
+				_settlementPrice = value;
+				NotifyChanged(nameof(SettlementPrice));
+			}
+		}
+
 		private DateTimeOffset _lastChangeTime;
 
 		/// <summary>
@@ -360,6 +384,35 @@ namespace StockSharp.BusinessEntities
 			}
 		}
 
+		private DateTimeOffset? _expirationDate;
+
+		/// <summary>
+		/// Expiration date.
+		/// </summary>
+		[DataMember]
+		[DisplayNameLoc(LocalizedStrings.ExpiryDateKey)]
+		[DescriptionLoc(LocalizedStrings.ExpiryDateKey)]
+		[MainCategory]
+		[Nullable]
+		public DateTimeOffset? ExpirationDate
+		{
+			get => _expirationDate;
+			set
+			{
+				_expirationDate = value;
+				NotifyChanged(nameof(ExpirationDate));
+			}
+		}
+
+		/// <summary>
+		/// Client code assigned by the broker.
+		/// </summary>
+		[DataMember]
+		[MainCategory]
+		[DisplayNameLoc(LocalizedStrings.ClientCodeKey)]
+		[DescriptionLoc(LocalizedStrings.ClientCodeDescKey)]
+		public string ClientCode { get; set; }
+
 		/// <summary>
 		/// To copy fields of the current position to <paramref name="destination" />.
 		/// </summary>
@@ -378,7 +431,11 @@ namespace StockSharp.BusinessEntities
 			destination.UnrealizedPnL = UnrealizedPnL;
 			destination.AveragePrice = AveragePrice;
 			destination.CurrentPrice = CurrentPrice;
+			destination.SettlementPrice = SettlementPrice;
 			destination.Description = Description;
+			destination.Currency = Currency;
+			destination.ExpirationDate = ExpirationDate;
+			destination.ClientCode = ClientCode;
 			//destination.LastChangeTime = LastChangeTime;
 			//destination.LocalTime = LocalTime;
 		}

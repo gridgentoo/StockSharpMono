@@ -97,22 +97,6 @@ namespace StockSharp.Messages
 		public TimeInForce? TimeInForce { get; set; }
 
 		/// <summary>
-		/// Information for REPO\REPO-M orders.
-		/// </summary>
-		[DisplayNameLoc(LocalizedStrings.Str233Key)]
-		[DescriptionLoc(LocalizedStrings.Str234Key)]
-		[MainCategory]
-		public RepoOrderInfo RepoInfo { get; set; }
-
-		/// <summary>
-		/// Information for Negotiate Deals Mode orders.
-		/// </summary>
-		[DisplayNameLoc(LocalizedStrings.Str235Key)]
-		[DescriptionLoc(LocalizedStrings.Str236Key)]
-		[MainCategory]
-		public RpsOrderInfo RpsInfo { get; set; }
-
-		/// <summary>
 		/// Is the order of market-maker.
 		/// </summary>
 		[DataMember]
@@ -137,6 +121,14 @@ namespace StockSharp.Messages
 		[DisplayNameLoc(LocalizedStrings.Str163Key)]
 		[DescriptionLoc(LocalizedStrings.Str164Key)]
 		public decimal? Slippage { get; set; }
+
+		/// <summary>
+		/// Is order manual.
+		/// </summary>
+		[DataMember]
+		[DisplayNameLoc(LocalizedStrings.ManualKey)]
+		[DescriptionLoc(LocalizedStrings.IsOrderManualKey)]
+		public bool? IsManual { get; set; }
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="OrderRegisterMessage"/>.
@@ -174,39 +166,22 @@ namespace StockSharp.Messages
 		/// <param name="destination">The object, to which copied information.</param>
 		public void CopyTo(OrderRegisterMessage destination)
 		{
-			if (destination == null)
-				throw new ArgumentNullException(nameof(destination));
+			base.CopyTo(destination);
 
-			destination.Comment = Comment;
-			destination.Condition = Condition?.Clone();
-			destination.TillDate = TillDate;
-			destination.OrderType = OrderType;
-			destination.PortfolioName = PortfolioName;
 			destination.Price = Price;
-			destination.RepoInfo = RepoInfo?.Clone();
-			destination.RpsInfo = RpsInfo?.Clone();
-			//destination.SecurityId = SecurityId;
-			//destination.SecurityType = SecurityType;
-			destination.Side = Side;
-			destination.TimeInForce = TimeInForce;
-			destination.TransactionId = TransactionId;
-			destination.VisibleVolume = VisibleVolume;
 			destination.Volume = Volume;
-			//destination.Currency = Currency;
-			destination.UserOrderId = UserOrderId;
-			destination.ClientCode = ClientCode;
-			destination.BrokerCode = BrokerCode;
+			destination.VisibleVolume = VisibleVolume;
+			destination.Side = Side;
+			destination.Comment = Comment;
+			destination.TillDate = TillDate;
+			destination.TimeInForce = TimeInForce;
 			destination.IsMarketMaker = IsMarketMaker;
 			destination.IsMargin = IsMargin;
 			destination.Slippage = Slippage;
-
-			base.CopyTo(destination);
+			destination.IsManual = IsManual;
 		}
 
-		/// <summary>
-		/// Returns a string that represents the current object.
-		/// </summary>
-		/// <returns>A string that represents the current object.</returns>
+		/// <inheritdoc />
 		public override string ToString()
 		{
 			return base.ToString() + $",TransId={TransactionId},Price={Price},Side={Side},OrdType={OrderType},Vol={Volume},Sec={SecurityId},Pf={PortfolioName}";

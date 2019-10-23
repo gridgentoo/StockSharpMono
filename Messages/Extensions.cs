@@ -23,6 +23,7 @@ namespace StockSharp.Messages
 
 	using Ecng.Common;
 	using Ecng.Collections;
+	using Ecng.ComponentModel;
 	using Ecng.Localization;
 	using Ecng.Net;
 
@@ -92,7 +93,7 @@ namespace StockSharp.Messages
 			if (message == null)
 				throw new ArgumentNullException(nameof(message));
 
-			return (message.IsSorted ? message.Bids : message.Bids.OrderByDescending(q => q.Price)).FirstOrDefault();
+			return (message.IsSorted ? (IEnumerable<QuoteChange>)message.Bids : message.Bids.OrderByDescending(q => q.Price)).FirstOrDefault();
 		}
 
 		/// <summary>
@@ -105,7 +106,7 @@ namespace StockSharp.Messages
 			if (message == null)
 				throw new ArgumentNullException(nameof(message));
 
-			return (message.IsSorted ? message.Asks : message.Asks.OrderBy(q => q.Price)).FirstOrDefault();
+			return (message.IsSorted ? (IEnumerable<QuoteChange>)message.Asks : message.Asks.OrderBy(q => q.Price)).FirstOrDefault();
 		}
 
 		/// <summary>
@@ -325,29 +326,39 @@ namespace StockSharp.Messages
 		/// <returns>Server time. If the value is <see langword="null" />, the message does not contain the server time.</returns>
 		public static DateTimeOffset? TryGetServerTime(this Message message)
 		{
-			switch (message.Type)
-			{
-				case MessageTypes.Execution:
-					return ((ExecutionMessage)message).ServerTime;
-				case MessageTypes.QuoteChange:
-					return ((QuoteChangeMessage)message).ServerTime;
-				case MessageTypes.Level1Change:
-					return ((Level1ChangeMessage)message).ServerTime;
-				case MessageTypes.PositionChange:
-					return ((PositionChangeMessage)message).ServerTime;
-				case MessageTypes.PortfolioChange:
-					return ((PortfolioChangeMessage)message).ServerTime;
-				case MessageTypes.Time:
-					return ((TimeMessage)message).ServerTime;
-				case MessageTypes.Connect:
-					return ((ConnectMessage)message).LocalTime;
-				default:
-				{
-					var candleMsg = message as CandleMessage;
-					return candleMsg?.OpenTime;
-				}
-			}
+			return (message as IServerTimeMessage)?.ServerTime;
 		}
+
+		/// <summary>
+		/// Convert <see cref="MessageTypes"/> to <see cref="MessageTypeInfo"/> value.
+		/// </summary>
+		/// <param name="type"><see cref="MessageTypes"/> value.</param>
+		/// <param name="isMarketData">Market data.</param>
+		/// <returns><see cref="MessageTypeInfo"/> value.</returns>
+		public static MessageTypeInfo ToInfo(this MessageTypes type, bool? isMarketData = null)
+		{
+			if (isMarketData == null)
+				isMarketData = IsMarketData(type);
+
+			return new MessageTypeInfo(type, isMarketData);
+		}
+
+		private static readonly CachedSynchronizedSet<MessageTypes> _transactionalTypes = new CachedSynchronizedSet<MessageTypes>(new[]
+		{
+			MessageTypes.OrderRegister,
+			MessageTypes.OrderCancel,
+			MessageTypes.OrderStatus,
+			MessageTypes.OrderGroupCancel,
+			MessageTypes.OrderReplace,
+			MessageTypes.OrderPairReplace,
+			MessageTypes.Portfolio,
+			MessageTypes.PortfolioLookup
+		});
+
+		/// <summary>
+		/// Transactional message types.
+		/// </summary>
+		public static IEnumerable<MessageTypes> TransactionalMessageTypes => _transactionalTypes.Cache;
 
 		/// <summary>
 		/// Fill the <see cref="IMessageAdapter.SupportedMessages"/> message types related to transactional.
@@ -355,15 +366,8 @@ namespace StockSharp.Messages
 		/// <param name="adapter">Adapter.</param>
 		public static void AddTransactionalSupport(this IMessageAdapter adapter)
 		{
-			adapter.AddSupportedMessage(MessageTypes.OrderCancel);
-			adapter.AddSupportedMessage(MessageTypes.OrderGroupCancel);
-			adapter.AddSupportedMessage(MessageTypes.OrderPairReplace);
-			adapter.AddSupportedMessage(MessageTypes.OrderRegister);
-			adapter.AddSupportedMessage(MessageTypes.OrderReplace);
-			adapter.AddSupportedMessage(MessageTypes.OrderStatus);
-			adapter.AddSupportedMessage(MessageTypes.Portfolio);
-			adapter.AddSupportedMessage(MessageTypes.PortfolioLookup);
-			//adapter.AddSupportedMessage(MessageTypes.Position);
+			foreach (var type in TransactionalMessageTypes)
+				adapter.AddSupportedMessage(type, false);
 		}
 
 		/// <summary>
@@ -372,16 +376,20 @@ namespace StockSharp.Messages
 		/// <param name="adapter">Adapter.</param>
 		public static void RemoveTransactionalSupport(this IMessageAdapter adapter)
 		{
-			adapter.RemoveSupportedMessage(MessageTypes.OrderCancel);
-			adapter.RemoveSupportedMessage(MessageTypes.OrderGroupCancel);
-			adapter.RemoveSupportedMessage(MessageTypes.OrderPairReplace);
-			adapter.RemoveSupportedMessage(MessageTypes.OrderRegister);
-			adapter.RemoveSupportedMessage(MessageTypes.OrderReplace);
-			adapter.RemoveSupportedMessage(MessageTypes.OrderStatus);
-			adapter.RemoveSupportedMessage(MessageTypes.Portfolio);
-			adapter.RemoveSupportedMessage(MessageTypes.PortfolioLookup);
-			//adapter.RemoveSupportedMessage(MessageTypes.Position);
+			foreach (var type in TransactionalMessageTypes)
+				adapter.RemoveSupportedMessage(type);
 		}
+
+		private static readonly CachedSynchronizedSet<MessageTypes> _marketDataTypes = new CachedSynchronizedSet<MessageTypes>(new[]
+		{
+			MessageTypes.MarketData,
+			MessageTypes.SecurityLookup,
+		});
+
+		/// <summary>
+		/// Market-data message types.
+		/// </summary>
+		public static IEnumerable<MessageTypes> MarketDataMessageTypes => _marketDataTypes.Cache;
 
 		/// <summary>
 		/// Fill the <see cref="IMessageAdapter.SupportedMessages"/> message types related to market-data.
@@ -389,10 +397,8 @@ namespace StockSharp.Messages
 		/// <param name="adapter">Adapter.</param>
 		public static void AddMarketDataSupport(this IMessageAdapter adapter)
 		{
-			adapter.AddSupportedMessage(MessageTypes.MarketData);
-			adapter.AddSupportedMessage(MessageTypes.SecurityLookup);
-
-			//adapter.AddSupportedAllMarketDataTypes();
+			foreach (var type in MarketDataMessageTypes)
+				adapter.AddSupportedMessage(type, true);
 		}
 
 		/// <summary>
@@ -401,10 +407,20 @@ namespace StockSharp.Messages
 		/// <param name="adapter">Adapter.</param>
 		public static void RemoveMarketDataSupport(this IMessageAdapter adapter)
 		{
-			adapter.RemoveSupportedMessage(MessageTypes.MarketData);
-			adapter.RemoveSupportedMessage(MessageTypes.SecurityLookup);
+			foreach (var type in MarketDataMessageTypes)
+				adapter.RemoveSupportedMessage(type);
 
 			adapter.RemoveSupportedAllMarketDataTypes();
+		}
+
+		private static bool? IsMarketData(MessageTypes type)
+		{
+			if (MarketDataMessageTypes.Contains(type))
+				return true;
+			else if (TransactionalMessageTypes.Contains(type))
+				return false;
+
+			return null;
 		}
 
 		/// <summary>
@@ -412,12 +428,40 @@ namespace StockSharp.Messages
 		/// </summary>
 		/// <param name="adapter">Adapter.</param>
 		/// <param name="type">Message type.</param>
+		[Obsolete]
 		public static void AddSupportedMessage(this IMessageAdapter adapter, MessageTypes type)
+		{
+			AddSupportedMessage(adapter, type, IsMarketData(type));
+		}
+
+		/// <summary>
+		/// Add the message type info <see cref="IMessageAdapter.SupportedMessages"/>.
+		/// </summary>
+		/// <param name="adapter">Adapter.</param>
+		/// <param name="type">Message type.</param>
+		/// <param name="isMarketData"><paramref name="type"/> is market-data type.</param>
+		public static void AddSupportedMessage(this IMessageAdapter adapter, MessageTypes type, bool? isMarketData)
+		{
+			adapter.AddSupportedMessage(new MessageTypeInfo(type, isMarketData));
+		}
+
+		/// <summary>
+		/// Add the message type info <see cref="IMessageAdapter.SupportedMessages"/>.
+		/// </summary>
+		/// <param name="adapter">Adapter.</param>
+		/// <param name="info">Extended info for <see cref="MessageTypes"/>.</param>
+		public static void AddSupportedMessage(this IMessageAdapter adapter, MessageTypeInfo info)
 		{
 			if (adapter == null)
 				throw new ArgumentNullException(nameof(adapter));
 
-			adapter.SupportedMessages = adapter.SupportedMessages.Concat(type).Distinct().ToArray();
+			if (info == null)
+				throw new ArgumentNullException(nameof(info));
+
+			var dict = adapter.PossibleSupportedMessages.ToDictionary(i => i.Type);
+			dict.TryAdd(info.Type, info);
+
+			adapter.PossibleSupportedMessages = dict.Values.ToArray();
 		}
 
 		/// <summary>
@@ -430,7 +474,7 @@ namespace StockSharp.Messages
 			if (adapter == null)
 				throw new ArgumentNullException(nameof(adapter));
 
-			adapter.SupportedMessages = adapter.SupportedMessages.Except(new[] { type }).ToArray();
+			adapter.PossibleSupportedMessages = adapter.PossibleSupportedMessages.Where(i => i.Type != type).ToArray();
 		}
 
 		/// <summary>
@@ -473,6 +517,143 @@ namespace StockSharp.Messages
 			adapter.SupportedMarketDataTypes = adapter.SupportedMarketDataTypes.Except(new[] { type }).ToArray();
 		}
 
+		private static readonly PairSet<MessageTypes, MarketDataTypes> _candleDataTypes = new PairSet<MessageTypes, MarketDataTypes>
+		{
+			{ MessageTypes.CandleTimeFrame, MarketDataTypes.CandleTimeFrame },
+			{ MessageTypes.CandleTick, MarketDataTypes.CandleTick },
+			{ MessageTypes.CandleVolume, MarketDataTypes.CandleVolume },
+			{ MessageTypes.CandleRange, MarketDataTypes.CandleRange },
+			{ MessageTypes.CandlePnF, MarketDataTypes.CandlePnF },
+			{ MessageTypes.CandleRenko, MarketDataTypes.CandleRenko },
+		};
+
+		/// <summary>
+		/// Determine the <paramref name="type"/> is candle data type.
+		/// </summary>
+		/// <param name="type">The data type.</param>
+		/// <returns><see langword="true" />, if data type is candle, otherwise, <see langword="false" />.</returns>
+		public static bool IsCandleDataType(this MarketDataTypes type)
+		{
+			return _candleDataTypes.ContainsValue(type);
+		}
+
+		/// <summary>
+		/// To convert the type of candles <see cref="MarketDataTypes"/> into type of message <see cref="MessageTypes"/>.
+		/// </summary>
+		/// <param name="type">Candles type.</param>
+		/// <returns>Message type.</returns>
+		public static MessageTypes ToCandleMessageType(this MarketDataTypes type)
+		{
+			return _candleDataTypes[type];
+		}
+
+		/// <summary>
+		/// To convert the type of message <see cref="MessageTypes"/> into type of candles <see cref="MarketDataTypes"/>.
+		/// </summary>
+		/// <param name="type">Message type.</param>
+		/// <returns>Candles type.</returns>
+		public static MarketDataTypes ToCandleMarketDataType(this MessageTypes type)
+		{
+			return _candleDataTypes[type];
+		}
+
+		private static readonly PairSet<Type, MarketDataTypes> _candleMarketDataTypes = new PairSet<Type, MarketDataTypes>
+		{
+			{ typeof(TimeFrameCandleMessage), MarketDataTypes.CandleTimeFrame },
+			{ typeof(TickCandleMessage), MarketDataTypes.CandleTick },
+			{ typeof(VolumeCandleMessage), MarketDataTypes.CandleVolume },
+			{ typeof(RangeCandleMessage), MarketDataTypes.CandleRange },
+			{ typeof(PnFCandleMessage), MarketDataTypes.CandlePnF },
+			{ typeof(RenkoCandleMessage), MarketDataTypes.CandleRenko },
+		};
+
+		/// <summary>
+		/// Cast candle type <see cref="MarketDataTypes"/> to the message <see cref="CandleMessage"/>.
+		/// </summary>
+		/// <param name="type">Candle type.</param>
+		/// <returns>Message type <see cref="CandleMessage"/>.</returns>
+		public static Type ToCandleMessage(this MarketDataTypes type)
+		{
+			var messageType = _candleMarketDataTypes.TryGetKey(type);
+
+			if (messageType == null)
+				throw new ArgumentOutOfRangeException(nameof(type), type, LocalizedStrings.WrongCandleType);
+
+			return messageType;
+		}
+
+		/// <summary>
+		/// Cast message type <see cref="CandleMessage"/> to the <see cref="MarketDataTypes"/>.
+		/// </summary>
+		/// <param name="messageType">The type of the message <see cref="CandleMessage"/>.</param>
+		/// <returns><see cref="MarketDataTypes"/>.</returns>
+		public static MarketDataTypes ToCandleMarketDataType(this Type messageType)
+		{
+			if (messageType == null)
+				throw new ArgumentNullException(nameof(messageType));
+
+			var dataType = _candleMarketDataTypes.TryGetValue2(messageType);
+
+			if (dataType == null)
+				throw new ArgumentOutOfRangeException(nameof(messageType), messageType, LocalizedStrings.WrongCandleType);
+
+			return dataType.Value;
+		}
+
+		/// <summary>
+		/// Determines whether the specified subscription request is supported by the adapter.
+		/// </summary>
+		/// <param name="adapter">Adapter.</param>
+		/// <param name="subscription">Subscription.</param>
+		/// <returns><see langword="true"/> if the specified subscription request is supported, otherwise, <see langword="false"/>.</returns>
+		public static bool IsCandlesSupported(this IMessageAdapter adapter, MarketDataMessage subscription)
+		{
+			if (adapter == null)
+				throw new ArgumentNullException(nameof(adapter));
+
+			if (subscription == null)
+				throw new ArgumentNullException(nameof(subscription));
+
+			if (!adapter.SupportedMarketDataTypes.Contains(subscription.DataType))
+				return false;
+
+			var args = adapter.GetCandleArgs(subscription.DataType.ToCandleMessage(), subscription.SecurityId, subscription.From, subscription.To).ToArray();
+
+			if (args.IsEmpty())
+				return true;
+
+			return args.Contains(subscription.Arg);
+		}
+
+		/// <summary>
+		/// Get possible time-frames for the specified instrument.
+		/// </summary>
+		/// <param name="adapter">Trading system adapter.</param>
+		/// <param name="securityId">Security ID.</param>
+		/// <param name="from">The initial date from which you need to get data.</param>
+		/// <param name="to">The final date by which you need to get data.</param>
+		/// <returns>Possible time-frames.</returns>
+		public static IEnumerable<TimeSpan> GetTimeFrames(this IMessageAdapter adapter, SecurityId securityId = default, DateTimeOffset? from = null, DateTimeOffset? to = null)
+			=> adapter.GetCandleArgs<TimeSpan>(typeof(TimeFrameCandleMessage), securityId, from, to);
+
+		/// <summary>
+		/// Get possible args for the specified candle type and instrument.
+		/// </summary>
+		/// <typeparam name="TArg">Type of <see cref="CandleMessage.Arg"/>.</typeparam>
+		/// <param name="adapter">Adapter.</param>
+		/// <param name="candleType">The type of the message <see cref="CandleMessage"/>.</param>
+		/// <param name="securityId">Security ID.</param>
+		/// <param name="from">The initial date from which you need to get data.</param>
+		/// <param name="to">The final date by which you need to get data.</param>
+		/// <returns>Possible args.</returns>
+		public static IEnumerable<TArg> GetCandleArgs<TArg>(this IMessageAdapter adapter, Type candleType, SecurityId securityId = default, DateTimeOffset? from = null, DateTimeOffset? to = null)
+		{
+			if (adapter == null)
+				throw new ArgumentNullException(nameof(adapter));
+
+			return adapter.GetCandleArgs(candleType, securityId, from, to).Cast<TArg>();
+		}
+
 		/// <summary>
 		/// Determines whether the specified market-data type is supported by the adapter.
 		/// </summary>
@@ -485,27 +666,6 @@ namespace StockSharp.Messages
 				throw new ArgumentNullException(nameof(adapter));
 
 			return adapter.SupportedMarketDataTypes.Contains(type);
-		}
-
-		/// <summary>
-		/// Add all market data types into <see cref="IMessageAdapter.SupportedMarketDataTypes"/>.
-		/// </summary>
-		/// <param name="adapter">Adapter.</param>
-		public static void AddSupportedAllMarketDataTypes(this IMessageAdapter adapter)
-		{
-			if (adapter == null)
-				throw new ArgumentNullException(nameof(adapter));
-
-			//adapter.AddSupportedMarketDataType(MarketDataTypes.OrderLog);
-			adapter.AddSupportedMarketDataType(MarketDataTypes.Trades);
-			adapter.AddSupportedMarketDataType(MarketDataTypes.MarketDepth);
-			adapter.AddSupportedMarketDataType(MarketDataTypes.Level1);
-			adapter.AddSupportedMarketDataType(MarketDataTypes.CandleTimeFrame);
-			//adapter.AddSupportedMarketDataType(MarketDataTypes.CandleTick);
-			//adapter.AddSupportedMarketDataType(MarketDataTypes.CandleVolume);
-			//adapter.AddSupportedMarketDataType(MarketDataTypes.CandleRange);
-			//adapter.AddSupportedMarketDataType(MarketDataTypes.CandlePnF);
-			//adapter.AddSupportedMarketDataType(MarketDataTypes.CandleRenko);
 		}
 
 		/// <summary>
@@ -739,30 +899,59 @@ namespace StockSharp.Messages
 		}
 
 		/// <summary>
+		/// Fields related to last trade.
+		/// </summary>
+		public static CachedSynchronizedSet<Level1Fields> LastTradeFields { get; } = new CachedSynchronizedSet<Level1Fields>(new[]
+		{
+			Level1Fields.LastTradeId,
+			Level1Fields.LastTradeTime,
+			Level1Fields.LastTradeOrigin,
+			Level1Fields.LastTradePrice,
+			Level1Fields.LastTradeUpDown,
+			Level1Fields.LastTradeVolume,
+			Level1Fields.IsSystem
+		});
+
+		/// <summary>
 		/// Is the specified <see cref="Level1Fields"/> is related to last trade.
 		/// </summary>
 		/// <param name="field">Field.</param>
 		/// <returns>Check result.</returns>
-		public static bool IsLastTradeField(this Level1Fields field) =>
-			field == Level1Fields.LastTradeId || field == Level1Fields.LastTradeTime ||
-			field == Level1Fields.LastTradeOrigin || field == Level1Fields.LastTradePrice ||
-			field == Level1Fields.LastTradeUpDown || field == Level1Fields.LastTradeVolume;
+		public static bool IsLastTradeField(this Level1Fields field) => LastTradeFields.Contains(field);
+
+		/// <summary>
+		/// Fields related to best bid.
+		/// </summary>
+		public static CachedSynchronizedSet<Level1Fields> BestBidFields { get; } = new CachedSynchronizedSet<Level1Fields>(new[]
+		{
+			Level1Fields.BestBidPrice,
+			Level1Fields.BestBidTime,
+			Level1Fields.BestBidVolume
+		});
 
 		/// <summary>
 		/// Is the specified <see cref="Level1Fields"/> is related to best bid.
 		/// </summary>
 		/// <param name="field">Field.</param>
 		/// <returns>Check result.</returns>
-		public static bool IsBestBidField(this Level1Fields field) =>
-			field == Level1Fields.BestBidPrice || field == Level1Fields.BestBidTime || field == Level1Fields.BestBidVolume;
+		public static bool IsBestBidField(this Level1Fields field) => BestBidFields.Contains(field);
 		
+		/// <summary>
+		/// Fields related to best ask.
+		/// </summary>
+		public static CachedSynchronizedSet<Level1Fields> BestAskFields { get; } = new CachedSynchronizedSet<Level1Fields>(new[]
+		{
+			Level1Fields.BestAskPrice,
+			Level1Fields.BestAskTime,
+			Level1Fields.BestAskVolume
+		});
+
 		/// <summary>
 		/// Is the specified <see cref="Level1Fields"/> is related to best ask.
 		/// </summary>
 		/// <param name="field">Field.</param>
 		/// <returns>Check result.</returns>
-		public static bool IsBestAskField(this Level1Fields field) =>
-			field == Level1Fields.BestAskPrice || field == Level1Fields.BestAskTime || field == Level1Fields.BestAskVolume;
+		public static bool IsBestAskField(this Level1Fields field) => BestAskFields.Contains(field);
 
 		/// <summary>
 		/// Fill default <see cref="SecurityTypes.CryptoCurrency"/> price and volume step by 0.00000001 value.
@@ -796,11 +985,11 @@ namespace StockSharp.Messages
 		}
 
 		/// <summary>
-		/// Get prefered language.
+		/// Get preferred language.
 		/// </summary>
 		/// <param name="categories">Message adapter categories.</param>
 		/// <returns>Language</returns>
-		public static Languages GetPreferedLanguage(this MessageAdapterCategories? categories)
+		public static Languages GetPreferredLanguage(this MessageAdapterCategories? categories)
 		{
 			return categories?.Contains(MessageAdapterCategories.Russia) == true ? Languages.Russian : Languages.English;
 		}
@@ -843,5 +1032,558 @@ namespace StockSharp.Messages
 
 			return item.TradeVolume != null;
 		}
+
+		/// <summary>
+		/// Get period for schedule.
+		/// </summary>
+		/// <param name="time">Trading schedule.</param>
+		/// <param name="date">The date in time for search of appropriate period.</param>
+		/// <returns>The schedule period. If no period is appropriate, <see langword="null" /> is returned.</returns>
+		public static WorkingTimePeriod GetPeriod(this WorkingTime time, DateTime date)
+		{
+			if (time == null)
+				throw new ArgumentNullException(nameof(time));
+
+			return time.Periods.FirstOrDefault(p => p.Till >= date);
+		}
+
+		private const string _dateFormat = "yyyyMMdd";
+		private const string _timeFormat = "hh\\:mm";
+
+		/// <summary>
+		/// Encode <see cref="WorkingTime.Periods"/> to string.
+		/// </summary>
+		/// <param name="periods">Schedule validity periods.</param>
+		/// <returns>Encoded string.</returns>
+		public static string EncodeToString(this IEnumerable<WorkingTimePeriod> periods)
+		{
+			return periods.Select(p => $"{p.Till:yyyyMMdd}=" + p.Times.Select(r => $"{r.Min:hh\\:mm}-{r.Max:hh\\:mm}").Join("--") + "=" + p.SpecialDays.Select(p2 => $"{p2.Key}:" + p2.Value.Select(r => $"{r.Min:hh\\:mm}-{r.Max:hh\\:mm}").Join("--")).Join("//")).Join(",");
+		}
+
+		/// <summary>
+		/// Decode from string to <see cref="WorkingTime.Periods"/>.
+		/// </summary>
+		/// <param name="input">Encoded string.</param>
+		/// <returns>Schedule validity periods.</returns>
+		public static IEnumerable<WorkingTimePeriod> DecodeToPeriods(this string input)
+		{
+			var periods = new List<WorkingTimePeriod>();
+
+			if (input.IsEmpty())
+				return periods;
+
+			try
+			{
+				foreach (var str in input.Split(","))
+				{
+					var parts = str.Split('=');
+					periods.Add(new WorkingTimePeriod
+					{
+						Till = parts[0].ToDateTime(_dateFormat),
+						Times = parts[1].Split("--").Select(s =>
+						{
+							var parts2 = s.Split('-');
+							return new Range<TimeSpan>(parts2[0].ToTimeSpan(_timeFormat), parts2[1].ToTimeSpan(_timeFormat));
+						}).ToList(),
+						SpecialDays = parts[2].Split("//").Select(s =>
+						{
+							var idx = s.IndexOf(':');
+							return new KeyValuePair<DayOfWeek, Range<TimeSpan>[]>(s.Substring(0, idx).To<DayOfWeek>(), s.Substring(idx + 1).Split("--").Select(s2 =>
+							{
+								var parts3 = s2.Split('-');
+								return new Range<TimeSpan>(parts3[0].ToTimeSpan(_timeFormat), parts3[1].ToTimeSpan(_timeFormat));
+							}).ToArray());
+						}).ToDictionary()
+					});
+				}
+			}
+			catch (Exception ex)
+			{
+				throw new InvalidOperationException(LocalizedStrings.Str2141Params.Put(input), ex);
+			}
+
+			return periods;
+		}
+
+		/// <summary>
+		/// Encode <see cref="WorkingTime.SpecialDays"/> to string.
+		/// </summary>
+		/// <param name="specialDays">Special working days and holidays.</param>
+		/// <returns>Encoded string.</returns>
+		public static string EncodeToString(this IDictionary<DateTime, Range<TimeSpan>[]> specialDays)
+		{
+			return specialDays.Select(p => $"{p.Key:yyyyMMdd}=" + p.Value.Select(r => $"{r.Min:hh\\:mm}-{r.Max:hh\\:mm}").Join("--")).Join(",");
+		}
+
+		/// <summary>
+		/// Decode from string to <see cref="WorkingTime.SpecialDays"/>.
+		/// </summary>
+		/// <param name="input">Encoded string.</param>
+		/// <returns>Special working days and holidays.</returns>
+		public static IDictionary<DateTime, Range<TimeSpan>[]> DecodeToSpecialDays(this string input)
+		{
+			var specialDays = new Dictionary<DateTime, Range<TimeSpan>[]>();
+
+			if (input.IsEmpty())
+				return specialDays;
+
+			try
+			{
+				foreach (var str in input.Split(","))
+				{
+					var parts = str.Split('=');
+					specialDays[parts[0].ToDateTime(_dateFormat)] = parts[1].Split("--").Select(s =>
+					{
+						var parts2 = s.Split('-');
+						return new Range<TimeSpan>(parts2[0].ToTimeSpan(_timeFormat), parts2[1].ToTimeSpan(_timeFormat));
+					}).ToArray();
+				}
+			}
+			catch (Exception ex)
+			{
+				throw new InvalidOperationException(LocalizedStrings.Str2141Params.Put(input), ex);
+			}
+
+			return specialDays;
+		}
+
+		/// <summary>
+		/// Is the specified adapter support market-data.
+		/// </summary>
+		/// <param name="adapter">Adapter.</param>
+		/// <returns>Check result.</returns>
+		public static bool IsMarketData(this IMessageAdapter adapter)
+		{
+			if (adapter == null)
+				throw new ArgumentNullException(nameof(adapter));
+
+			return adapter.IsMessageSupported(MessageTypes.MarketData) || adapter.IsMessageSupported(MessageTypes.SecurityLookup);
+		}
+
+		/// <summary>
+		/// Is the specified adapter support transactions.
+		/// </summary>
+		/// <param name="adapter">Adapter.</param>
+		/// <returns>Check result.</returns>
+		public static bool IsTransactional(this IMessageAdapter adapter)
+		{
+			if (adapter == null)
+				throw new ArgumentNullException(nameof(adapter));
+
+			return adapter.IsMessageSupported(MessageTypes.OrderRegister);
+		}
+
+		private static bool IsOrderConditionOf(this IMessageAdapter adapter, Type interfaceType)
+		{
+			if (interfaceType == null)
+				throw new ArgumentNullException(nameof(interfaceType));
+
+			var type = adapter.OrderConditionType;
+
+			return type != null && interfaceType.IsAssignableFrom(type);
+		}
+
+		/// <summary>
+		/// Determines whether the adapter support stop-loss orders.
+		/// </summary>
+		/// <param name="adapter">Adapter.</param>
+		/// <returns>Check result.</returns>
+		public static bool IsSupportStopLoss(this IMessageAdapter adapter)
+			=> adapter.IsOrderConditionOf(typeof(IStopLossOrderCondition));
+
+		/// <summary>
+		/// Determines whether the adapter support take-profit orders.
+		/// </summary>
+		/// <param name="adapter">Adapter.</param>
+		/// <returns>Check result.</returns>
+		public static bool IsSupportTakeProfit(this IMessageAdapter adapter)
+			=> adapter.IsOrderConditionOf(typeof(ITakeProfitOrderCondition));
+
+		/// <summary>
+		/// Determines whether the adapter support withdraw orders.
+		/// </summary>
+		/// <param name="adapter">Adapter.</param>
+		/// <returns>Check result.</returns>
+		public static bool IsSupportWithdraw(this IMessageAdapter adapter)
+			=> adapter.IsOrderConditionOf(typeof(IWithdrawOrderCondition));
+
+		/// <summary>
+		/// Initialize <see cref="SecurityId.SecurityCode"/>.
+		/// </summary>
+		/// <param name="message">A message containing info about the security.</param>
+		/// <param name="secCode">Security code.</param>
+		public static void SetSecurityCode(this SecurityMessage message, string secCode)
+		{
+			if (message == null)
+				throw new ArgumentNullException(nameof(message));
+
+			var secId = message.SecurityId;
+			secId.SecurityCode = secCode;
+			message.SecurityId = secId;
+		}
+
+		/// <summary>
+		/// Initialize <see cref="SecurityId.Native"/>.
+		/// </summary>
+		/// <param name="secId">Security ID.</param>
+		/// <param name="nativeId">Native (internal) trading system security id.</param>
+		/// <returns>Security ID.</returns>
+		public static SecurityId SetNativeId(this SecurityId secId, object nativeId)
+		{
+			secId.Native = nativeId;
+			return secId;
+		}
+
+		/// <summary>
+		/// Initialize <see cref="SecurityId.Native"/>.
+		/// </summary>
+		/// <param name="message">A message containing info about the security.</param>
+		/// <param name="nativeId">Native (internal) trading system security id.</param>
+		public static void SetNativeId(this SecurityMessage message, object nativeId)
+		{
+			if (message == null)
+				throw new ArgumentNullException(nameof(message));
+
+			message.SecurityId = message.SecurityId.SetNativeId(nativeId);
+		}
+
+		/// <summary>
+		/// Initialize <see cref="SecurityLookupMessage.SecurityTypes"/>.
+		/// </summary>
+		/// <param name="message">Message security lookup for specified criteria.</param>
+		/// <param name="type">Security type.</param>
+		/// <param name="types">Securities types.</param>
+		public static void SetSecurityTypes(this SecurityLookupMessage message, SecurityTypes? type, IEnumerable<SecurityTypes> types = null)
+		{
+			if (message == null)
+				throw new ArgumentNullException(nameof(message));
+
+			if (type != null)
+				message.SecurityType = type.Value;
+			else if (types != null)
+			{
+				var set = types.ToHashSet();
+
+				if (set.Count <= 0)
+					return;
+
+				if (set.Count == 1)
+					message.SecurityType = set.First();
+				else
+					message.SecurityTypes = set.ToArray();
+			}
+		}
+
+		/// <summary>
+		/// Get <see cref="SecurityLookupMessage.SecurityTypes"/>.
+		/// </summary>
+		/// <param name="message">Message security lookup for specified criteria.</param>
+		/// <returns>Securities types.</returns>
+		public static HashSet<SecurityTypes> GetSecurityTypes(this SecurityLookupMessage message)
+		{
+			if (message == null)
+				throw new ArgumentNullException(nameof(message));
+
+			var types = new HashSet<SecurityTypes>();
+
+			if (message.SecurityType != null)
+				types.Add(message.SecurityType.Value);
+			else if (message.SecurityTypes != null)
+				types.AddRange(message.SecurityTypes);
+
+			return types;
+		}
+
+		/// <summary>
+		/// Get adapter by the specified key.
+		/// </summary>
+		/// <param name="adapters">All available adapters.</param>
+		/// <param name="id">Adapter identifier.</param>
+		/// <returns>Found adapter or <see langword="null"/>.</returns>
+		public static IMessageAdapter FindById(this IEnumerable<IMessageAdapter> adapters, Guid id)
+		{
+			return adapters.FirstOrDefault(a => a.Id == id);
+		}
+
+		/// <summary>
+		/// Create <see cref="IMessageAdapter"/> instance.
+		/// </summary>
+		/// <param name="adapterType">Adapter type.</param>
+		/// <returns><see cref="IMessageAdapter"/> instance.</returns>
+		public static IMessageAdapter CreateAdapter(this Type adapterType)
+		{
+			return adapterType.CreateAdapter(new IncrementalIdGenerator());
+		}
+
+		/// <summary>
+		/// Create <see cref="IMessageAdapter"/>.
+		/// </summary>
+		/// <param name="adapterType">Adapter type.</param>
+		/// <param name="idGenerator">Transaction id generator.</param>
+		/// <returns><see cref="IMessageAdapter"/> instance.</returns>
+		public static IMessageAdapter CreateAdapter(this Type adapterType, IdGenerator idGenerator)
+		{
+			return adapterType.CreateInstance<IMessageAdapter>(idGenerator);
+		}
+
+		/// <summary>
+		/// Find adapter by the specified type.
+		/// </summary>
+		/// <typeparam name="TAdapter">The adapter type.</typeparam>
+		/// <param name="adapter">Adapter.</param>
+		/// <returns>Found adapter or <see langword="null"/>.</returns>
+		public static TAdapter FindAdapter<TAdapter>(this IMessageAdapter adapter)
+			where TAdapter : IMessageAdapter
+		{
+			if (adapter == null)
+				throw new ArgumentNullException(nameof(adapter));
+
+			if (adapter is TAdapter t)
+				return t;
+			else if (adapter is IMessageAdapterWrapper wrapper)
+				return wrapper.FindAdapter<TAdapter>();
+
+			return default;
+		}
+
+		/// <summary>
+		/// Find adapter by the specified type.
+		/// </summary>
+		/// <typeparam name="TAdapter">The adapter type.</typeparam>
+		/// <param name="wrapper">Wrapping based adapter.</param>
+		/// <returns>Found adapter or <see langword="null"/>.</returns>
+		public static TAdapter FindAdapter<TAdapter>(this IMessageAdapterWrapper wrapper)
+			where TAdapter : IMessageAdapter
+		{
+			if (wrapper == null)
+				throw new ArgumentNullException(nameof(wrapper));
+
+			if (wrapper is TAdapter adapter)
+				return adapter;
+
+			if (wrapper.InnerAdapter is IMessageAdapterWrapper w)
+				return w.FindAdapter<TAdapter>();
+
+			return default;
+		}
+
+		/// <summary>
+		/// Determines whether the reply contains an error <see cref="MarketDataMessage.Error"/> or has <see cref="MarketDataMessage.IsNotSupported"/>.
+		/// </summary>
+		/// <param name="message">Reply.</param>
+		/// <returns>Check result.</returns>
+		public static bool IsOk(this MarketDataMessage message)
+		{
+			return message.Error == null && !message.IsNotSupported;
+		}
+
+		/// <summary>
+		/// Special set mean any depth for <see cref="IMessageAdapter.SupportedOrderBookDepths"/> option.
+		/// </summary>
+		public static IEnumerable<int> AnyDepths = Array.AsReadOnly(new[] { -1 });
+
+		/// <summary>
+		/// Get the nearest supported depth for the specified.
+		/// </summary>
+		/// <param name="adapter">Adapter.</param>
+		/// <param name="depth">Depth.</param>
+		/// <returns>Supported depth.</returns>
+		public static int? NearestSupportedDepth(this IMessageAdapter adapter, int depth)
+		{
+			if (adapter == null)
+				throw new ArgumentNullException(nameof(adapter));
+
+			if (depth <= 0)
+				throw new ArgumentOutOfRangeException(nameof(depth));
+
+			var supported = adapter.SupportedOrderBookDepths;
+
+			if (ReferenceEquals(supported, AnyDepths))
+				return depth;
+
+			var arr = supported.ToArray();
+
+			if (arr.IsEmpty())
+				return null;
+
+			return arr.Where(d => d >= depth).OrderBy().FirstOr() ?? arr.Max();
+		}
+
+		/// <summary>
+		/// Create <see cref="IOrderLogMarketDepthBuilder"/> instance.
+		/// </summary>
+		/// <param name="builderType">Builder type.</param>
+		/// <param name="securityId">Security ID.</param>
+		/// <returns><see cref="IOrderLogMarketDepthBuilder"/> instance.</returns>
+		public static IOrderLogMarketDepthBuilder CreateOrderLogMarketDepthBuilder(this Type builderType, SecurityId securityId)
+		{
+			return builderType.CreateInstance<IOrderLogMarketDepthBuilder>(securityId);
+		}
+
+		/// <summary>
+		/// Get time-frame from the specified market-data message.
+		/// </summary>
+		/// <param name="mdMsg">Market-data message (uses as a subscribe/unsubscribe in outgoing case, confirmation event in incoming case).</param>
+		/// <returns>Time-frame.</returns>
+		public static TimeSpan GetTimeFrame(this MarketDataMessage mdMsg)
+		{
+			if (mdMsg == null)
+				throw new ArgumentNullException(nameof(mdMsg));
+
+			if (!(mdMsg.Arg is TimeSpan timeFrame))
+				throw new InvalidOperationException(LocalizedStrings.WrongCandleArg.Put(mdMsg.Arg));
+
+			return timeFrame;
+		}
+
+		internal static bool HandleErrorResponse(this Message message, Exception ex, DateTimeOffset currentTime, Action<Message> sendOut)
+		{
+			if (message == null)
+				throw new ArgumentNullException(nameof(message));
+
+			if (ex == null)
+				throw new ArgumentNullException(nameof(ex));
+
+			if (sendOut == null)
+				throw new ArgumentNullException(nameof(sendOut));
+
+			void SendOutErrorExecution(ExecutionMessage execMsg)
+			{
+				execMsg.ServerTime = currentTime;
+				execMsg.Error = ex;
+				execMsg.OrderState = OrderStates.Failed;
+				sendOut(execMsg);
+			}
+
+			switch (message.Type)
+			{
+				case MessageTypes.Connect:
+					sendOut(new ConnectMessage { Error = ex });
+					return true;
+
+				case MessageTypes.Disconnect:
+					sendOut(new DisconnectMessage { Error = ex });
+					return true;
+
+				case MessageTypes.OrderRegister:
+				case MessageTypes.OrderReplace:
+				case MessageTypes.OrderCancel:
+				case MessageTypes.OrderGroupCancel:
+				{
+					var replyMsg = ((OrderMessage)message).CreateReply();
+					SendOutErrorExecution(replyMsg);
+					return true;
+				}
+				case MessageTypes.OrderPairReplace:
+				{
+					var replyMsg = ((OrderPairReplaceMessage)message).Message1.CreateReply();
+					SendOutErrorExecution(replyMsg);
+					return true;
+				}
+
+				case MessageTypes.MarketData:
+				{
+					var reply = (MarketDataMessage)message.Clone();
+					reply.OriginalTransactionId = reply.TransactionId;
+					reply.Error = ex;
+					sendOut(reply);
+					return true;
+				}
+
+				case MessageTypes.SecurityLookup:
+				{
+					var lookupMsg = (SecurityLookupMessage)message;
+					sendOut(new SecurityLookupResultMessage
+					{
+						OriginalTransactionId = lookupMsg.TransactionId,
+						Error = ex
+					});
+					return true;
+				}
+
+				case MessageTypes.BoardLookup:
+				{
+					var lookupMsg = (BoardLookupMessage)message;
+					sendOut(new BoardLookupResultMessage
+					{
+						OriginalTransactionId = lookupMsg.TransactionId,
+						Error = ex
+					});
+					return true;
+				}
+
+				case MessageTypes.PortfolioLookup:
+				{
+					var lookupMsg = (PortfolioLookupMessage)message;
+					sendOut(new PortfolioLookupResultMessage
+					{
+						OriginalTransactionId = lookupMsg.TransactionId,
+						Error = ex
+					});
+					return true;
+				}
+
+				case MessageTypes.UserLookup:
+				{
+					var lookupMsg = (UserLookupMessage)message;
+					sendOut(new UserLookupResultMessage
+					{
+						OriginalTransactionId = lookupMsg.TransactionId,
+						Error = ex
+					});
+					return true;
+				}
+
+				case MessageTypes.UserRequest:
+				{
+					var requestMsg = (UserRequestMessage)message;
+					sendOut(new UserRequestMessage
+					{
+						OriginalTransactionId = requestMsg.TransactionId,
+						Error = ex
+					});
+					return true;
+				}
+
+				case MessageTypes.ChangePassword:
+				{
+					var pwdMsg = (ChangePasswordMessage)message;
+					sendOut(new ChangePasswordMessage
+					{
+						OriginalTransactionId = pwdMsg.TransactionId,
+						Error = ex
+					});
+					return true;
+				}
+			}
+
+			return false;
+		}
+
+		/// <summary>
+		/// Get subscription identifiers from the specified message.
+		/// </summary>
+		/// <param name="message">Message.</param>
+		/// <returns>Identifiers.</returns>
+		public static IEnumerable<long> GetSubscriptionIds(this ISubscriptionIdMessage message)
+		{
+			if (message == null)
+				throw new ArgumentNullException(nameof(message));
+
+			if (message.SubscriptionIds != null)
+				return message.SubscriptionIds;
+			else if (message.SubscriptionId > 0)
+				return new[] { message.SubscriptionId };
+			else
+				return Enumerable.Empty<long>();
+		}
+
+		/// <summary>
+		/// Is the data type required security info.
+		/// </summary>
+		/// <param name="type">Market data type.</param>
+		/// <returns>Check result.</returns>
+		public static bool IsSecurityRequired(this MarketDataTypes type)
+			=> type != MarketDataTypes.News && type != MarketDataTypes.Board;
 	}
 }

@@ -204,30 +204,24 @@ namespace StockSharp.Algo.Storages
 			if (serverTime != null)
 				_currentTime = serverTime.Value;
 
-			_currentMessage = (T)message;
+			Current = (T)message;
 
 			return true;
 		}
 
-		/// <summary>
-		/// Sets the enumerator to its initial position, which is before the first element in the collection.
-		/// </summary>
+		/// <inheritdoc />
 		public void Reset()
 		{
-			_currentMessage = null;
+			Current = null;
 			_currentTime = DateTimeOffset.MinValue;
 			_isTimeLineAdded = false;
             _basketStorage.InnerStorages.Clear();
 		}
 
-		private T _currentMessage;
+		/// <inheritdoc />
+		public T Current { get; private set; }
 
-		/// <summary>
-		/// Gets the current element in the collection.
-		/// </summary>
-		public T Current => _currentMessage;
-
-		object IEnumerator.Current => _currentMessage;
+		object IEnumerator.Current => Current;
 
 		#endregion
 

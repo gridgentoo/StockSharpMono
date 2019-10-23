@@ -57,6 +57,8 @@ namespace StockSharp.Algo.Storages.Binary
 		public static readonly Version Version60 = new Version(6, 0);
 		public static readonly Version Version61 = new Version(6, 1);
 		public static readonly Version Version62 = new Version(6, 2);
+		public static readonly Version Version63 = new Version(6, 3);
+		public static readonly Version Version64 = new Version(6, 4);
 	}
 
 	abstract class BinaryMetaInfo : MetaInfo
@@ -142,8 +144,8 @@ namespace StockSharp.Algo.Storages.Binary
 			if (Version < MarketDataVersions.Version40)
 				stream.Read<decimal>(); // ранее был StepPrice
 
-			FirstTime = stream.Read<DateTime>().ChangeKind(DateTimeKind.Utc);
-			LastTime = stream.Read<DateTime>().ChangeKind(DateTimeKind.Utc);
+			FirstTime = stream.Read<DateTime>().UtcKind();
+			LastTime = stream.Read<DateTime>().UtcKind();
 
 			if (Version < MarketDataVersions.Version40)
 				return;
@@ -390,7 +392,7 @@ namespace StockSharp.Algo.Storages.Binary
 			{
 				Index = -1;
 				MetaInfo = null;
-				Previous = Current = default(TData);
+				Previous = Current = default;
 				PartSize = 0;
 
 				if (Reader != null)

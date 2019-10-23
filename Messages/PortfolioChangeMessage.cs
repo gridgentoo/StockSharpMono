@@ -19,7 +19,6 @@ namespace StockSharp.Messages
 	using System.Linq;
 	using System.Runtime.Serialization;
 
-	using Ecng.Collections;
 	using Ecng.Common;
 
 	using StockSharp.Localization;
@@ -31,17 +30,8 @@ namespace StockSharp.Messages
 	[Serializable]
 	[DisplayNameLoc(LocalizedStrings.PortfolioKey)]
 	[DescriptionLoc(LocalizedStrings.Str541Key)]
-	public sealed class PortfolioChangeMessage : BaseChangeMessage<PositionChangeTypes>
+	public sealed class PortfolioChangeMessage : BasePositionChangeMessage
 	{
-		/// <summary>
-		/// Portfolio name.
-		/// </summary>
-		[DataMember]
-		[DisplayNameLoc(LocalizedStrings.NameKey)]
-		[DescriptionLoc(LocalizedStrings.Str247Key)]
-		[MainCategory]
-		public string PortfolioName { get; set; }
-
 		/// <summary>
 		/// Electronic board code.
 		/// </summary>
@@ -65,27 +55,20 @@ namespace StockSharp.Messages
 		/// <returns>Copy.</returns>
 		public override Message Clone()
 		{
-			var msg = new PortfolioChangeMessage
+			var clone = new PortfolioChangeMessage
 			{
-				LocalTime = LocalTime,
-				PortfolioName = PortfolioName,
 				BoardCode = BoardCode,
-				ServerTime = ServerTime
 			};
 
-			msg.Changes.AddRange(Changes);
-			this.CopyExtensionInfo(msg);
+			CopyTo(clone);
 
-			return msg;
+			return clone;
 		}
 
-		/// <summary>
-		/// Returns a string that represents the current object.
-		/// </summary>
-		/// <returns>A string that represents the current object.</returns>
+		/// <inheritdoc />
 		public override string ToString()
 		{
-			return base.ToString() + $",P={PortfolioName},Changes={Changes.Select(c => c.ToString()).Join(",")}";
+			return base.ToString() + $",P={PortfolioName},CL={ClientCode},Changes={Changes.Select(c => c.ToString()).Join(",")}";
 		}
 	}
 }

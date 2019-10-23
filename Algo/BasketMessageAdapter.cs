@@ -62,12 +62,15 @@ namespace StockSharp.Algo
 	{
 		private sealed class InnerAdapterList : CachedSynchronizedList<IMessageAdapter>, IInnerAdapterList
 		{
+			private readonly BasketMessageAdapter _parent;
 			private readonly Dictionary<IMessageAdapter, int> _enables = new Dictionary<IMessageAdapter, int>();
 
-			public IEnumerable<IMessageAdapter> SortedAdapters
+			public InnerAdapterList(BasketMessageAdapter parent)
 			{
-				get { return Cache.Where(t => this[t] != -1).OrderBy(t => this[t]); }
+				_parent = parent ?? throw new ArgumentNullException(nameof(parent));
 			}
+
+			public IEnumerable<IMessageAdapter> SortedAdapters => Cache.Where(t => this[t] != -1).OrderBy(t => this[t]);
 
 			protected override bool OnAdding(IMessageAdapter item)
 			{
@@ -84,12 +87,14 @@ namespace StockSharp.Algo
 			protected override bool OnRemoving(IMessageAdapter item)
 			{
 				_enables.Remove(item);
+				_parent._activeAdapters.Remove(item);
 				return base.OnRemoving(item);
 			}
 
 			protected override bool OnClearing()
 			{
 				_enables.Clear();
+				_parent._activeAdapters.Clear();
 				return base.OnClearing();
 			}
 
@@ -121,15 +126,20 @@ namespace StockSharp.Algo
 		private readonly SynchronizedDictionary<long, IMessageAdapter> _subscriptionsById = new SynchronizedDictionary<long, IMessageAdapter>();
 		private readonly Dictionary<long, HashSet<IMessageAdapter>> _subscriptionNonSupportedAdapters = new Dictionary<long, HashSet<IMessageAdapter>>();
 		private readonly SynchronizedDictionary<Helper.SubscriptionKey, IMessageAdapter> _subscriptionsByKey = new SynchronizedDictionary<Helper.SubscriptionKey, IMessageAdapter>();
-		private readonly SynchronizedDictionary<IMessageAdapter, HeartbeatMessageAdapter> _hearbeatAdapters = new SynchronizedDictionary<IMessageAdapter, HeartbeatMessageAdapter>();
+		private readonly SynchronizedDictionary<IMessageAdapter, IMessageAdapter> _activeAdapters = new SynchronizedDictionary<IMessageAdapter, IMessageAdapter>();
 		private readonly SyncObject _connectedResponseLock = new SyncObject();
 		private readonly Dictionary<MessageTypes, CachedSynchronizedSet<IMessageAdapter>> _messageTypeAdapters = new Dictionary<MessageTypes, CachedSynchronizedSet<IMessageAdapter>>();
 		private readonly HashSet<IMessageAdapter> _pendingConnectAdapters = new HashSet<IMessageAdapter>();
 		private readonly Queue<Message> _pendingMessages = new Queue<Message>();
-		private readonly HashSet<HeartbeatMessageAdapter> _connectedAdapters = new HashSet<HeartbeatMessageAdapter>();
+		private readonly HashSet<IMessageAdapter> _connectedAdapters = new HashSet<IMessageAdapter>();
 		private bool _isFirstConnect;
 		private readonly InnerAdapterList _innerAdapters;
-		private readonly SynchronizedDictionary<long, RefTriple<long, bool?, IMessageAdapter>> _newsSubscriptions = new SynchronizedDictionary<long, RefTriple<long, bool?, IMessageAdapter>>();
+		private readonly SynchronizedDictionary<long, RefTriple<long, bool?, IMessageAdapter>> _newsBoardSubscriptions = new SynchronizedDictionary<long, RefTriple<long, bool?, IMessageAdapter>>();
+		private readonly SynchronizedDictionary<Tuple<MessageTypes, long>, HashSet<IMessageAdapter>> _lookups = new SynchronizedDictionary<Tuple<MessageTypes, long>, HashSet<IMessageAdapter>>();
+
+		private readonly SynchronizedDictionary<string, IMessageAdapter> _portfolioAdapters = new SynchronizedDictionary<string, IMessageAdapter>(StringComparer.InvariantCultureIgnoreCase);
+		private readonly SynchronizedDictionary<Tuple<SecurityId, MarketDataTypes?>, IMessageAdapter> _securityAdapters = new SynchronizedDictionary<Tuple<SecurityId, MarketDataTypes?>, IMessageAdapter>();
+		private readonly SynchronizedSet<long> _subscriptionListRequests = new SynchronizedSet<long>();
 
 		/// <summary>
 		/// Adapters with which the aggregator operates.
@@ -187,33 +197,59 @@ namespace StockSharp.Algo
 		/// Initializes a new instance of the <see cref="BasketMessageAdapter"/>.
 		/// </summary>
 		/// <param name="transactionIdGenerator">Transaction id generator.</param>
-		/// <param name="adapterProvider">The message adapter's provider.</param>
-		/// <param name="exchangeInfoProvider">The exchange boards provider.</param>
-		public BasketMessageAdapter(IdGenerator transactionIdGenerator, IPortfolioMessageAdapterProvider adapterProvider, IExchangeInfoProvider exchangeInfoProvider)
+		/// <param name="candleBuilderProvider">Candle builders provider.</param>
+		public BasketMessageAdapter(IdGenerator transactionIdGenerator, CandleBuilderProvider candleBuilderProvider)
+			: this(transactionIdGenerator, new InMemorySecurityMessageAdapterProvider(), new InMemoryPortfolioMessageAdapterProvider(), candleBuilderProvider)
+		{
+		}
+
+		/// <summary>
+		/// Initializes a new instance of the <see cref="BasketMessageAdapter"/>.
+		/// </summary>
+		/// <param name="transactionIdGenerator">Transaction id generator.</param>
+		/// <param name="securityAdapterProvider">The security based message adapter's provider.</param>
+		/// <param name="portfolioAdapterProvider">The portfolio based message adapter's provider.</param>
+		/// <param name="candleBuilderProvider">Candle builders provider.</param>
+		public BasketMessageAdapter(IdGenerator transactionIdGenerator,
+			ISecurityMessageAdapterProvider securityAdapterProvider,
+			IPortfolioMessageAdapterProvider portfolioAdapterProvider,
+			CandleBuilderProvider candleBuilderProvider)
 			: base(transactionIdGenerator)
 		{
-			_innerAdapters = new InnerAdapterList();
-			AdapterProvider = adapterProvider ?? throw new ArgumentNullException(nameof(adapterProvider));
-			ExchangeInfoProvider = exchangeInfoProvider;
+			_innerAdapters = new InnerAdapterList(this);
+			SecurityAdapterProvider = securityAdapterProvider ?? throw new ArgumentNullException(nameof(securityAdapterProvider));
+			PortfolioAdapterProvider = portfolioAdapterProvider ?? throw new ArgumentNullException(nameof(portfolioAdapterProvider));
+			CandleBuilderProvider = candleBuilderProvider ?? throw new ArgumentNullException(nameof(portfolioAdapterProvider));
 
 			LatencyManager = new LatencyManager();
 			CommissionManager = new CommissionManager();
 			//PnLManager = new PnLManager();
 			SlippageManager = new SlippageManager();
+
+			SecurityAdapterProvider.Changed += SecurityAdapterProviderOnChanged;
+			PortfolioAdapterProvider.Changed += PortfolioAdapterProviderOnChanged;
 		}
 
 		/// <summary>
-		/// The message adapter's provider.
+		/// The portfolio based message adapter's provider.
 		/// </summary>
-		public IPortfolioMessageAdapterProvider AdapterProvider { get; }
+		public IPortfolioMessageAdapterProvider PortfolioAdapterProvider { get; }
 
 		/// <summary>
-		/// The exchange boards provider.
+		/// The security based message adapter's provider.
 		/// </summary>
-		public IExchangeInfoProvider ExchangeInfoProvider { get; }
+		public ISecurityMessageAdapterProvider SecurityAdapterProvider { get; }
+
+		/// <summary>
+		/// Candle builders provider.
+		/// </summary>
+		public CandleBuilderProvider CandleBuilderProvider { get; }
 
 		/// <inheritdoc />
-		public override MessageTypes[] SupportedMessages => GetSortedAdapters().SelectMany(a => a.SupportedMessages).Distinct().ToArray();
+		public override IEnumerable<MessageTypes> SupportedMessages => GetSortedAdapters().SelectMany(a => a.SupportedMessages).Distinct();
+
+		/// <inheritdoc />
+		public override IEnumerable<MarketDataTypes> SupportedMarketDataTypes => GetSortedAdapters().SelectMany(a => a.SupportedMarketDataTypes).Distinct();
 
 		/// <inheritdoc />
 		public override bool PortfolioLookupRequired => GetSortedAdapters().Any(a => a.PortfolioLookupRequired);
@@ -225,10 +261,10 @@ namespace StockSharp.Algo
 		public override bool SecurityLookupRequired => GetSortedAdapters().Any(a => a.SecurityLookupRequired);
 
 		/// <inheritdoc />
-		protected override bool IsSupportNativePortfolioLookup => true;
+		protected override bool IsSupportPortfolioLookupResult => true;
 
 		/// <inheritdoc />
-		protected override bool IsSupportNativeSecurityLookup => true;
+		protected override bool IsSupportSecurityLookupResult => true;
 
 		/// <inheritdoc />
 		public override bool IsSupportSecuritiesLookupAll => GetSortedAdapters().Any(a => a.IsSupportSecuritiesLookupAll);
@@ -256,21 +292,40 @@ namespace StockSharp.Algo
 		/// </summary>
 		public bool SupportBuildingFromOrderLog { get; set; } = true;
 
-		/// <inheritdoc />
-		public override IEnumerable<TimeSpan> TimeFrames
-		{
-			get { return GetSortedAdapters().SelectMany(a => a.TimeFrames); }
-		}
+		/// <summary>
+		/// Use <see cref="OrderBookTruncateMessageAdapter"/>.
+		/// </summary>
+		public bool SupportOrderBookTruncate { get; set; } = true;
+
+		/// <summary>
+		/// Use <see cref="OfflineMessageAdapter"/>.
+		/// </summary>
+		public bool SupportOffline { get; set; }
+
+		/// <summary>
+		/// Do not add extra adapters.
+		/// </summary>
+		public bool IgnoreExtraAdapters { get; set; }
 
 		/// <inheritdoc />
-		public override OrderCondition CreateOrderCondition() => throw new NotSupportedException();
+		public override IEnumerable<object> GetCandleArgs(Type candleType, SecurityId securityId, DateTimeOffset? from, DateTimeOffset? to)
+			=> GetSortedAdapters().SelectMany(a => a.GetCandleArgs(candleType, securityId, from, to)).Distinct().OrderBy();
+
+		/// <inheritdoc />
+		public override bool IsSecurityNewsOnly => GetSortedAdapters().All(a => a.IsSecurityNewsOnly);
 
 		/// <inheritdoc />
 		public override bool IsConnectionAlive() => throw new NotSupportedException();
 
-		private void ProcessReset(Message message)
+		/// <summary>
+		/// To get adapters <see cref="IInnerAdapterList.SortedAdapters"/> sorted by the specified priority. By default, there is no sorting.
+		/// </summary>
+		/// <returns>Sorted adapters.</returns>
+		protected IEnumerable<IMessageAdapter> GetSortedAdapters() => _innerAdapters.SortedAdapters;
+
+		private void ProcessReset(ResetMessage message)
 		{
-			_hearbeatAdapters.Values.ForEach(a =>
+			_activeAdapters.Values.ForEach(a =>
 			{
 				a.SendInMessage(message);
 				a.Dispose();
@@ -285,15 +340,19 @@ namespace StockSharp.Algo
 				_subscriptionNonSupportedAdapters.Clear();
 			}
 
-			_hearbeatAdapters.Clear();
+			_activeAdapters.Clear();
 			_subscriptionsById.Clear();
 			_subscriptionsByKey.Clear();
 			_subscriptionMessages.Clear();
-			_newsSubscriptions.Clear();
+			_newsBoardSubscriptions.Clear();
+			_lookups.Clear();
+			_subscriptionListRequests.Clear();
 		}
 
 		private IMessageAdapter CreateWrappers(IMessageAdapter adapter)
 		{
+			adapter = new PartialDownloadMessageAdapter(adapter);
+
 			if (LatencyManager != null)
 			{
 				adapter = new LatencyMessageAdapter(adapter) { LatencyManager = LatencyManager.Clone() };
@@ -304,12 +363,17 @@ namespace StockSharp.Algo
 				adapter = new SecurityNativeIdMessageAdapter(adapter, NativeIdStorage);
 			}
 
+			if (SecurityMappingStorage != null)
+			{
+				adapter = new SecurityMappingMessageAdapter(adapter, SecurityMappingStorage);
+			}
+
 			if (SlippageManager != null)
 			{
 				adapter = new SlippageMessageAdapter(adapter) { SlippageManager = SlippageManager.Clone() };
 			}
 
-			if (PnLManager != null)
+			if (PnLManager != null && !adapter.IsSupportExecutionsPnL)
 			{
 				adapter = new PnLMessageAdapter(adapter) { PnLManager = PnLManager.Clone() };
 			}
@@ -324,19 +388,29 @@ namespace StockSharp.Algo
 				adapter = new OrderLogMessageAdapter(adapter);
 			}
 
+			if (adapter.IsSupportOrderBookIncrements)
+			{
+				adapter = new OrderBookInrementMessageAdapter(adapter);
+			}
+
+			if (SupportOrderBookTruncate)
+			{
+				adapter = new OrderBookTruncateMessageAdapter(adapter);
+			}
+
 			if (adapter.IsFullCandlesOnly)
 			{
 				adapter = new CandleHolderMessageAdapter(adapter);
 			}
 
-			if (SupportCandlesCompression)
+			if (adapter.IsSupportSubscriptions)
 			{
-				adapter = new CandleBuilderMessageAdapter(adapter, ExchangeInfoProvider);
+				adapter = new SubscriptionMessageAdapter(adapter) { IsRestoreOnErrorReconnect = IsRestoreSubscriptionOnReconnect };
 			}
 
-			if (SecurityMappingStorage != null && !adapter.StorageName.IsEmpty())
+			if (SupportCandlesCompression)
 			{
-				adapter = new SecurityMappingMessageAdapter(adapter, SecurityMappingStorage);
+				adapter = new CandleBuilderMessageAdapter(adapter, CandleBuilderProvider);
 			}
 
 			if (ExtendedInfoStorage != null && !adapter.SecurityExtendedFields.IsEmpty())
@@ -344,18 +418,27 @@ namespace StockSharp.Algo
 				adapter = new ExtendedInfoStorageMessageAdapter(adapter, ExtendedInfoStorage, adapter.StorageName, adapter.SecurityExtendedFields);
 			}
 
-			if (adapter.IsSupportSubscriptions)
-			{
-				adapter = new SubscriptionMessageAdapter(adapter) { IsRestoreOnReconnect = IsRestoreSubscriptionOnReconnect };
-			}
-
 			return adapter;
 		}
 
+		private readonly Dictionary<IMessageAdapter, bool> _hearbeatFlags = new Dictionary<IMessageAdapter, bool>();
+
+		private bool IsHeartbeatOn(IMessageAdapter adapter)
+		{
+			return _hearbeatFlags.TryGetValue2(adapter) ?? true;
+		}
+
 		/// <summary>
-		/// Send message.
+		/// Apply on/off heartbeat mode for the specified adapter.
 		/// </summary>
-		/// <param name="message">Message.</param>
+		/// <param name="adapter">Adapter.</param>
+		/// <param name="on">Is active.</param>
+		public void ApplyHeartbeat(IMessageAdapter adapter, bool on)
+		{
+			_hearbeatFlags[adapter] = on;
+		}
+
+		/// <inheritdoc />
 		protected override void OnSendInMessage(Message message)
 		{
 			if (message.IsBack)
@@ -380,7 +463,7 @@ namespace StockSharp.Algo
 			switch (message.Type)
 			{
 				case MessageTypes.Reset:
-					ProcessReset(message);
+					ProcessReset((ResetMessage)message);
 					break;
 
 				case MessageTypes.Connect:
@@ -390,22 +473,36 @@ namespace StockSharp.Algo
 					else
 						ProcessReset(new ResetMessage());
 
-					_hearbeatAdapters.AddRange(GetSortedAdapters().ToDictionary(a => a, a =>
+					_activeAdapters.AddRange(GetSortedAdapters().ToDictionary(a => a, a =>
 					{
 						lock (_connectedResponseLock)
 							_pendingConnectAdapters.Add(a);
 
-						var wrapper = CreateWrappers(a);
-						var hearbeatAdapter = new HeartbeatMessageAdapter(wrapper) { SuppressReconnectingErrors = SuppressReconnectingErrors };
-						((IMessageAdapter)hearbeatAdapter).Parent = this;
-						hearbeatAdapter.NewOutMessage += m => OnInnerAdapterNewOutMessage(wrapper, m);
-						return hearbeatAdapter;
+						var wrapper = IgnoreExtraAdapters ? a : CreateWrappers(a);
+
+						var adapter = wrapper;
+
+						if (IsHeartbeatOn(a))
+						{
+							adapter = new HeartbeatMessageAdapter(adapter)
+							{
+								SuppressReconnectingErrors = SuppressReconnectingErrors,
+								Parent = this
+							};
+						}
+
+						if (SupportOffline)
+							adapter = new OfflineMessageAdapter(adapter);
+
+						adapter.NewOutMessage += m => OnInnerAdapterNewOutMessage(wrapper, m);
+						
+						return adapter;
 					}));
 					
-					if (_hearbeatAdapters.Count == 0)
+					if (_activeAdapters.Count == 0)
 						throw new InvalidOperationException(LocalizedStrings.Str3650);
 
-					_hearbeatAdapters.Values.ForEach(a =>
+					_activeAdapters.Values.ForEach(a =>
 					{
 						var u = GetUnderlyingAdapter(a);
 						this.AddInfoLog("Connecting '{0}'.", u);
@@ -434,6 +531,13 @@ namespace StockSharp.Algo
 				case MessageTypes.Portfolio:
 				{
 					var pfMsg = (PortfolioMessage)message;
+					ProcessPortfolioMessage(pfMsg.PortfolioName, pfMsg);
+					break;
+				}
+
+				case MessageTypes.PortfolioChange:
+				{
+					var pfMsg = (PortfolioChangeMessage)message;
 					ProcessPortfolioMessage(pfMsg.PortfolioName, pfMsg);
 					break;
 				}
@@ -488,30 +592,119 @@ namespace StockSharp.Algo
 				return;
 			}
 
-			GetAdapters(message).ForEach(a => a.SendInMessage(message));
+			var adapters = GetAdapters(message, out var isPended, out _);
+
+			if (isPended)
+				return;
+
+			if (adapters.Length == 0)
+			{
+				switch (message.Type)
+				{
+					case MessageTypes.SecurityLookup:
+						SendOutMessage(new SecurityLookupResultMessage
+						{
+							OriginalTransactionId = ((SecurityLookupMessage)message).TransactionId,
+						});
+
+						break;
+
+					case MessageTypes.BoardLookup:
+						SendOutMessage(new BoardLookupResultMessage
+						{
+							OriginalTransactionId = ((BoardLookupMessage)message).TransactionId,
+						});
+
+						break;
+
+					case MessageTypes.PortfolioLookup:
+						SendOutMessage(new PortfolioLookupResultMessage
+						{
+							OriginalTransactionId = ((PortfolioLookupMessage)message).TransactionId,
+						});
+
+						break;
+				}
+			}
+			else
+			{
+				Tuple<MessageTypes, long> key = null;
+
+				switch (message.Type)
+				{
+					case MessageTypes.SecurityLookup:
+						key = Tuple.Create(MessageTypes.SecurityLookupResult, ((SecurityLookupMessage)message).TransactionId);
+						break;
+					case MessageTypes.BoardLookup:
+						key = Tuple.Create(MessageTypes.BoardLookupResult, ((BoardLookupMessage)message).TransactionId);
+						break;
+					case MessageTypes.PortfolioLookup:
+						key = Tuple.Create(MessageTypes.PortfolioLookupResult, ((PortfolioLookupMessage)message).TransactionId);
+						break;
+				}
+
+				if (key != null && key.Item2 != 0)
+				{
+					lock (_lookups.SyncRoot)
+					{
+						if (!_lookups.ContainsKey(key))
+							_lookups.Add(key, new HashSet<IMessageAdapter>(adapters.Select(GetUnderlyingAdapter)));
+					}
+				}
+
+				if (message is SubscriptionListRequestMessage listRequest)
+					_subscriptionListRequests.Add(listRequest.TransactionId);
+
+				adapters.ForEach(a => a.SendInMessage(message));
+			}
 		}
 
-		private IMessageAdapter[] GetAdapters(Message message)
+		private IMessageAdapter[] GetAdapters(Message message, out bool isPended, out bool skipSupportedMessages)
 		{
-			IMessageAdapter[] adapters;
+			isPended = false;
+			skipSupportedMessages = false;
+
+			IMessageAdapter[] adapters = null;
+
+			var adapter = GetUnderlyingAdapter(message.Adapter);
+
+			if (adapter == null && message is MarketDataMessage mdMsg && mdMsg.DataType.IsSecurityRequired())
+				adapter = _securityAdapters.TryGetValue(Tuple.Create(mdMsg.SecurityId, (MarketDataTypes?)mdMsg.DataType)) ?? _securityAdapters.TryGetValue(Tuple.Create(mdMsg.SecurityId, (MarketDataTypes?)null));
+
+			if (adapter != null)
+			{
+				adapter = _activeAdapters.TryGetValue(adapter);
+
+				if (adapter != null)
+				{
+					adapters = new[] { adapter };
+					skipSupportedMessages = true;
+				}
+			}
 
 			lock (_connectedResponseLock)
 			{
-				adapters = _messageTypeAdapters.TryGetValue(message.Type)?.Cache;
+				if (adapters == null)
+					adapters = _messageTypeAdapters.TryGetValue(message.Type)?.Cache;
 
 				if (adapters != null)
 				{
 					if (message.Type == MessageTypes.MarketData)
 					{
-						var set = _subscriptionNonSupportedAdapters.TryGetValue(((MarketDataMessage)message).TransactionId);
+						var mdMsg1 = (MarketDataMessage)message;
+						var set = _subscriptionNonSupportedAdapters.TryGetValue(mdMsg1.TransactionId);
 
 						if (set != null)
 						{
 							adapters = adapters.Where(a => !set.Contains(GetUnderlyingAdapter(a))).ToArray();
-
-							if (adapters.Length == 0)
-								adapters = null;
 						}
+						else if (mdMsg1.DataType == MarketDataTypes.News && mdMsg1.SecurityId == default)
+						{
+							adapters = adapters.Where(a => !a.IsSecurityNewsOnly).ToArray();
+						}
+
+						if (adapters.Length == 0)
+							adapters = null;
 					}
 					else if (message.Type == MessageTypes.SecurityLookup)
 					{
@@ -526,6 +719,7 @@ namespace StockSharp.Algo
 				{
 					if (_pendingConnectAdapters.Count > 0)
 					{
+						isPended = true;
 						_pendingMessages.Enqueue(message.Clone());
 						return ArrayHelper.Empty<IMessageAdapter>();
 					}
@@ -539,62 +733,68 @@ namespace StockSharp.Algo
 
 			if (adapters.Length == 0)
 			{
-				var msg = LocalizedStrings.Str629Params.Put(message);
-
-				this.AddWarningLog(msg);
-
-				if (message.Type == MessageTypes.SecurityLookup)
-				{
-					SendOutMessage(new SecurityLookupResultMessage
-					{
-						OriginalTransactionId = ((SecurityLookupMessage)message).TransactionId,
-						Error = new InvalidOperationException(msg),
-					});
-				}
-
+				this.AddInfoLog(LocalizedStrings.Str629Params.Put(message));
 				//throw new InvalidOperationException(LocalizedStrings.Str629Params.Put(message));
 			}
 
 			return adapters;
 		}
 
-		private IEnumerable<IMessageAdapter> GetSubscriptionAdapters(MarketDataMessage mdMsg)
+		private IMessageAdapter[] GetSubscriptionAdapters(MarketDataMessage mdMsg)
 		{
-			if (mdMsg.Adapter != null)
+			var adapters = GetAdapters(mdMsg, out _, out var skipSupportedMessages).Where(a =>
 			{
-				var wrapper = _hearbeatAdapters.TryGetValue(mdMsg.Adapter);
+				if (skipSupportedMessages)
+					return true;
 
-				if (wrapper != null)
-					return new[] { (IMessageAdapter)wrapper };
-			}
-
-			var adapters = GetAdapters(mdMsg).Where(a =>
-			{
-				var isTfCandles = mdMsg.DataType == MarketDataTypes.CandleTimeFrame;
-
-				if (!a.IsMarketDataTypeSupported(mdMsg.DataType))
+				if (mdMsg.DataType != MarketDataTypes.CandleTimeFrame)
 				{
-					if (!isTfCandles)
+					var isCandles = mdMsg.DataType.IsCandleDataType();
+
+					if (a.IsMarketDataTypeSupported(mdMsg.DataType) && (!isCandles || a.IsCandlesSupported(mdMsg)))
+						return true;
+					else
 					{
-						if (mdMsg.DataType == MarketDataTypes.MarketDepth || mdMsg.DataType == MarketDataTypes.Trades)
+						switch (mdMsg.DataType)
 						{
-							if (a.IsMarketDataTypeSupported(MarketDataTypes.OrderLog))
+							case MarketDataTypes.Level1:
+							case MarketDataTypes.OrderLog:
+							case MarketDataTypes.News:
+							case MarketDataTypes.Board:
+								return false;
+							case MarketDataTypes.MarketDepth:
 							{
-								return true;
+								if (mdMsg.BuildMode != MarketDataBuildModes.Load)
+								{
+									switch (mdMsg.BuildFrom)
+									{
+										case MarketDataTypes.Level1:
+											return a.IsMarketDataTypeSupported(MarketDataTypes.Level1);
+										case MarketDataTypes.OrderLog:
+											return a.IsMarketDataTypeSupported(MarketDataTypes.OrderLog);
+									}
+								}
+
+								return false;
+							}
+							case MarketDataTypes.Trades:
+								return a.IsMarketDataTypeSupported(MarketDataTypes.OrderLog);
+							default:
+							{
+								if (isCandles && a.TryGetCandlesBuildFrom(mdMsg, CandleBuilderProvider) != null)
+									return true;
+
+								return false;
+								//throw new ArgumentOutOfRangeException(mdMsg.DataType.ToString());
 							}
 						}
-
-						return false;
 					}
 				}
 
-				if (!isTfCandles)
-					return true;
+				var original = mdMsg.GetTimeFrame();
+				var timeFrames = a.GetTimeFrames(mdMsg.SecurityId, mdMsg.From, mdMsg.To).ToArray();
 
-				var original = (TimeSpan)mdMsg.Arg;
-				var timeFrames = a.GetTimeFrames(mdMsg.SecurityId).ToArray();
-
-				if (timeFrames.Contains(original)|| a.CheckTimeFrameByRequest)
+				if (timeFrames.Contains(original) || a.CheckTimeFrameByRequest)
 					return true;
 
 				if (mdMsg.AllowBuildFromSmallerTimeFrame)
@@ -608,13 +808,11 @@ namespace StockSharp.Algo
 						return true;
 				}
 
-				var buildFrom = mdMsg.BuildFrom ?? a.SupportedMarketDataTypes.Intersect(CandleHelper.CandleDataSources).FirstOr();
-
-				return buildFrom != null && a.SupportedMarketDataTypes.Contains(buildFrom.Value);
+				return a.TryGetCandlesBuildFrom(mdMsg, CandleBuilderProvider) != null;
 			}).ToArray();
 
-			if (adapters.Length == 0)
-				throw new InvalidOperationException(LocalizedStrings.Str629Params.Put(mdMsg));
+			//if (!isPended && adapters.Length == 0)
+			//	throw new InvalidOperationException(LocalizedStrings.Str629Params.Put(mdMsg));
 
 			return adapters;
 		}
@@ -627,6 +825,7 @@ namespace StockSharp.Algo
 			switch (mdMsg.DataType)
 			{
 				case MarketDataTypes.News:
+				case MarketDataTypes.Board:
 				{
 					var dict = new Dictionary<IMessageAdapter, long>();
 
@@ -634,7 +833,13 @@ namespace StockSharp.Algo
 					{
 						var adapters = GetSubscriptionAdapters(mdMsg);
 
-						lock (_newsSubscriptions.SyncRoot)
+						if (adapters.Length == 0)
+						{
+							SendOutMarketDataNotSupported(mdMsg.TransactionId);
+							break;
+						}
+
+						lock (_newsBoardSubscriptions.SyncRoot)
 						{
 							foreach (var adapter in adapters)
 							{
@@ -642,15 +847,15 @@ namespace StockSharp.Algo
 
 								dict.Add(adapter, transId);
 
-								_newsSubscriptions.Add(transId, RefTuple.Create(mdMsg.TransactionId, (bool?)null, adapter));
+								_newsBoardSubscriptions.Add(transId, RefTuple.Create(mdMsg.TransactionId, (bool?)null, adapter));
 							}
 						}
 					}
 					else
 					{
-						lock (_newsSubscriptions.SyncRoot)
+						lock (_newsBoardSubscriptions.SyncRoot)
 						{
-							var adapters = _newsSubscriptions.Select(p => p.Value.Third).Where(a => a != null).ToArray();
+							var adapters = _newsBoardSubscriptions.Select(p => p.Value.Third).Where(a => a != null).ToArray();
 
 							foreach (var adapter in adapters)
 							{
@@ -658,7 +863,7 @@ namespace StockSharp.Algo
 
 								dict.Add(adapter, transId);
 
-								_newsSubscriptions.Add(transId, RefTuple.Create(mdMsg.TransactionId, (bool?)null, adapter));
+								_newsBoardSubscriptions.Add(transId, RefTuple.Create(mdMsg.TransactionId, (bool?)null, adapter));
 							}
 						}
 					}
@@ -681,15 +886,20 @@ namespace StockSharp.Algo
 					var key = mdMsg.CreateKey();
 
 					var adapter = mdMsg.IsSubscribe
-							? GetSubscriptionAdapters(mdMsg).First()
+							? GetSubscriptionAdapters(mdMsg).FirstOrDefault()
 							: (_subscriptionsById.TryGetValue(mdMsg.OriginalTransactionId) ?? _subscriptionsByKey.TryGetValue(key));
 
-					if (adapter == null)
-						break;
-
-					// if the message was looped back via IsBack=true
-					_subscriptionMessages.TryAdd(mdMsg.TransactionId, (MarketDataMessage)mdMsg.Clone());
-					adapter.SendInMessage(mdMsg);
+					if (adapter != null)
+					{
+						// if the message was looped back via IsBack=true
+						_subscriptionMessages.TryAdd(mdMsg.TransactionId, (MarketDataMessage)mdMsg.Clone());
+						adapter.SendInMessage(mdMsg);
+					}
+					else
+					{
+						if (mdMsg.IsSubscribe)
+							SendOutMarketDataNotSupported(mdMsg.TransactionId);
+					}
 
 					break;
 				}
@@ -708,18 +918,18 @@ namespace StockSharp.Algo
 
 		private void ProcessPortfolioMessage(string portfolioName, Message message)
 		{
-			var adapter = portfolioName.IsEmpty() ? null : AdapterProvider.GetAdapter(portfolioName);
+			var adapter = portfolioName.IsEmpty() ? null : _portfolioAdapters.TryGetValue(portfolioName);
 
 			if (adapter == null)
 			{
-				adapter = GetAdapters(message).FirstOrDefault();
+				adapter = GetAdapters(message, out _, out _).FirstOrDefault();
 
 				if (adapter == null)
 					return;
 			}
 			else
 			{
-				var a = _hearbeatAdapters.TryGetValue(adapter);
+				var a = _activeAdapters.TryGetValue(adapter);
 
 				adapter = a ?? throw new InvalidOperationException(LocalizedStrings.Str1838Params.Put(adapter.GetType()));
 			}
@@ -755,12 +965,12 @@ namespace StockSharp.Algo
 
 					case MessageTypes.Portfolio:
 						var pfMsg = (PortfolioMessage)message;
-						AdapterProvider.SetAdapter(pfMsg.PortfolioName, GetUnderlyingAdapter(innerAdapter));
+						PortfolioAdapterProvider.SetAdapter(pfMsg.PortfolioName, GetUnderlyingAdapter(innerAdapter).Id);
 						break;
 
 					case MessageTypes.PortfolioChange:
 						var pfChangeMsg = (PortfolioChangeMessage)message;
-						AdapterProvider.SetAdapter(pfChangeMsg.PortfolioName, GetUnderlyingAdapter(innerAdapter));
+						PortfolioAdapterProvider.SetAdapter(pfChangeMsg.PortfolioName, GetUnderlyingAdapter(innerAdapter).Id);
 						break;
 
 					//case MessageTypes.Position:
@@ -770,7 +980,20 @@ namespace StockSharp.Algo
 
 					case MessageTypes.PositionChange:
 						var posChangeMsg = (PositionChangeMessage)message;
-						AdapterProvider.SetAdapter(posChangeMsg.PortfolioName, GetUnderlyingAdapter(innerAdapter));
+						PortfolioAdapterProvider.SetAdapter(posChangeMsg.PortfolioName, GetUnderlyingAdapter(innerAdapter).Id);
+						break;
+
+					case MessageTypes.Security:
+						var secMsg = (SecurityMessage)message;
+						SecurityAdapterProvider.SetAdapter(secMsg.SecurityId, null, GetUnderlyingAdapter(innerAdapter).Id);
+						break;
+
+					case MessageTypes.SecurityLookupResult:
+					case MessageTypes.PortfolioLookupResult:
+					case MessageTypes.BoardLookupResult:
+						if (!CanProcessLookupResult(GetUnderlyingAdapter(innerAdapter), message))
+							return;
+
 						break;
 				}
 			}
@@ -778,15 +1001,58 @@ namespace StockSharp.Algo
 			SendOutMessage(message);
 		}
 
+		private bool CanProcessLookupResult(IMessageAdapter innerAdapter, Message message)
+		{
+			var transId = 0L;
+
+			switch (message.Type)
+			{
+				case MessageTypes.SecurityLookupResult:
+					transId = ((SecurityLookupResultMessage)message).OriginalTransactionId;
+					break;
+				case MessageTypes.PortfolioLookupResult:
+					transId = ((PortfolioLookupResultMessage)message).OriginalTransactionId;
+					break;
+				case MessageTypes.BoardLookupResult:
+					transId = ((BoardLookupResultMessage)message).OriginalTransactionId;
+					break;
+			}
+
+			if (transId == 0)
+				return true;
+
+			var key = Tuple.Create(message.Type, transId);
+
+			lock (_lookups.SyncRoot)
+			{
+				var adapters = _lookups.TryGetValue(key);
+
+				if (adapters == null)
+					return true;
+
+				if (!adapters.Remove(innerAdapter))
+					return true;
+
+				return adapters.Count == 0;	
+			}
+		}
+
 		private static IMessageAdapter GetUnderlyingAdapter(IMessageAdapter adapter)
 		{
-			return adapter is IMessageAdapterWrapper wrapper ? (wrapper is IRealTimeEmulationMarketDataAdapter emuWrapper ? emuWrapper : GetUnderlyingAdapter(wrapper.InnerAdapter)) : adapter;
+			return adapter is IMessageAdapterWrapper wrapper
+				?
+				(
+					(wrapper is IRealTimeEmulationMarketDataAdapter || wrapper is IHistoryMessageAdapter)
+						? wrapper
+						: GetUnderlyingAdapter(wrapper.InnerAdapter)
+				)
+				: adapter;
 		}
 
 		private void ProcessConnectMessage(IMessageAdapter innerAdapter, ConnectMessage message)
 		{
 			var underlyingAdapter = GetUnderlyingAdapter(innerAdapter);
-			var heartbeatAdapter = _hearbeatAdapters[underlyingAdapter];
+			var wrapper = _activeAdapters[underlyingAdapter];
 
 			var isError = message.Error != null;
 
@@ -803,7 +1069,7 @@ namespace StockSharp.Algo
 
 				if (isError)
 				{
-					_connectedAdapters.Remove(heartbeatAdapter);
+					_connectedAdapters.Remove(wrapper);
 
 					if (_pendingConnectAdapters.Count == 0)
 					{
@@ -817,10 +1083,10 @@ namespace StockSharp.Algo
 				{
 					foreach (var supportedMessage in innerAdapter.SupportedMessages)
 					{
-						_messageTypeAdapters.SafeAdd(supportedMessage).Add(heartbeatAdapter);
+						_messageTypeAdapters.SafeAdd(supportedMessage).Add(wrapper);
 					}
 
-					_connectedAdapters.Add(heartbeatAdapter);
+					_connectedAdapters.Add(wrapper);
 
 					pendingMessages = _pendingMessages.ToArray();
 					_pendingMessages.Clear();
@@ -846,7 +1112,7 @@ namespace StockSharp.Algo
 		private void ProcessDisconnectMessage(IMessageAdapter innerAdapter, DisconnectMessage message)
 		{
 			var underlyingAdapter = GetUnderlyingAdapter(innerAdapter);
-			var heartbeatAdapter = _hearbeatAdapters[underlyingAdapter];
+			var wrapper = _activeAdapters[underlyingAdapter];
 
 			if (message.Error == null)
 				this.AddInfoLog("Disconnected from '{0}'.", underlyingAdapter);
@@ -862,13 +1128,13 @@ namespace StockSharp.Algo
 					if (list == null)
 						continue;
 
-					list.Remove(heartbeatAdapter);
+					list.Remove(wrapper);
 
 					if (list.Count == 0)
 						_messageTypeAdapters.Remove(supportedMessage);
 				}
 
-				_connectedAdapters.Remove(heartbeatAdapter);
+				_connectedAdapters.Remove(wrapper);
 			}
 
 			message.Adapter = underlyingAdapter;
@@ -882,26 +1148,28 @@ namespace StockSharp.Algo
 
 			if (originMsg == null)
 			{
+				if (_subscriptionListRequests.Contains(originalTransactionId))
+					_subscriptionsById.TryAdd(message.TransactionId, adapter);
+
 				SendOutMessage(message);
 				return;
 			}
 
-			var error = message.Error;
 			var isSubscribe = originMsg.IsSubscribe;
 
-			if (originMsg.DataType == MarketDataTypes.News)
+			if (!originMsg.DataType.IsSecurityRequired())
 			{
 				long? transId;
 				var allError = true;
 
-				lock (_newsSubscriptions.SyncRoot)
+				lock (_newsBoardSubscriptions.SyncRoot)
 				{
-					var tuple = _newsSubscriptions.TryGetValue(originalTransactionId);
+					var tuple = _newsBoardSubscriptions.TryGetValue(originalTransactionId);
 
 					transId = tuple.First;
-					tuple.Second = error == null && !message.IsNotSupported;
+					tuple.Second = message.IsOk();
 
-					foreach (var pair in _newsSubscriptions)
+					foreach (var pair in _newsBoardSubscriptions)
 					{
 						var t = pair.Value;
 
@@ -939,7 +1207,7 @@ namespace StockSharp.Algo
 			{
 				lock (_connectedResponseLock)
 				{
-					// try lookback only subscribe messages
+					// try loopback only subscribe messages
 					if (originMsg.IsSubscribe)
 					{
 						var set = _subscriptionNonSupportedAdapters.SafeAdd(originalTransactionId, k => new HashSet<IMessageAdapter>());
@@ -955,7 +1223,7 @@ namespace StockSharp.Algo
 				return;
 			}
 			
-			if (error == null && isSubscribe)
+			if (message.Error == null && isSubscribe)
 			{
 				// we can initiate multiple subscriptions with unique request id and same params
 				_subscriptionsByKey.TryAdd(key, adapter);
@@ -964,7 +1232,7 @@ namespace StockSharp.Algo
 				_subscriptionsById.TryAdd(originalTransactionId, adapter);
 			}
 
-			RaiseMarketDataMessage(adapter, originalTransactionId, error, isSubscribe);
+			RaiseMarketDataMessage(adapter, originalTransactionId, message.Error, isSubscribe);
 		}
 
 		private void RaiseMarketDataMessage(IMessageAdapter adapter, long originalTransactionId, Exception error, bool isSubscribe)
@@ -978,19 +1246,37 @@ namespace StockSharp.Algo
 			});
 		}
 
-		/// <summary>
-		/// To get adapters <see cref="IInnerAdapterList.SortedAdapters"/> sorted by the specified priority. By default, there is no sorting.
-		/// </summary>
-		/// <returns>Sorted adapters.</returns>
-		protected IEnumerable<IMessageAdapter> GetSortedAdapters()
+		private void SecurityAdapterProviderOnChanged(Tuple<SecurityId, MarketDataTypes?> key, Guid adapterId, bool changeType)
 		{
-			return _innerAdapters.SortedAdapters;
+			if (changeType)
+			{
+				var adapter = InnerAdapters.SyncGet(c => c.FindById(adapterId));
+
+				if (adapter == null)
+					_securityAdapters.Remove(key);
+				else
+					_securityAdapters[key] = adapter;
+			}
+			else
+				_securityAdapters.Remove(key);
 		}
 
-		/// <summary>
-		/// Save settings.
-		/// </summary>
-		/// <param name="storage">Settings storage.</param>
+		private void PortfolioAdapterProviderOnChanged(string key, Guid adapterId, bool changeType)
+		{
+			if (changeType)
+			{
+				var adapter = InnerAdapters.SyncGet(c => c.FindById(adapterId));
+
+				if (adapter == null)
+					_portfolioAdapters.Remove(key);
+				else
+					_portfolioAdapters[key] = adapter;
+			}
+			else
+				_portfolioAdapters.Remove(key);
+		}
+
+		/// <inheritdoc />
 		public override void Save(SettingsStorage storage)
 		{
 			lock (InnerAdapters.SyncRoot)
@@ -1005,14 +1291,6 @@ namespace StockSharp.Algo
 
 					return s;
 				}).ToArray());
-
-				var pairs = AdapterProvider
-					.PortfolioAdapters
-					.Where(p => InnerAdapters.Contains(p.Value))
-					.Select(p => RefTuple.Create(p.Key, p.Value.Id))
-					.ToArray();
-
-				storage.SetValue(nameof(AdapterProvider), pairs);
 			}
 
 			if (LatencyManager != null)
@@ -1030,10 +1308,7 @@ namespace StockSharp.Algo
 			base.Save(storage);
 		}
 
-		/// <summary>
-		/// Load settings.
-		/// </summary>
-		/// <param name="storage">Settings storage.</param>
+		/// <inheritdoc />
 		public override void Load(SettingsStorage storage)
 		{
 			lock (InnerAdapters.SyncRoot)
@@ -1046,7 +1321,7 @@ namespace StockSharp.Algo
 				{
 					try
 					{
-						var adapter = s.GetValue<Type>("AdapterType").CreateInstance<IMessageAdapter>(TransactionIdGenerator);
+						var adapter = s.GetValue<Type>("AdapterType").CreateAdapter(TransactionIdGenerator);
 						adapter.Load(s.GetValue<SettingsStorage>("AdapterSettings"));
 						InnerAdapters[adapter] = s.GetValue<int>("Priority");
 
@@ -1058,15 +1333,24 @@ namespace StockSharp.Algo
 					}
 				}
 
-				if (storage.ContainsKey(nameof(AdapterProvider)))
-				{
-					var mapping = storage.GetValue<RefPair<string, Guid>[]>(nameof(AdapterProvider));
+				_securityAdapters.Clear();
 
-					foreach (var tuple in mapping)
-					{
-						if (adapters.TryGetValue(tuple.Second, out var adapter))
-							AdapterProvider.SetAdapter(tuple.First, adapter);
-					}
+				foreach (var pair in SecurityAdapterProvider.Adapters)
+				{
+					if (!adapters.TryGetValue(pair.Value, out var adapter))
+						continue;
+
+					_securityAdapters.Add(pair.Key, adapter);
+				}
+
+				_portfolioAdapters.Clear();
+
+				foreach (var pair in PortfolioAdapterProvider.Adapters)
+				{
+					if (!adapters.TryGetValue(pair.Value, out var adapter))
+						continue;
+
+					_portfolioAdapters.Add(pair.Key, adapter);
 				}
 			}
 
@@ -1090,7 +1374,10 @@ namespace StockSharp.Algo
 		/// </summary>
 		protected override void DisposeManaged()
 		{
-			_hearbeatAdapters.Values.ForEach(a => ((IMessageAdapter)a).Parent = null);
+			SecurityAdapterProvider.Changed -= SecurityAdapterProviderOnChanged;
+			PortfolioAdapterProvider.Changed -= PortfolioAdapterProviderOnChanged;
+
+			_activeAdapters.Values.ForEach(a => a.Parent = null);
 
 			base.DisposeManaged();
 		}
@@ -1101,13 +1388,16 @@ namespace StockSharp.Algo
 		/// <returns>Copy.</returns>
 		public override IMessageChannel Clone()
 		{
-			var clone = new BasketMessageAdapter(TransactionIdGenerator, AdapterProvider, ExchangeInfoProvider)
+			var clone = new BasketMessageAdapter(TransactionIdGenerator, SecurityAdapterProvider, PortfolioAdapterProvider, CandleBuilderProvider)
 			{
 				ExtendedInfoStorage = ExtendedInfoStorage,
 				SupportCandlesCompression = SupportCandlesCompression,
 				SuppressReconnectingErrors = SuppressReconnectingErrors,
 				IsRestoreSubscriptionOnReconnect = IsRestoreSubscriptionOnReconnect,
 				SupportBuildingFromOrderLog = SupportBuildingFromOrderLog,
+				SupportOrderBookTruncate = SupportOrderBookTruncate,
+				SupportOffline = SupportOffline,
+				IgnoreExtraAdapters = IgnoreExtraAdapters,
 			};
 
 			clone.Load(this.Save());

@@ -24,7 +24,7 @@ namespace StockSharp.Algo.Candles.Compression
 		}
 
 		/// <inheritdoc />
-		public override void SendInMessage(Message message)
+		protected override void OnSendInMessage(Message message)
 		{
 			switch (message.Type)
 			{
@@ -63,7 +63,7 @@ namespace StockSharp.Algo.Candles.Compression
 				}
 			}
 
-			base.SendInMessage(message);
+			base.OnSendInMessage(message);
 		}
 
 		/// <inheritdoc />
@@ -105,7 +105,7 @@ namespace StockSharp.Algo.Candles.Compression
 			if (info == null)
 				return;
 
-			if (info.SecurityId == default(SecurityId))
+			if (info.SecurityId == default)
 				info.SecurityId = message.SecurityId;
 			else
 				message.SecurityId = info.SecurityId;
@@ -180,7 +180,7 @@ namespace StockSharp.Algo.Candles.Compression
 			var currentValue = getValue(current);
 			var fromValue = getValue(from);
 
-			if (currentValue == default(DateTimeOffset) && fromValue != default(DateTimeOffset))
+			if (currentValue == default && fromValue != default)
 				setValue(current, fromValue);
 			else
 				setValue(from, currentValue);

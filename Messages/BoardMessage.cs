@@ -17,6 +17,7 @@ namespace StockSharp.Messages
 {
 	using System;
 	using System.Runtime.Serialization;
+	using System.Xml.Serialization;
 
 	using StockSharp.Localization;
 
@@ -25,10 +26,10 @@ namespace StockSharp.Messages
 	/// </summary>
 	[DataContract]
 	[Serializable]
-	public class BoardMessage : Message
+	public class BoardMessage : BaseSubscriptionIdMessage
 	{
 		/// <summary>
-		/// Exchange code, which owns the board. Maybe be the same <see cref="BoardMessage.Code"/>.
+		/// Exchange code, which owns the board. Maybe be the same <see cref="Code"/>.
 		/// </summary>
 		[DataMember]
 		[DisplayNameLoc(LocalizedStrings.ExchangeInfoKey)]
@@ -106,6 +107,8 @@ namespace StockSharp.Messages
 		[DisplayNameLoc(LocalizedStrings.TimeZoneKey)]
 		[DescriptionLoc(LocalizedStrings.Str68Key)]
 		[MainCategory]
+		[XmlIgnore]
+		[Ecng.Serialization.TimeZoneInfo]
 		public TimeZoneInfo TimeZone
 		{
 			get => _timeZone;
@@ -135,7 +138,7 @@ namespace StockSharp.Messages
 		/// <returns>Copy.</returns>
 		public override Message Clone()
 		{
-			return new BoardMessage
+			var clone = new BoardMessage
 			{
 				Code = Code,
 				ExchangeCode = ExchangeCode,
@@ -145,12 +148,13 @@ namespace StockSharp.Messages
 				WorkingTime = WorkingTime.Clone(),
 				TimeZone = TimeZone,
 			};
+
+			CopyTo(clone);
+
+			return clone;
 		}
 
-		/// <summary>
-		/// Returns a string that represents the current object.
-		/// </summary>
-		/// <returns>A string that represents the current object.</returns>
+		/// <inheritdoc />
 		public override string ToString()
 		{
 			return base.ToString() + $",Code={Code},Ex={ExchangeCode}";

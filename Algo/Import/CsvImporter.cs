@@ -6,7 +6,6 @@
 	using System.Linq;
 
 	using Ecng.Common;
-	using Ecng.Configuration;
 
 	using StockSharp.Algo.Storages;
 	using StockSharp.BusinessEntities;
@@ -19,7 +18,7 @@
 	/// </summary>
 	public class CsvImporter : CsvParser
 	{
-		private readonly IEntityRegistry _entityRegistry;
+		private readonly ISecurityStorage _securityStorage;
 		private readonly IExchangeInfoProvider _exchangeInfoProvider;
 		private readonly IMarketDataDrive _drive;
 		private readonly StorageFormats _storageFormat;
@@ -29,14 +28,14 @@
 		/// </summary>
 		/// <param name="dataType">Data type info.</param>
 		/// <param name="fields">Importing fields.</param>
-		/// <param name="entityRegistry">The storage of trade objects.</param>
+		/// <param name="securityStorage">Securities meta info storage.</param>
 		/// <param name="exchangeInfoProvider">Exchanges and trading boards provider.</param>
 		/// <param name="drive">The storage. If a value is <see langword="null" />, <see cref="IStorageRegistry.DefaultDrive"/> will be used.</param>
 		/// <param name="storageFormat">The format type. By default <see cref="StorageFormats.Binary"/> is passed.</param>
-		public CsvImporter(DataType dataType, IEnumerable<FieldMapping> fields, IEntityRegistry entityRegistry, IExchangeInfoProvider exchangeInfoProvider, IMarketDataDrive drive, StorageFormats storageFormat)
+		public CsvImporter(DataType dataType, IEnumerable<FieldMapping> fields, ISecurityStorage securityStorage, IExchangeInfoProvider exchangeInfoProvider, IMarketDataDrive drive, StorageFormats storageFormat)
 			: base(dataType, fields)
 		{
-			_entityRegistry = entityRegistry ?? throw new ArgumentNullException(nameof(entityRegistry));
+			_securityStorage = securityStorage ?? throw new ArgumentNullException(nameof(securityStorage));
 			_exchangeInfoProvider = exchangeInfoProvider ?? throw new ArgumentNullException(nameof(exchangeInfoProvider));
 			_drive = drive;
 			_storageFormat = storageFormat;
@@ -48,6 +47,11 @@
 		public bool UpdateDuplicateSecurities { get; set; }
 
 		/// <summary>
+		/// Security updated event.
+		/// </summary>
+		public event Action<Security, bool> SecurityUpdated;
+
+		/// <summary>
 		/// Import from CSV file.
 		/// </summary>
 		/// <param name="fileName">File name.</param>
@@ -55,9 +59,24 @@
 		/// <param name="isCancelled">The processor, returning process interruption sign.</param>
 		public void Import(string fileName, Action<int> updateProgress, Func<bool> isCancelled)
 		{
-			var buffer = new List<dynamic>();
+			var buffer = new List<Message>();
 
 			this.AddInfoLog(LocalizedStrings.Str2870Params.Put(fileName, DataType.MessageType.Name));
+
+			Func<Message, SecurityId> getSecurityId = null;
+
+			if (DataType == DataType.Securities)
+				getSecurityId = m => ((SecurityMessage)m).SecurityId;
+			else if (DataType == DataType.MarketDepth)
+				getSecurityId = m => ((QuoteChangeMessage)m).SecurityId;
+			else if (DataType == DataType.Level1)
+				getSecurityId = m => ((Level1ChangeMessage)m).SecurityId;
+			else if (DataType == DataType.PositionChanges)
+				getSecurityId = m => ((PositionChangeMessage)m).SecurityId;
+			else if (DataType == DataType.Ticks || DataType == DataType.OrderLog || DataType == DataType.Transactions)
+				getSecurityId = m => ((ExecutionMessage)m).SecurityId;
+			else if (DataType.IsCandles)
+				getSecurityId = m => ((CandleMessage)m).SecurityId;
 
 			try
 			{
@@ -65,18 +84,22 @@
 				var prevPercent = 0;
 				var lineIndex = 0;
 
-				foreach (var instance in Parse(fileName, isCancelled))
+				foreach (var msg in Parse(fileName, isCancelled))
 				{
-					if (!(instance is SecurityMessage secMsg))
+					if (msg is SecurityMappingMessage)
+						continue;
+
+					if (!(msg is SecurityMessage secMsg))
 					{
-						buffer.Add(instance);
+						buffer.Add(msg);
 
 						if (buffer.Count > 1000)
-							FlushBuffer(buffer);
+							FlushBuffer(buffer, getSecurityId);
 					}
 					else
 					{
-						var security = _entityRegistry.Securities.ReadBySecurityId(secMsg.SecurityId);
+						var security = _securityStorage.LookupById(secMsg.SecurityId);
+						var isNew = true;
 
 						if (security != null)
 						{
@@ -86,14 +109,17 @@
 								continue;
 							}
 
+							isNew = false;
 							security.ApplyChanges(secMsg, _exchangeInfoProvider, UpdateDuplicateSecurities);
 						}
 						else
 							security = secMsg.ToSecurity(_exchangeInfoProvider);
 
-						_entityRegistry.Securities.Save(security, UpdateDuplicateSecurities);
+						_securityStorage.Save(security, UpdateDuplicateSecurities);
 
 						ExtendedInfoStorageItem?.Add(secMsg.SecurityId, secMsg.ExtensionInfo);
+
+						SecurityUpdated?.Invoke(security, isNew);
 					}
 
 					var percent = (int)(((double)lineIndex / len) * 100 - 1).Round();
@@ -113,13 +139,13 @@
 			}
 
 			if (buffer.Count > 0)
-				FlushBuffer(buffer);
+				FlushBuffer(buffer, getSecurityId);
 		}
 
 		private Security InitSecurity(SecurityId securityId, IExchangeInfoProvider exchangeInfoProvider)
 		{
 			var id = securityId.ToStringId();
-			var security = _entityRegistry.Securities.ReadById(id);
+			var security = _securityStorage.LookupById(id);
 
 			if (security != null)
 				return security;
@@ -129,18 +155,17 @@
 				Id = id,
 				Code = securityId.SecurityCode,
 				Board = exchangeInfoProvider.GetOrCreateBoard(securityId.BoardCode),
-				Type = securityId.SecurityType,
 			};
 
-			_entityRegistry.Securities.Save(security);
+			_securityStorage.Save(security, false);
 			this.AddInfoLog(LocalizedStrings.Str2871Params.Put(id));
 
 			return security;
 		}
 
-		private void FlushBuffer(List<dynamic> buffer)
+		private void FlushBuffer(List<Message> buffer, Func<Message, SecurityId> getSecurityId)
 		{
-			var registry = ConfigManager.GetService<IStorageRegistry>();
+			var registry = ServicesRegistry.StorageRegistry;
 
 			if (DataType.MessageType == typeof(NewsMessage))
 			{
@@ -148,13 +173,15 @@
 			}
 			else
 			{
+				if (getSecurityId == null)
+					throw new ArgumentNullException(nameof(getSecurityId));
+
 				foreach (var typeGroup in buffer.GroupBy(i => i.GetType()))
 				{
-					var dataType = (Type)typeGroup.Key;
+					var dataType = typeGroup.Key;
 
-					foreach (var secGroup in typeGroup.GroupBy(i => (SecurityId)i.SecurityId))
+					foreach (var secGroup in typeGroup.GroupBy(getSecurityId))
 					{
-						var secId = secGroup.Key;
 						var security = InitSecurity(secGroup.Key, _exchangeInfoProvider);
 
 						if (dataType.IsCandleMessage())
@@ -167,7 +194,7 @@
 								if (candle.CloseTime < candle.OpenTime)
 								{
 									// close time doesn't exist in importing file
-									candle.CloseTime = default(DateTimeOffset);
+									candle.CloseTime = default;
 								}
 								else if (candle.CloseTime > candle.OpenTime)
 								{
@@ -195,18 +222,8 @@
 						}
 						else if (dataType == typeof(TimeQuoteChange))
 						{
-							registry
-								.GetQuoteMessageStorage(security, _drive, _storageFormat)
-								.Save(secGroup
-									.GroupBy(i => i.Time)
-									.Select(g => new QuoteChangeMessage
-									{
-										SecurityId = secId,
-										ServerTime = g.Key,
-										Bids = g.Cast<QuoteChange>().Where(q => q.Side == Sides.Buy).ToArray(),
-										Asks = g.Cast<QuoteChange>().Where(q => q.Side == Sides.Sell).ToArray(),
-									})
-									.OrderBy(md => md.ServerTime));
+							var storage = registry.GetQuoteMessageStorage(security, _drive, _storageFormat);
+							storage.Save(secGroup.Cast<QuoteChangeMessage>().OrderBy(md => md.ServerTime));
 						}
 						else
 						{

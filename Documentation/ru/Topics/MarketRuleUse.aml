@@ -51,13 +51,13 @@ class FirstStrategy : Strategy
 	
 	protected override void OnStarting()
 	{
-		_series
-			.WhenCandlesFinished()
+		Trader
+			.WhenCandlesFinished(_series)
 			.Do(FinishCandle)
 			.Apply(this);
 
 		Security
-			.WhenNewTrade(trader)
+			.WhenNewTrade(Trader)
 			.Do(NewTrade)
 			.Apply(this);
 
@@ -75,7 +75,7 @@ class FirstStrategy : Strategy
   				
 				<para>У <codeEntityReference qualifyHint="false">T:StockSharp.Algo.IMarketRule</codeEntityReference> есть
 				<codeEntityReference qualifyHint="false">P:StockSharp.Algo.IMarketRule.Token</codeEntityReference> - токен правила, с которым он ассоциирован. Например, для правила 
-				<codeEntityReference qualifyHint="false" autoUpgrade="true">M:StockSharp.Algo.MarketRuleHelper.WhenCanceled(StockSharp.BusinessEntities.Order,StockSharp.BusinessEntities.IConnector)</codeEntityReference>
+				<codeEntityReference qualifyHint="false" autoUpgrade="true">M:StockSharp.Algo.MarketRuleHelper.WhenCanceled(StockSharp.BusinessEntities.Order,StockSharp.BusinessEntities.ITransactionProvider)</codeEntityReference>
 				токеном будет являться заявка.</para>  				
   				
   				<para>Когда сработало правило успешной отмены заявки, то лучше удалить все остальные правила, связанные с этой заявкой:</para>
@@ -138,7 +138,7 @@ TimeSpan _holdTimeToOpen = TimeSpan.FromMilliseconds(5000);
 
 Trader
 	.WhenIntervalElapsed(_holdTimeToOpen)
-	.Or(__candleManager.WhenCandlesStarted(_series))
+	.Or(Trader.WhenCandlesStarted(_series))
 	.Do(() => this.AddInfoLog("Свеча закрыта или вышло время"))
 	.Once()
 	.Apply(this);
@@ -150,7 +150,7 @@ Trader
   				<code language="C#">
 				<![CDATA[
 MarketRuleHelper
-	.Or(new IMarketRule[] {Trader.WhenIntervalElapsed(_holdTimeToOpen), _candleManager.WhenCandlesStarted(_series)})
+	.Or(new IMarketRule[] {Trader.WhenIntervalElapsed(_holdTimeToOpen), Trader.WhenCandlesStarted(_series)})
 	.Do(() => this.AddInfoLog("Свеча закрыта или вышло время"))
 	.Once()
 	.Apply(this);

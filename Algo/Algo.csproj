@@ -79,13 +79,10 @@
     <Reference Include="Ecng.Xaml.DevExp">
       <HintPath>..\References\Ecng.Xaml.DevExp.dll</HintPath>
     </Reference>
-    <Reference Include="MathNet.Numerics">
-      <HintPath>..\References\MathNet.Numerics.dll</HintPath>
+    <Reference Include="Ecng.Localization">
+      <HintPath>..\References\Ecng.Localization.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.CSharp" />
-    <Reference Include="MoreLinq">
-      <HintPath>..\References\MoreLinq.dll</HintPath>
-    </Reference>
     <Reference Include="PresentationCore">
       <RequiredTargetFramework>3.0</RequiredTargetFramework>
     </Reference>
@@ -95,9 +92,7 @@
     <Reference Include="System.configuration" />
     <Reference Include="System.Core" />
     <Reference Include="System.Data" />
-    <Reference Include="System.Drawing" />
     <Reference Include="System.Runtime.Serialization" />
-    <Reference Include="System.Security" />
     <Reference Include="System.ServiceModel" />
     <Reference Include="System.Xaml" />
     <Reference Include="System.Xml" />
@@ -110,22 +105,42 @@
     </Compile>
     <Compile Include="AssociatedSecurityAdapter.cs" />
     <Compile Include="BasketSecurity.cs" />
+    <Compile Include="BasketSecurityBaseProcessor.cs" />
+    <Compile Include="BasketSecurityMessageAdapter.cs" />
+    <Compile Include="BasketSecurityProcessorProvider.cs" />
     <Compile Include="Candles\BiggerTimeFrameCandleCompressor.cs" />
     <Compile Include="Candles\CandlesHolder.cs" />
     <Compile Include="Candles\Compression\CandleBuilderMessageAdapter.cs" />
+    <Compile Include="Candles\Compression\CandleBuilderProvider.cs" />
     <Compile Include="Candles\Compression\CandleHolderMessageAdapter.cs" />
     <Compile Include="Candles\Compression\ICandleBuilderValueTransform.cs" />
+    <Compile Include="CollectionPortfolioProvider.cs" />
     <Compile Include="CollectionSecurityProvider.cs" />
     <Compile Include="Commissions\CommissionMessageAdapter.cs" />
-    <Compile Include="DataType.cs" />
     <Compile Include="Export\Database\CandleTable.cs" />
     <Compile Include="Export\Database\IndicatorValueTable.cs" />
     <Compile Include="Export\Database\PositionChangeTable.cs" />
     <Compile Include="Export\Database\SecurityTable.cs" />
     <Compile Include="Export\IndicatorValue.cs" />
+    <Compile Include="Expressions\ExpressionIndexSecurity.cs" />
+    <Compile Include="Expressions\ExpressionIndexSecurityProcessor.cs" />
     <Compile Include="FilterableSecurityProvider.cs" />
     <Compile Include="FilteredMarketDepthAdapter.cs" />
+    <Compile Include="ISubscriptionProvider.cs" />
+    <Compile Include="Storages\Binary\BoardStateBinarySerializer.cs" />
+    <Compile Include="Storages\Csv\BoardStateCsvSerializer.cs" />
+    <Compile Include="Storages\Remote\IRemoteExtendedStorage.cs" />
+    <Compile Include="Storages\Remote\IRemoteStorage.cs" />
+    <Compile Include="Storages\Remote\ISecurityRemoteExtendedStorage.cs" />
+    <Compile Include="Storages\Remote\RemoteStorage.cs" />
+    <Compile Include="Storages\Remote\RemoteStorageClient.cs" />
+    <Compile Include="Subscription.cs" />
+    <Compile Include="Testing\IHistoryMessageAdapter.cs" />
+    <Compile Include="TraderHelper_FORTS.cs" />
+    <Compile Include="OrderBookInrementMessageAdapter.cs" />
+    <Compile Include="OrderBookTruncateMessageAdapter.cs" />
     <Compile Include="OrderLogMessageAdapter.cs" />
+    <Compile Include="PartialDownloadMessageAdapter.cs" />
     <Compile Include="PermissionCredentialsAuthorization.cs" />
     <Compile Include="PermissionCredentialsRemoteAuthorization.cs" />
     <Compile Include="PermissionCredentialsStorage.cs" />
@@ -137,12 +152,21 @@
     <Compile Include="Indicators\IndicatorValueAttribute.cs" />
     <Compile Include="IRemoteAuthorization.cs" />
     <Compile Include="PermissionCredentials.cs" />
+    <Compile Include="Server\ITransactionIdStorage.cs" />
+    <Compile Include="Server\IMessageListener.cs" />
+    <Compile Include="Server\IMessageListenerSession.cs" />
+    <Compile Include="ServicesRegistry.cs" />
     <Compile Include="Storages\Binary\Snapshot\PositionBinarySnapshotSerializer.cs" />
     <Compile Include="Storages\Binary\Snapshot\QuotesBinarySnapshotSerializer.cs" />
+    <Compile Include="Storages\Binary\Snapshot\Sizes.cs" />
+    <Compile Include="Storages\Binary\Snapshot\SnapshotVersions.cs" />
     <Compile Include="Storages\Binary\Snapshot\TransactionBinarySnapshotSerializer.cs" />
     <Compile Include="Storages\CacheableMarketDataStorage.cs" />
-    <Compile Include="Storages\Csv\ComplexSecurityList.cs" />
     <Compile Include="Storages\Csv\MarketDepthCsvSerializer.cs" />
+    <Compile Include="Storages\DriveCache.cs" />
+    <Compile Include="Storages\IMappingMessageAdapterProvider.cs" />
+    <Compile Include="Storages\IPortfolioMessageAdapterProvider.cs" />
+    <Compile Include="Storages\ISecurityMessageAdapterProvider.cs" />
     <Compile Include="Storages\ISnapshotSerializer.cs" />
     <Compile Include="Storages\ISecurityMappingStorage.cs" />
     <Compile Include="SecurityMappingMessageAdapter.cs" />
@@ -168,7 +192,6 @@
     <Compile Include="BasketMessageAdapter.cs" />
     <Compile Include="BasketPortfolio.cs" />
     <Compile Include="BasketPosition.cs" />
-    <Compile Include="Candles\BaseCandleSource.cs" />
     <Compile Include="Candles\CandleSourceEnumerator.cs" />
     <Compile Include="Candles\Compression\CandleBuilder.cs" />
     <Compile Include="Candles\CandleManagerContainer.cs" />
@@ -179,8 +202,6 @@
     <Compile Include="Candles\ICandleManager.cs" />
     <Compile Include="Candles\ICandleSource.cs" />
     <Compile Include="Candles\IExternalCandleSource.cs" />
-    <Compile Include="Candles\IndexSecurityCandleManagerSource.cs" />
-    <Compile Include="Candles\IndexCandleBuilder.cs" />
     <Compile Include="Candles\Compression\VolumeProfileHelper.cs" />
     <Compile Include="Commissions\CommissionManager.cs" />
     <Compile Include="Commissions\CommissionRule.cs" />
@@ -325,7 +346,6 @@
     <Compile Include="Storages\Csv\QuoteCsvSerializer.cs" />
     <Compile Include="Storages\Csv\TickCsvSerializer.cs" />
     <Compile Include="Storages\Csv\TransactionCsvSerializer.cs" />
-    <Compile Include="Storages\ExchangeList.cs" />
     <Compile Include="Helper.cs" />
     <Compile Include="IMarketRuleContainer.cs" />
     <Compile Include="IMarketRuleList.cs" />
@@ -346,13 +366,14 @@
     <Compile Include="Storages\ISecurityStorage.cs" />
     <Compile Include="Storages\Binary\Snapshot\Level1BinarySnapshotSerializer.cs" />
     <Compile Include="Storages\ISnapshotStorage.cs" />
+    <Compile Include="Storages\IPositionStorage.cs" />
     <Compile Include="Storages\IStoragePositionList.cs" />
     <Compile Include="Storages\IStorageSecurityList.cs">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Storages\Binary\Level1BinarySerializer.cs" />
-    <Compile Include="Storages\MultiSecurityStorage.cs" />
-    <Compile Include="Storages\NewsList.cs" />
+    <Compile Include="Storages\PositionStorage.cs" />
+    <Compile Include="Storages\RemoteMarketDataDrive.cs" />
     <Compile Include="Storages\SnapshotRegistry.cs" />
     <Compile Include="Storages\StorageEntityFactory.cs" />
     <Compile Include="Storages\Binary\TransactionBinarySerializer.cs" />
@@ -373,15 +394,12 @@
     <Compile Include="Statistics\StatisticManager.cs" />
     <Compile Include="SecurityIdGenerator.cs" />
     <Compile Include="Slippage\ISlippageManager.cs" />
-    <Compile Include="Storages\ContinuousSecurityMarketDataStorage.cs" />
     <Compile Include="Storages\Binary\CandleBinarySerializer.cs" />
     <Compile Include="Storages\EntityRegistry.cs" />
-    <Compile Include="Storages\ExchangeBoardList.cs" />
     <Compile Include="Storages\IEntityRegistry.cs" />
     <Compile Include="Storages\IMarketDataSerializer.cs" />
     <Compile Include="Storages\IMarketDataStorage.cs" />
     <Compile Include="Storages\IMarketDataDrive.cs" />
-    <Compile Include="Storages\IndexSecurityMarketDataStorage.cs" />
     <Compile Include="Storages\LocalMarketDataDrive.cs" />
     <Compile Include="Storages\Binary\BinaryHelper.cs" />
     <Compile Include="Storages\Binary\OrderLogBinarySerializer.cs" />
@@ -397,6 +415,11 @@
     <Compile Include="Strategies\Analytics\PriceVolumeDistributionStrategy.cs" />
     <Compile Include="Strategies\BasketStrategy.cs" />
     <Compile Include="Strategies\IStrategyChildStrategyList.cs" />
+    <Compile Include="Strategies\Messages\StrategyInfoMessage.cs" />
+    <Compile Include="Strategies\Messages\StrategyLookupMessage.cs" />
+    <Compile Include="Strategies\Messages\StrategyLookupResultMessage.cs" />
+    <Compile Include="Strategies\Messages\StrategyStateMessage.cs" />
+    <Compile Include="Strategies\Messages\StrategyTypeMessage.cs" />
     <Compile Include="Strategies\Reporting\CsvStrategyReport.cs" />
     <Compile Include="Strategies\Reporting\ExcelStrategyReport.cs" />
     <Compile Include="Strategies\Reporting\StrategyReport.cs" />
@@ -406,6 +429,9 @@
     <Compile Include="Strategies\StrategyNameGenerator.cs" />
     <Compile Include="Strategies\StrategyParam.cs" />
     <Compile Include="Strategies\StrategyParamHelper.cs" />
+    <Compile Include="Strategies\Strategy_Candles.cs" />
+    <Compile Include="Strategies\Strategy_MarketDataProvider.cs" />
+    <Compile Include="Strategies\Strategy_TransactionProvider.cs" />
     <Compile Include="Strategies\Testing\BatchEmulation.cs" />
     <Compile Include="Strategies\Testing\EmulationMarketModes.cs" />
     <Compile Include="Strategies\Testing\EmulationSettings.cs" />
@@ -434,7 +460,6 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ProcessStates.cs" />
     <Compile Include="Storages\BaseStorageEntityList.cs" />
-    <Compile Include="Storages\OrderFailList.cs" />
     <Compile Include="Testing\BaseEmulationConnector.cs" />
     <Compile Include="Storages\BasketMarketDataStorage.cs" />
     <Compile Include="Testing\ClearingMessage.cs" />
@@ -449,11 +474,6 @@
     <Compile Include="Testing\LastMessage.cs" />
     <Compile Include="Testing\MarketDataGenerator.cs" />
     <Compile Include="Testing\MarketDepthGenerator.cs" />
-    <Compile Include="Storages\MyTradeList.cs" />
-    <Compile Include="Storages\OrderList.cs" />
-    <Compile Include="Storages\PortfolioList.cs" />
-    <Compile Include="Storages\PositionList.cs" />
-    <Compile Include="Storages\SecurityList.cs" />
     <Compile Include="Testing\ExecutionLogConverter.cs" />
     <Compile Include="Testing\MarketEmulator.cs" />
     <Compile Include="Testing\MarketEmulatorSettings.cs" />
@@ -463,7 +483,6 @@
     <Compile Include="Testing\TradeGenerator.cs" />
     <Compile Include="TraderHelper.cs" />
     <Compile Include="TraderHelper_Obsolete.cs" />
-    <Compile Include="UserPermissions.cs" />
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include="Microsoft.Net.Client.3.5">
@@ -504,7 +523,6 @@
       <Name>Messages</Name>
     </ProjectReference>
   </ItemGroup>
-  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

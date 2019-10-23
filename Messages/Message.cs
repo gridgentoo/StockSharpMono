@@ -26,6 +26,27 @@ namespace StockSharp.Messages
 	using StockSharp.Localization;
 
 	/// <summary>
+	/// <see cref="Message"/> offline modes.
+	/// </summary>
+	public enum MessageOfflineModes
+	{
+		/// <summary>
+		/// None.
+		/// </summary>
+		None,
+
+		/// <summary>
+		/// Ignore offline mode and continue processing.
+		/// </summary>
+		Force,
+
+		/// <summary>
+		/// Cancel message processing and create reply.
+		/// </summary>
+		Cancel,
+	}
+
+	/// <summary>
 	/// A message containing market data or command.
 	/// </summary>
 	[System.Runtime.Serialization.DataContract]
@@ -52,12 +73,7 @@ namespace StockSharp.Messages
 		[field: NonSerialized]
 		private IDictionary<string, object> _extensionInfo;
 
-		/// <summary>
-		/// Extended information.
-		/// </summary>
-		/// <remarks>
-		/// Necessary to keep additional information associated with the message.
-		/// </remarks>
+		/// <inheritdoc />
 		[Ignore]
 		[XmlIgnore]
 		[DisplayNameLoc(LocalizedStrings.ExtendedInfoKey)]
@@ -72,16 +88,22 @@ namespace StockSharp.Messages
 		/// <summary>
 		/// Is loopback message.
 		/// </summary>
+		[Ignore]
+		[XmlIgnore]
 		public bool IsBack { get; set; }
 
 		/// <summary>
-		/// Ignore offline mode and continue processing.
+		/// Offline mode handling message.
 		/// </summary>
-		public bool IgnoreOffline { get; set; }
+		[Ignore]
+		[XmlIgnore]
+		public MessageOfflineModes OfflineMode { get; set; }
 
 		/// <summary>
 		/// Source adapter. Can be <see langword="null" />.
 		/// </summary>
+		[Ignore]
+		[XmlIgnore]
 		public IMessageAdapter Adapter { get; set; }
 
 		/// <summary>
@@ -91,16 +113,13 @@ namespace StockSharp.Messages
 		protected Message(MessageTypes type)
 		{
 			_type = type;
+			//StackTrace = Environment.StackTrace;
 		}
 
-		/// <summary>
-		/// Returns a string that represents the current object.
-		/// </summary>
-		/// <returns>A string that represents the current object.</returns>
-		public override string ToString()
-		{
-			return Type + $",T(L)={LocalTime:yyyy/MM/dd HH:mm:ss.fff}";
-		}
+		//internal readonly string StackTrace;
+
+		/// <inheritdoc />
+		public override string ToString() => Type + $",T(L)={LocalTime:yyyy/MM/dd HH:mm:ss.fff}";
 
 		/// <summary>
 		/// Create a copy of <see cref="Message"/>.
@@ -108,8 +127,18 @@ namespace StockSharp.Messages
 		/// <returns>Copy.</returns>
 		public abstract override Message Clone();
 
-		//{
-		//	throw new NotSupportedException(LocalizedStrings.Str17 + " " + GetType().FullName);
-		//}
+		/// <summary>
+		/// Copy the message into the <paramref name="destination" />.
+		/// </summary>
+		/// <param name="destination">The object, to which copied information.</param>
+		protected void CopyTo(Message destination)
+		{
+			if (destination == null)
+				throw new ArgumentNullException(nameof(destination));
+
+			destination.LocalTime = LocalTime;
+
+			this.CopyExtensionInfo(destination);
+		}
 	}
 }

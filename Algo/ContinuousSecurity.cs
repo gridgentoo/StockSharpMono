@@ -18,6 +18,7 @@ namespace StockSharp.Algo
 	using System;
 	using System.Collections.Generic;
 	using System.ComponentModel;
+	using System.ComponentModel.DataAnnotations;
 	using System.Linq;
 
 	using Ecng.Collections;
@@ -32,10 +33,20 @@ namespace StockSharp.Algo
 	/// </summary>
 	[DisplayNameLoc(LocalizedStrings.ContinuousSecurityKey)]
 	[DescriptionLoc(LocalizedStrings.Str696Key)]
-	public class ContinuousSecurity : BasketSecurity
+	public abstract class ContinuousSecurity : BasketSecurity
+	{
+	}
+
+	/// <summary>
+	/// Rollover by expiration date continuous security.
+	/// </summary>
+	[DisplayNameLoc(LocalizedStrings.ContinuousSecurityKey)]
+	[DescriptionLoc(LocalizedStrings.Str696Key)]
+	[BasketCode("CE")]
+	public class ExpirationContinuousSecurity : ContinuousSecurity
 	{
 		/// <summary>
-		/// The interface describing the internal instruments collection <see cref="ContinuousSecurity.ExpirationJumps"/>.
+		/// The interface describing the internal instruments collection <see cref="ExpirationJumps"/>.
 		/// </summary>
 		public interface IExpirationJumpList : ISynchronizedCollection<KeyValuePair<SecurityId, DateTimeOffset>>, IDictionary<SecurityId, DateTimeOffset>
 		{
@@ -63,14 +74,14 @@ namespace StockSharp.Algo
 			/// </summary>
 			/// <param name="security">Security.</param>
 			/// <returns>The next instrument. If the <paramref name="security" /> is the last instrument then <see langword="null" /> will be returned.</returns>
-			SecurityId GetNextSecurity(SecurityId security);
+			SecurityId? GetNextSecurity(SecurityId security);
 
 			/// <summary>
 			/// To get the previous instrument.
 			/// </summary>
 			/// <param name="security">Security.</param>
 			/// <returns>The previous instrument. If the <paramref name="security" /> is the first instrument then <see langword="null" /> will be returned.</returns>
-			SecurityId GetPrevSecurity(SecurityId security);
+			SecurityId? GetPrevSecurity(SecurityId security);
 			
 			/// <summary>
 			/// To get the range of operation of the internal instrument.
@@ -185,7 +196,7 @@ namespace StockSharp.Algo
 						MoveNext();
 					}
 
-					return default(SecurityId);
+					return default;
 				}
 			}
 
@@ -198,7 +209,7 @@ namespace StockSharp.Algo
 
 			SecurityId IExpirationJumpList.LastSecurity => _expirationRanges.LastOrDefault().Value;
 
-			SecurityId IExpirationJumpList.GetNextSecurity(SecurityId security)
+			SecurityId? IExpirationJumpList.GetNextSecurity(SecurityId security)
 			{
 				lock (SyncRoot)
 				{
@@ -206,11 +217,11 @@ namespace StockSharp.Algo
 						throw new ArgumentException(LocalizedStrings.Str697Params.Put(security));
 
 					var index = InnerSecurities.IndexOf(security);
-					return index == InnerSecurities.Length - 1 ? default(SecurityId) : InnerSecurities[index + 1];
+					return index == InnerSecurities.Length - 1 ? (SecurityId?)null : InnerSecurities[index + 1];
 				}
 			}
 
-			SecurityId IExpirationJumpList.GetPrevSecurity(SecurityId security)
+			SecurityId? IExpirationJumpList.GetPrevSecurity(SecurityId security)
 			{
 				lock (SyncRoot)
 				{
@@ -218,7 +229,7 @@ namespace StockSharp.Algo
 						throw new ArgumentException(LocalizedStrings.Str697Params.Put(security));
 
 					var index = InnerSecurities.IndexOf(security);
-					return index == 0 ? default(SecurityId) : InnerSecurities[index - 1];
+					return index == 0 ? (SecurityId?)null : InnerSecurities[index - 1];
 				}
 			}
 
@@ -237,9 +248,9 @@ namespace StockSharp.Algo
 		}
 
 		/// <summary>
-		/// Initializes a new instance of the <see cref="ContinuousSecurity"/>.
+		/// Initializes a new instance of the <see cref="ExpirationContinuousSecurity"/>.
 		/// </summary>
-		public ContinuousSecurity()
+		public ExpirationContinuousSecurity()
 		{
 			Type = SecurityTypes.Future;
 			_expirationJumps = new ExpirationJumpsDictionary();
@@ -253,9 +264,7 @@ namespace StockSharp.Algo
 		[Browsable(false)]
 		public IExpirationJumpList ExpirationJumps => _expirationJumps;
 
-		/// <summary>
-		/// Instruments, from which this basket is created.
-		/// </summary>
+		/// <inheritdoc />
 		[Browsable(false)]
 		public override IEnumerable<SecurityId> InnerSecurityIds => _expirationJumps.InnerSecurities;
 
@@ -271,29 +280,27 @@ namespace StockSharp.Algo
 
 		private const string _dateFormat = "yyyyMMddHHmmss";
 
-		/// <summary>
-		/// Save security state to string.
-		/// </summary>
-		/// <returns>String.</returns>
-		public override string ToSerializedString()
+		/// <inheritdoc />
+		protected override string ToSerializedString()
 		{
 			lock (_expirationJumps.SyncRoot)
 				return _expirationJumps.Select(j => $"{j.Key.ToStringId()}={j.Value.UtcDateTime.ToString(_dateFormat)}").Join(",");
 		}
 
-		/// <summary>
-		/// Load security state from <paramref name="text"/>.
-		/// </summary>
-		/// <param name="text">Value, received from <see cref="BasketSecurity.ToSerializedString"/>.</param>
-		public override void FromSerializedString(string text)
+		/// <inheritdoc />
+		protected override void FromSerializedString(string text)
 		{
 			lock (_expirationJumps.SyncRoot)
 			{
 				_expirationJumps.Clear();
+
+				if (text.IsEmpty())
+					return;
+
 				_expirationJumps.AddRange(text.Split(",").Select(p =>
 				{
 					var parts = p.Split("=");
-					return new KeyValuePair<SecurityId, DateTimeOffset>(parts[0].ToSecurityId(), parts[1].ToDateTime(_dateFormat).ChangeKind(DateTimeKind.Utc));
+					return new KeyValuePair<SecurityId, DateTimeOffset>(parts[0].ToSecurityId(), parts[1].ToDateTime(_dateFormat).UtcKind());
 				}));
 			}
 		}
@@ -325,5 +332,83 @@ namespace StockSharp.Algo
 		//		_expirationJumps.AddRange(dict);
 		//	}
 		//}
+	}
+
+	/// <summary>
+	/// Rollover by volume continuous security.
+	/// </summary>
+	[DisplayNameLoc(LocalizedStrings.ContinuousSecurityKey)]
+	[DescriptionLoc(LocalizedStrings.Str696Key)]
+	[BasketCode("CV")]
+	public class VolumeContinuousSecurity : ContinuousSecurity
+	{
+		/// <summary>
+		/// Initializes a new instance of the <see cref="VolumeContinuousSecurity"/>.
+		/// </summary>
+		public VolumeContinuousSecurity()
+		{
+			Type = SecurityTypes.Future;
+		}
+
+		/// <summary>
+		/// Instruments rollover by volume.
+		/// </summary>
+		public SynchronizedList<SecurityId> InnerSecurities { get; } = new SynchronizedList<SecurityId>();
+
+		/// <summary>
+		/// Use open interest for <see cref="VolumeLevel"/>.
+		/// </summary>
+		[Display(
+			ResourceType = typeof(LocalizedStrings),
+			Name = LocalizedStrings.OIKey,
+			Description = LocalizedStrings.OpenInterestKey,
+			GroupName = LocalizedStrings.ContinuousSecurityKey,
+			Order = 1)]
+		public bool IsOpenInterest { get; set; }
+
+		private Unit _volumeLevel = new Unit();
+
+		/// <summary>
+		/// Volume trigger causes switch to the next contract.
+		/// </summary>
+		[Display(
+			ResourceType = typeof(LocalizedStrings),
+			Name = LocalizedStrings.VolumeKey,
+			Description = LocalizedStrings.VolumeTriggerKey,
+			GroupName = LocalizedStrings.ContinuousSecurityKey,
+			Order = 0)]
+		public Unit VolumeLevel
+		{
+			get => _volumeLevel;
+			set => _volumeLevel = value ?? throw new ArgumentNullException(nameof(value));
+		}
+
+		/// <inheritdoc />
+		[Browsable(false)]
+		public override IEnumerable<SecurityId> InnerSecurityIds => InnerSecurities;
+
+		/// <inheritdoc />
+		protected override string ToSerializedString()
+		{
+			lock (InnerSecurities.SyncRoot)
+			{
+				return $"{IsOpenInterest},{VolumeLevel}," + InnerSecurities.Select(id => id.ToStringId()).Join(",");
+			}
+		}
+
+		/// <inheritdoc />
+		protected override void FromSerializedString(string text)
+		{
+			var parts = text.Split(",");
+
+			IsOpenInterest = parts[0].To<bool>();
+			VolumeLevel = parts[1].ToUnit();
+
+			lock (InnerSecurities.SyncRoot)
+			{
+				InnerSecurities.Clear();
+				InnerSecurities.AddRange(parts.Skip(2).Select(p => p.ToSecurityId()));
+			}
+		}
 	}
 }

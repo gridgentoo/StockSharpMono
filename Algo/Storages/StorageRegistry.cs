@@ -18,14 +18,12 @@ namespace StockSharp.Algo.Storages
 	using System;
 	using System.Collections;
 	using System.Collections.Generic;
-	using System.Globalization;
 	using System.IO;
 	using System.Linq;
 
 	using Ecng.Collections;
 	using Ecng.Common;
 	using Ecng.Reflection;
-	using Ecng.Reflection.Path;
 
 	using StockSharp.Algo.Candles;
 	using StockSharp.Algo.Storages.Binary;
@@ -416,7 +414,7 @@ namespace StockSharp.Algo.Storages
 		private sealed class NewsStorage : ConvertableStorage<NewsMessage, News, VoidType>
 		{
 			public NewsStorage(StorageRegistry parent, Security security, SecurityId securityId, IMarketDataSerializer<NewsMessage> serializer, IMarketDataStorageDrive drive)
-				: base(parent, security, securityId, null, m => m.ServerTime, m => default(SecurityId), m => null, serializer, drive)
+				: base(parent, security, securityId, null, m => m.ServerTime, m => default, m => null, serializer, drive)
 			{
 			}
 
@@ -431,12 +429,31 @@ namespace StockSharp.Algo.Storages
 			}
 		}
 
+		private sealed class BoardStateStorage : ConvertableStorage<BoardStateMessage, BoardStateMessage, VoidType>
+		{
+			public BoardStateStorage(StorageRegistry parent, Security security, SecurityId securityId, IMarketDataSerializer<BoardStateMessage> serializer, IMarketDataStorageDrive drive)
+				: base(parent, security, securityId, null, m => m.ServerTime, m => default, m => null, serializer, drive)
+			{
+			}
+
+			public override DateTimeOffset GetTime(BoardStateMessage data)
+			{
+				return data.ServerTime;
+			}
+
+			protected override BoardStateMessage ToMessage(BoardStateMessage entity)
+			{
+				return entity;
+			}
+		}
+
 		private readonly SynchronizedDictionary<Tuple<SecurityId, IMarketDataStorageDrive>, IMarketDataStorage<QuoteChangeMessage>> _depthStorages = new SynchronizedDictionary<Tuple<SecurityId, IMarketDataStorageDrive>, IMarketDataStorage<QuoteChangeMessage>>();
 		private readonly SynchronizedDictionary<Tuple<SecurityId, IMarketDataStorageDrive>, IMarketDataStorage<Level1ChangeMessage>> _level1Storages = new SynchronizedDictionary<Tuple<SecurityId, IMarketDataStorageDrive>, IMarketDataStorage<Level1ChangeMessage>>();
 		private readonly SynchronizedDictionary<Tuple<SecurityId, IMarketDataStorageDrive>, IMarketDataStorage<PositionChangeMessage>> _positionStorages = new SynchronizedDictionary<Tuple<SecurityId, IMarketDataStorageDrive>, IMarketDataStorage<PositionChangeMessage>>();
 		private readonly SynchronizedDictionary<Tuple<SecurityId, IMarketDataStorageDrive>, IMarketDataStorage<CandleMessage>> _candleStorages = new SynchronizedDictionary<Tuple<SecurityId, IMarketDataStorageDrive>, IMarketDataStorage<CandleMessage>>();
 		private readonly SynchronizedDictionary<Tuple<SecurityId, ExecutionTypes, IMarketDataStorageDrive>, IMarketDataStorage<ExecutionMessage>> _executionStorages = new SynchronizedDictionary<Tuple<SecurityId, ExecutionTypes, IMarketDataStorageDrive>, IMarketDataStorage<ExecutionMessage>>();
 		private readonly SynchronizedDictionary<IMarketDataStorageDrive, IMarketDataStorage<NewsMessage>> _newsStorages = new SynchronizedDictionary<IMarketDataStorageDrive, IMarketDataStorage<NewsMessage>>();
+		private readonly SynchronizedDictionary<IMarketDataStorageDrive, IMarketDataStorage<BoardStateMessage>> _boardStateStorages = new SynchronizedDictionary<IMarketDataStorageDrive, IMarketDataStorage<BoardStateMessage>>();
 		private readonly SynchronizedDictionary<IMarketDataDrive, ISecurityStorage> _securityStorages = new SynchronizedDictionary<IMarketDataDrive, ISecurityStorage>();
 		
 		/// <summary>
@@ -457,9 +474,7 @@ namespace StockSharp.Algo.Storages
 
 		private IMarketDataDrive _defaultDrive = new LocalMarketDataDrive();
 
-		/// <summary>
-		/// The storage used by default.
-		/// </summary>
+		/// <inheritdoc />
 		public virtual IMarketDataDrive DefaultDrive
 		{
 			get => _defaultDrive;
@@ -478,9 +493,7 @@ namespace StockSharp.Algo.Storages
 
 		private IExchangeInfoProvider _exchangeInfoProvider = new InMemoryExchangeInfoProvider();
 
-		/// <summary>
-		/// Exchanges and trading boards provider.
-		/// </summary>
+		/// <inheritdoc />
 		public IExchangeInfoProvider ExchangeInfoProvider
 		{
 			get => _exchangeInfoProvider;
@@ -571,7 +584,6 @@ namespace StockSharp.Algo.Storages
 
 			storages.Add(Tuple.Create(storage.Security.ToSecurityId(), type, storage.Drive), storage);
 		}
-
 
 		/// <inheritdoc />
 		public IMarketDataStorage<Trade> GetTradeStorage(Security security, IMarketDataDrive drive = null, StorageFormats format = StorageFormats.Binary)
@@ -888,155 +900,36 @@ namespace StockSharp.Algo.Storages
 			});
 		}
 
+		/// <inheritdoc />
+		public IMarketDataStorage<BoardStateMessage> GetBoardStateMessageStorage(IMarketDataDrive drive = null, StorageFormats format = StorageFormats.Binary)
+		{
+			var securityId = GetSecurityId(TraderHelper.AllSecurity);
+
+			return _boardStateStorages.SafeAdd((drive ?? DefaultDrive).GetStorageDrive(securityId, typeof(BoardStateMessage), null, format), key =>
+			{
+				IMarketDataSerializer<BoardStateMessage> serializer;
+
+				switch (format)
+				{
+					case StorageFormats.Binary:
+						serializer = new BoardStateBinarySerializer(ExchangeInfoProvider);
+						break;
+					case StorageFormats.Csv:
+						serializer = new BoardStateCsvSerializer();
+						break;
+					default:
+						throw new ArgumentOutOfRangeException(nameof(format), format, LocalizedStrings.Str1219);
+				}
+
+				return new BoardStateStorage(this, TraderHelper.AllSecurity, securityId, serializer, key);
+			});
+		}
+
 		private static SecurityId GetSecurityId(Security security)
 		{
 			var id = security.ToSecurityId();
 			id.EnsureHashCode();
 			return id;
-		}
-
-		private class SecurityStorage : Disposable, ISecurityStorage
-		{
-			private readonly StorageRegistry _parent;
-			private const string _format = "{Id};{Type};{Decimals};{PriceStep};{VolumeStep};{Multiplier};{Name};{ShortName};{UnderlyingSecurityId};{Class};{Currency};{OptionType};{Strike};{BinaryOptionType}";
-			private readonly string _file;
-			private readonly CachedSynchronizedSet<Security> _securities = new CachedSynchronizedSet<Security>();
-
-			public SecurityStorage(StorageRegistry parent, IMarketDataDrive drive)
-			{
-				if (drive == null)
-					throw new ArgumentNullException(nameof(drive));
-
-				_parent = parent ?? throw new ArgumentNullException(nameof(parent));
-				_file = Path.Combine(drive.Path, "instruments.csv");
-				Load();
-			}
-
-			private void Load()
-			{
-				if (!File.Exists(_file))
-					return;
-
-				var proxySet = _format
-					.Split(';')
-					.Select(s => MemberProxy.Create(typeof(Security), s.Substring(1, s.Length - 2)))
-					.ToArray();
-
-				CultureInfo.InvariantCulture.DoInCulture(() =>
-				{
-					foreach (var line in File.ReadAllLines(_file))
-					{
-						var security = new Security();
-
-						var cells = line.Split(';');
-
-						for (var i = 0; i < proxySet.Length; i++)
-						{
-							var proxy = proxySet[i];
-							var cell = cells[i];
-
-							if (cell.Length == 0)
-								cell = null;
-
-							var value = (object)cell;
-
-							if (proxy.ReturnType != typeof(string))
-								value = value.To(proxy.ReturnType);
-
-							proxy.SetValue(security, value);
-						}
-
-						var id = security.Id.ToSecurityId();
-						security.Code = id.SecurityCode;
-						security.Board = _parent.ExchangeInfoProvider.GetOrCreateBoard(id.BoardCode);
-
-						_securities.Add(security);
-					}
-				});
-			}
-
-			int ISecurityProvider.Count => _securities.Count;
-
-			public event Action<IEnumerable<Security>> Added;
-			public event Action<IEnumerable<Security>> Removed;
-
-			public event Action Cleared
-			{
-				add { }
-				remove { }
-			}
-
-			IEnumerable<Security> ISecurityProvider.Lookup(Security criteria)
-			{
-				return _securities.Cache.Filter(criteria);
-			}
-
-			void ISecurityStorage.Save(Security security, bool forced)
-			{
-				if (!_securities.TryAdd(security))
-					return;
-
-				CultureInfo.InvariantCulture.DoInCulture(() =>
-				{
-					using (var file = File.AppendText(_file))
-						file.WriteLine(_format.PutEx(security));
-				});
-
-				Added?.Invoke(new[] { security });
-			}
-
-			void ISecurityStorage.Delete(Security security)
-			{
-				if (!_securities.Remove(security))
-					return;
-
-				Save();
-				Removed?.Invoke(new[] { security });
-			}
-
-			void ISecurityStorage.DeleteBy(Security criteria)
-			{
-				var removed = new List<Security>();
-
-				foreach (var security in _securities.Cache.Filter(criteria))
-				{
-					if (_securities.Remove(security))
-						removed.Add(security);
-				}
-
-				Removed?.Invoke(removed);
-				
-				Save();
-			}
-
-			private void Save()
-			{
-				var securities = _securities.Cache;
-
-				if (securities.Length == 0)
-					File.Delete(_file);
-
-				CultureInfo.InvariantCulture.DoInCulture(() =>
-				{
-					File.WriteAllLines(_file, securities.Select(s => _format.PutEx(s)));
-				});
-			}
-
-			//IEnumerable<string> ISecurityStorage.GetSecurityIds()
-			//{
-			//	return _securities.Cache.Select(s => s.Id);
-			//}
-		}
-
-		/// <summary>
-		/// To get the instruments storage.
-		/// </summary>
-		/// <param name="drive">The storage. If a value is <see langword="null" />, <see cref="StorageRegistry.DefaultDrive"/> will be used.</param>
-		/// <param name="format">The format type. By default <see cref="StorageFormats.Binary"/> is passed.</param>
-		/// <returns>The instruments storage.</returns>
-		public ISecurityStorage GetSecurityStorage(IMarketDataDrive drive = null, StorageFormats format = StorageFormats.Binary)
-		{
-			return _securityStorages.SafeAdd(drive ?? DefaultDrive, key => new SecurityStorage(this, key));
 		}
 	}
 }

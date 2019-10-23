@@ -23,7 +23,7 @@ namespace StockSharp.Localization
 		/// <summary>
 		/// Gets company information.
 		/// </summary>
-		public const string Company = "StockSharp LLC";
+		public const string Company = "StockSharp LP";
 
 		/// <summary>
 		/// Gets product information.
@@ -33,7 +33,7 @@ namespace StockSharp.Localization
 		/// <summary>
 		/// Gets copyright information.
 		/// </summary>
-		public const string Copyright = "Copyright @ StockSharp 2018";
+		public const string Copyright = "Copyright @ StockSharp 2019";
 
 		/// <summary>
 		/// Gets trademark information.
@@ -43,6 +43,6 @@ namespace StockSharp.Localization
 		/// <summary>
 		/// Gets version information.
 		/// </summary>
-		public const string Version = "4.4.12";
+		public const string Version = "4.4.17";
 	}
 }

@@ -17,7 +17,6 @@ namespace StockSharp.Algo.Storages.Binary
 {
 	using System;
 	using System.Collections;
-	using System.Text;
 
 	using Ecng.Collections;
 	using Ecng.Common;
@@ -85,7 +84,7 @@ namespace StockSharp.Algo.Storages.Binary
 
 					var found = false;
 
-					for (var i = 0; i < 10; i++)
+					for (var i = 0; i < 20; i++)
 					{
 						if ((price % newPriceStep) == 0)
 						{
@@ -280,7 +279,7 @@ namespace StockSharp.Algo.Storages.Binary
 					if (timeDiff <= TimeSpan.FromHours(32))
 					{
 						writer.Write(true);
-						writer.WriteBits(timeDiff.Hours, 5);
+						writer.WriteBits(timeDiff.Days * 24 + timeDiff.Hours, 5);
 					}
 					else
 					{
@@ -484,17 +483,33 @@ namespace StockSharp.Algo.Storages.Binary
 			return reader.Read() ? (reader.Read() ? Sides.Buy : Sides.Sell) : (Sides?)null;
 		}
 
+		public static void WriteStringEx(this BitArrayWriter writer, string value)
+		{
+			if (value.IsEmpty())
+				writer.Write(false);
+			else
+			{
+				writer.Write(true);
+				writer.WriteString(value);
+			}
+		}
+
 		public static void WriteString(this BitArrayWriter writer, string value)
 		{
-			var bits = Encoding.UTF8.GetBytes(value).To<BitArray>().To<bool[]>();
+			var bits = value.UTF8().To<BitArray>().To<bool[]>();
 			writer.WriteInt(bits.Length);
 			bits.ForEach(writer.Write);
+		}
+
+		public static string ReadStringEx(this BitArrayReader reader)
+		{
+			return reader.Read() ? reader.ReadString() : null;
 		}
 
 		public static string ReadString(this BitArrayReader reader)
 		{
 			var len = reader.ReadInt();
-			return Encoding.UTF8.GetString(reader.ReadArray(len).To<BitArray>().To<byte[]>());
+			return reader.ReadArray(len).To<BitArray>().To<byte[]>().UTF8();
 		}
 
 		public static TimeSpan GetTimeZone(this BinaryMetaInfo metaInfo, bool isUtc, SecurityId securityId, IExchangeInfoProvider exchangeInfoProvider)
@@ -548,6 +563,24 @@ namespace StockSharp.Algo.Storages.Binary
 		public static bool HasLocalTime(this Message msg, DateTimeOffset serverTime)
 		{
 			return !msg.LocalTime.IsDefault() && msg.LocalTime != serverTime/* && (msg.LocalTime - serverTime).TotalHours.Abs() < 1*/;
+		}
+
+		public static void WriteDto(this BitArrayWriter writer, DateTimeOffset? dto)
+		{
+			if (dto != null)
+			{
+				writer.Write(true);
+				writer.WriteLong(dto.Value.Ticks);
+				writer.WriteInt(dto.Value.Offset.Hours);
+				writer.WriteInt(dto.Value.Offset.Minutes);
+			}
+			else
+				writer.Write(false);
+		}
+
+		public static DateTimeOffset? ReadDto(this BitArrayReader reader)
+		{
+			return reader.Read() ? reader.ReadLong().To<DateTime>().ApplyTimeZone(new TimeSpan(reader.ReadInt(), reader.ReadInt(), 0)) : (DateTimeOffset?)null;
 		}
 	}
 }

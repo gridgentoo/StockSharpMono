@@ -17,6 +17,7 @@ namespace StockSharp.Messages
 {
 	using System;
 	using System.Runtime.Serialization;
+	using System.Xml.Serialization;
 
 	/// <summary>
 	/// Base connect/disconnect message.
@@ -38,12 +39,21 @@ namespace StockSharp.Messages
 		/// Information about the error connection or disconnection.
 		/// </summary>
 		[DataMember]
+		[XmlIgnore]
 		public Exception Error { get; set; }
 
 		/// <summary>
-		/// Returns a string that represents the current object.
+		/// Copy the message into the <paramref name="destination" />.
 		/// </summary>
-		/// <returns>A string that represents the current object.</returns>
+		/// <param name="destination">The object, to which copied information.</param>
+		protected virtual void CopyTo(BaseConnectionMessage destination)
+		{
+			base.CopyTo(destination);
+
+			destination.Error = Error;
+		}
+
+		/// <inheritdoc />
 		public override string ToString()
 		{
 			return base.ToString() + (Error == null ? null : $",Error={Error.Message}");

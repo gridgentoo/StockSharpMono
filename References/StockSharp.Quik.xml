@@ -20,10 +20,10 @@
             Possible time-frames.
             </summary>
     </member>
-    <member name="M:StockSharp.Quik.Lua.LuaFixMarketDataMessageAdapter.CreateOrderCondition">
+    <member name="M:StockSharp.Quik.Lua.LuaFixMarketDataMessageAdapter.CreateDialect(StockSharp.Fix.FixDialects)">
       <inheritdoc />
     </member>
-    <member name="M:StockSharp.Quik.Lua.LuaFixMarketDataMessageAdapter.CreateDialect(StockSharp.Fix.FixDialects)">
+    <member name="M:StockSharp.Quik.Lua.LuaFixMarketDataMessageAdapter.IsAllDownloadingSupported(StockSharp.Messages.MarketDataTypes)">
       <inheritdoc />
     </member>
     <member name="M:StockSharp.Quik.Lua.LuaFixMarketDataMessageAdapter.OnSendInMessage(StockSharp.Messages.Message)">
@@ -43,6 +43,13 @@
       <summary>
             Создать <see cref="T:StockSharp.Quik.Lua.LuaFixServer" />.
             </summary>
+    </member>
+    <member name="M:StockSharp.Quik.Lua.LuaFixServer.GetLuaString(StockSharp.Messages.OrderMessage)">
+      <summary>
+            Получить LUA строку для транзакции.
+            </summary>
+      <param name="message">Транзакция.</param>
+      <returns>LUA строка.</returns>
     </member>
     <member name="P:StockSharp.Quik.Lua.LuaFixServer.TransactionAddress">
       <summary>
@@ -96,6 +103,11 @@
             Автоматически править коды фьючерсов для Si и Eu.
             </summary>
     </member>
+    <member name="P:StockSharp.Quik.Lua.LuaFixServer.IgnoreCyrillic">
+      <summary>
+            Игнорировать кириллические инструменты.
+            </summary>
+    </member>
     <member name="P:StockSharp.Quik.Lua.LuaFixServer.LogFile">
       <summary>
             Название текстового файла, в который будут писаться логи.
@@ -145,17 +157,17 @@
             Описание классов инструментов, в зависимости от которых будут проставляться параметры в <see cref="P:StockSharp.Messages.SecurityMessage.SecurityType" /> и <see cref="P:StockSharp.Messages.SecurityId.BoardCode" />.
             </summary>
     </member>
-    <member name="M:StockSharp.Quik.Lua.LuaFixServer.GetNextRequest">
+    <member name="M:StockSharp.Quik.Lua.LuaFixServer.GetNextMessage">
       <summary>
             Получить пользовательский запрос.
             </summary>
       <returns>Пользовательский запрос.</returns>
     </member>
-    <member name="M:StockSharp.Quik.Lua.LuaFixServer.AddRequest(StockSharp.Quik.Lua.LuaRequest)">
+    <member name="M:StockSharp.Quik.Lua.LuaFixServer.AddMessage(StockSharp.Messages.Message)">
       <summary>
             Добавить пользовательский запрос.
             </summary>
-      <param name="request">Пользовательский запрос.</param>
+      <param name="message">Пользовательский запрос.</param>
     </member>
     <member name="M:StockSharp.Quik.Lua.LuaFixServer.GetNextTransactionId">
       <summary>
@@ -171,12 +183,11 @@
       <returns>
         <see langword="true" />, если транзакция не была ранее обработана и ее можно обработать, иначе <see langword="false" />.</returns>
     </member>
-    <member name="M:StockSharp.Quik.Lua.LuaFixServer.GetLastCandle(StockSharp.Messages.SecurityId,System.TimeSpan)">
+    <member name="M:StockSharp.Quik.Lua.LuaFixServer.GetLastCandle(System.Int64)">
       <summary>
             Получить последнюю отправленную свечу.
             </summary>
-      <param name="securityId">Идентификатор инструмента.</param>
-      <param name="timeFrame">Тайм-фрейм.</param>
+      <param name="originalTransactionId">Идентификатор первоначального сообщения <see cref="P:StockSharp.Messages.MarketDataMessage.TransactionId" />, для которого данное сообщение является ответом.</param>
       <returns>Последняя отправленная свеча.</returns>
     </member>
     <member name="M:StockSharp.Quik.Lua.LuaFixServer.TryAddSecurityCode(System.String)">
@@ -184,6 +195,8 @@
       </summary>
       <param name="secCode">
       </param>
+      <returns>
+      </returns>
     </member>
     <member name="M:StockSharp.Quik.Lua.LuaFixServer.TryGetSecurityCode(System.String)">
       <summary>
@@ -204,77 +217,11 @@
             </summary>
       <param name="transactionIdGenerator">Генератор идентификаторов транзакций.</param>
     </member>
-    <member name="M:StockSharp.Quik.Lua.LuaFixTransactionMessageAdapter.CreateOrderCondition">
+    <member name="P:StockSharp.Quik.Lua.LuaFixTransactionMessageAdapter.SupportedMarketDataTypes">
       <inheritdoc />
     </member>
     <member name="M:StockSharp.Quik.Lua.LuaFixTransactionMessageAdapter.CreateDialect(StockSharp.Fix.FixDialects)">
       <inheritdoc />
-    </member>
-    <member name="T:StockSharp.Quik.Lua.LuaRequest">
-      <summary>
-            Пользовательский запрос.
-            </summary>
-    </member>
-    <member name="M:StockSharp.Quik.Lua.LuaRequest.#ctor">
-      <summary>
-            Создать <see cref="T:StockSharp.Quik.Lua.LuaRequest" />.
-            </summary>
-    </member>
-    <member name="P:StockSharp.Quik.Lua.LuaRequest.MessageType">
-      <summary>
-            Тип сообщения.
-            </summary>
-    </member>
-    <member name="P:StockSharp.Quik.Lua.LuaRequest.TransactionId">
-      <summary>
-            Идентификатор транзакции.
-            </summary>
-    </member>
-    <member name="P:StockSharp.Quik.Lua.LuaRequest.Value">
-      <summary>
-            Значение запроса.
-            </summary>
-    </member>
-    <member name="P:StockSharp.Quik.Lua.LuaRequest.SecurityId">
-      <summary>
-            Идентификатор инструмента.
-            </summary>
-    </member>
-    <member name="P:StockSharp.Quik.Lua.LuaRequest.OrderType">
-      <summary>
-            Тип заявки.
-            </summary>
-    </member>
-    <member name="P:StockSharp.Quik.Lua.LuaRequest.IsSubscribe">
-      <summary>
-            Является ли сообщение подпиской на маркет-данные.
-            </summary>
-    </member>
-    <member name="P:StockSharp.Quik.Lua.LuaRequest.DataType">
-      <summary>
-            Тип маркет-данных.
-            </summary>
-    </member>
-    <member name="P:StockSharp.Quik.Lua.LuaRequest.Arg">
-      <summary>
-            Дополнительный аргумент, ассоциированный с типом данных. Например, параметр свечи.
-            </summary>
-    </member>
-    <member name="P:StockSharp.Quik.Lua.LuaRequest.From">
-      <summary>
-            Дата начала, с которой необходимо получать данные.
-            </summary>
-    </member>
-    <member name="P:StockSharp.Quik.Lua.LuaRequest.To">
-      <summary>
-            Дата окончания, до которой необходимо получать данные.
-            </summary>
-    </member>
-    <member name="M:StockSharp.Quik.Lua.LuaRequest.ToString">
-      <summary>
-            Получить строковое представление.
-            </summary>
-      <returns>Строковое представление.</returns>
     </member>
     <member name="T:StockSharp.Quik.Native.Codes">
       <summary>
@@ -2354,6 +2301,9 @@
             Маркет-дата адаптер сообщений для Quik, работающий через протокол DDE.
             </summary>
     </member>
+    <member name="P:StockSharp.Quik.QuikDdeAdapter.IsSupportSecuritiesLookupAll">
+      <inheritdoc />
+    </member>
     <member name="P:StockSharp.Quik.QuikDdeAdapter.CustomTables">
       <summary>
             Список произвольных таблиц.
@@ -2657,30 +2607,21 @@
             Признак исполнения заявки «Тэйк-профит» по рыночной цене.
             </summary>
     </member>
-    <member name="M:StockSharp.Quik.QuikOrderCondition.Clone">
-      <summary>
-            Создать копию <see cref="T:StockSharp.Quik.QuikOrderCondition" />.
-            </summary>
-      <returns>Копия.</returns>
+    <member name="P:StockSharp.Quik.QuikOrderCondition.IsRepo">
+      <inheritdoc />
     </member>
-    <member name="E:StockSharp.Quik.QuikOrderCondition.PropertiesChanged">
-      <summary>
-            The available properties change event.
-            </summary>
+    <member name="P:StockSharp.Quik.QuikOrderCondition.RepoInfo">
+      <inheritdoc />
     </member>
-    <member name="M:StockSharp.Quik.QuikOrderCondition.RaisePropertiesChanged">
-      <summary>
-            To call the available properties change event.
-            </summary>
+    <member name="P:StockSharp.Quik.QuikOrderCondition.IsNtm">
+      <inheritdoc />
+    </member>
+    <member name="P:StockSharp.Quik.QuikOrderCondition.NtmInfo">
+      <inheritdoc />
     </member>
     <member name="T:StockSharp.Quik.QuikTrader">
       <summary>
             Реализация интерфейса <see cref="T:StockSharp.BusinessEntities.IConnector" />, предоставляющая подключение к терминалу Quik.
-            </summary>
-    </member>
-    <member name="F:StockSharp.Quik.QuikTrader.DefaultLuaAddress">
-      <summary>
-            Адрес по-умолчанию к LUA FIX серверу. Равен localhost:5001
             </summary>
     </member>
     <member name="M:StockSharp.Quik.QuikTrader.#ctor">
@@ -2750,8 +2691,8 @@
     </member>
     <member name="P:StockSharp.Quik.QuikTrader.IsAsyncMode">
       <summary>
-            Асинхронный режим. Если <see langword="true" />, то все транзакции, такие как <see cref="M:StockSharp.BusinessEntities.IConnector.RegisterOrder(StockSharp.BusinessEntities.Order)" />
-            или <see cref="M:StockSharp.BusinessEntities.IConnector.CancelOrder(StockSharp.BusinessEntities.Order)" /> будут отправляться в асинхронном режиме.
+            Асинхронный режим. Если <see langword="true" />, то все транзакции, такие как <see cref="M:StockSharp.BusinessEntities.ITransactionProvider.RegisterOrder(StockSharp.BusinessEntities.Order)" />
+            или <see cref="M:StockSharp.BusinessEntities.ITransactionProvider.CancelOrder(StockSharp.BusinessEntities.Order)" /> будут отправляться в асинхронном режиме.
             </summary>
       <remarks>
             Значение по умолчанию <see langword="true" />.
@@ -3285,21 +3226,6 @@
       <summary>
             https://forum.quik.ru/forum10/topic1218/
             </summary>
-    </member>
-    <member name="M:StockSharp.Quik.QuikTrans2QuikAdapter.CreateOrderCondition">
-      <summary>
-            Создать для заявки типа <see cref="F:StockSharp.Messages.OrderTypes.Conditional" /> условие, которое поддерживается подключением.
-            </summary>
-      <returns>Условие для заявки. Если подключение не поддерживает заявки типа <see cref="F:StockSharp.Messages.OrderTypes.Conditional" />, то будет возвращено <see langword="null" />.</returns>
-    </member>
-    <member name="P:StockSharp.Quik.QuikTrans2QuikAdapter.IsSupportStopLoss">
-      <inheritdoc />
-    </member>
-    <member name="P:StockSharp.Quik.QuikTrans2QuikAdapter.IsSupportTakeProfit">
-      <inheritdoc />
-    </member>
-    <member name="M:StockSharp.Quik.QuikTrans2QuikAdapter.CreateStopCondition(System.Boolean,System.Nullable{System.Decimal})">
-      <inheritdoc />
     </member>
     <member name="M:StockSharp.Quik.QuikTrans2QuikAdapter.OnSendInMessage(StockSharp.Messages.Message)">
       <summary>

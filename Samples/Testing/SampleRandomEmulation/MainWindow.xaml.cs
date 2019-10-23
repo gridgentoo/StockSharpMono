@@ -16,7 +16,6 @@ Copyright 2010 by StockSharp, LLC
 namespace SampleRandomEmulation
 {
 	using System;
-	using System.Collections.Generic;
 	using System.Diagnostics;
 	using System.Windows;
 	using System.Windows.Media;
@@ -24,6 +23,7 @@ namespace SampleRandomEmulation
 	using Ecng.Common;
 	using Ecng.Xaml;
 	using Ecng.Collections;
+	using Ecng.Xaml.DevExp.Excel;
 
 	using StockSharp.Algo;
 	using StockSharp.Algo.Candles;
@@ -40,7 +40,7 @@ namespace SampleRandomEmulation
 	{
 		private SmaStrategy _strategy;
 
-		private readonly ICollection<LineData<DateTime>> _curveItems;
+		private readonly ChartBandElement _curveElem;
 		private HistoryEmulationConnector _connector;
 
 		private readonly LogManager _logManager = new LogManager();
@@ -52,7 +52,7 @@ namespace SampleRandomEmulation
 			InitializeComponent();
 
 			_logManager.Listeners.Add(new FileLogListener("log.txt"));
-			_curveItems = Curve.CreateCurve("Equity", Colors.DarkGreen);
+			_curveElem = Curve.CreateCurve("Equity", Colors.DarkGreen, ChartIndicatorDrawStyles.Line);
 		}
 
 		private void StartBtnClick(object sender, RoutedEventArgs e)
@@ -93,11 +93,7 @@ namespace SampleRandomEmulation
 			.TryAdd(Level1Fields.MarginSell, 10000m);
 
 			// test portfolio
-			var portfolio = new Portfolio
-			{
-				Name = "test account",
-				BeginValue = 1000000,
-			};
+			var portfolio = Portfolio.CreateSimulator();
 
 			var timeFrame = TimeSpan.FromMinutes(5);
 
@@ -119,12 +115,10 @@ namespace SampleRandomEmulation
 
 			_logManager.Sources.Add(_connector);
 
-			var candleManager = new CandleManager(_connector);
-
 			var series = new CandleSeries(typeof(TimeFrameCandle), security, timeFrame);
 
 			// create strategy based on 80 5-min и 10 5-min
-			_strategy = new SmaStrategy(candleManager, series, new SimpleMovingAverage { Length = 80 }, new SimpleMovingAverage { Length = 10 })
+			_strategy = new SmaStrategy(series, new SimpleMovingAverage { Length = 80 }, new SimpleMovingAverage { Length = 10 })
 			{
 				Volume = 1,
 				Security = security,
@@ -145,7 +139,6 @@ namespace SampleRandomEmulation
 
 				// start strategy before emulation started
 				_strategy.Start();
-				candleManager.Start(series);
 
 				// start historical data loading when connection established successfully and all data subscribed
 				_connector.Start();
@@ -157,13 +150,13 @@ namespace SampleRandomEmulation
 
 			_strategy.PnLChanged += () =>
 			{
-				var data = new EquityData
-				{
-					Time = _strategy.CurrentTime,
-					Value = _strategy.PnL,
-				};
+				var data = new ChartDrawData();
 
-				this.GuiAsync(() => _curveItems.Add(data));
+				data
+					.Group(_strategy.CurrentTime)
+						.Add(_curveElem, _strategy.PnL);
+
+				Curve.Draw(data);
 			};
 
 			_logManager.Sources.Add(_strategy);
@@ -205,7 +198,7 @@ namespace SampleRandomEmulation
 				}
 			};
 
-			_curveItems.Clear();
+			Curve.Reset(new[] { _curveElem });
 
 			Report.IsEnabled = false;
 
@@ -220,7 +213,7 @@ namespace SampleRandomEmulation
 			// generate report for backtested strategy
 			// Warning! For the huge order or trade count,
 			// generation will be extremely slow
-			new ExcelStrategyReport(_strategy, "sma.xlsx").Generate();
+			new ExcelStrategyReport(new DevExpExcelWorkerProvider(), _strategy, "sma.xlsx").Generate();
 
 			// order excel file
 			Process.Start("sma.xlsx");

@@ -18,10 +18,12 @@ namespace StockSharp.Algo
 	using System;
 	using System.Collections;
 	using System.Collections.Generic;
+	using System.Globalization;
 	using System.Linq;
 
 	using Ecng.Common;
 	using Ecng.Collections;
+	using Ecng.ComponentModel.Expressions;
 
 	using MoreLinq;
 
@@ -97,6 +99,8 @@ namespace StockSharp.Algo
 			_stateChangePossibilities[(int)OrderStates.Failed][(int)OrderStates.Active] = false;
 			_stateChangePossibilities[(int)OrderStates.Failed][(int)OrderStates.Done] = false;
 			_stateChangePossibilities[(int)OrderStates.Failed][(int)OrderStates.Failed] = true;
+
+			UsdRateMinAvailableTime = new DateTime(2009, 11, 2);
 		}
 
 		/// <summary>
@@ -346,9 +350,9 @@ namespace StockSharp.Algo
 		/// <returns>The multiple price.</returns>
 		public static decimal ShrinkPrice(this Security security, decimal price, ShrinkRules rule = ShrinkRules.Auto)
 		{
-			security.CheckPriceStep();
+			//var priceStep = security.CheckPriceStep();
 
-			return price.Round(security.PriceStep ?? 1m, security.Decimals ?? 0,
+			return price.Round(security.PriceStep ?? 0.01m, security.Decimals ?? 0,
 				rule == ShrinkRules.Auto
 					? (MidpointRounding?)null
 					: (rule == ShrinkRules.Less ? MidpointRounding.AwayFromZero : MidpointRounding.ToEven)).RemoveTrailingZeros();
@@ -411,7 +415,7 @@ namespace StockSharp.Algo
 		/// <returns><see langword="true" />, if time is traded, otherwise, not traded.</returns>
 		public static bool IsTradeTime(this ExchangeBoard board, DateTimeOffset time)
 		{
-			return board.ToMessage().IsTradeTime(time, out var _);
+			return board.ToMessage().IsTradeTime(time, out _);
 		}
 
 		/// <summary>
@@ -434,7 +438,7 @@ namespace StockSharp.Algo
 		/// <returns><see langword="true" />, if time is traded, otherwise, not traded.</returns>
 		public static bool IsTradeTime(this BoardMessage board, DateTimeOffset time)
 		{
-			return board.IsTradeTime(time, out var _);
+			return board.IsTradeTime(time, out _);
 		}
 
 		/// <summary>
@@ -519,7 +523,7 @@ namespace StockSharp.Algo
 		{
 			var period = workingTime.GetPeriod(date);
 
-			if ((period == null || period.Times.Count == 0) && workingTime.SpecialWorkingDays.Count == 0 && workingTime.SpecialHolidays.Count == 0)
+			if ((period == null || period.Times.Count == 0) && workingTime.SpecialWorkingDays.Length == 0 && workingTime.SpecialHolidays.Length == 0)
 				return true;
 
 			bool isWorkingDay;
@@ -575,8 +579,6 @@ namespace StockSharp.Algo
 				VisibleVolume = oldOrder.VisibleVolume,
 				BrokerCode = oldOrder.BrokerCode,
 				ClientCode = oldOrder.ClientCode,
-				RepoInfo = oldOrder.RepoInfo?.Clone(),
-				RpsInfo = oldOrder.RpsInfo?.Clone(),
 			};
 		}
 
@@ -934,9 +936,9 @@ namespace StockSharp.Algo
 			decimal priceLevel;
 
 			if (priceRange.Type == UnitTypes.Percent)
-				priceLevel = (decimal)(firstPrice + MathHelper.Floor((((price - firstPrice) * 100) / firstPrice), priceRange.Value).Percents());
+				priceLevel = (decimal)(firstPrice + (((price - firstPrice) * 100) / firstPrice).Floor(priceRange.Value).Percents());
 			else
-				priceLevel = MathHelper.Floor(price, (decimal)priceRange);
+				priceLevel = price.Floor((decimal)priceRange);
 
 			return priceLevel;
 		}
@@ -973,7 +975,7 @@ namespace StockSharp.Algo
 		/// <param name="to">Second quotes.</param>
 		/// <param name="side">The direction, showing the type of quotes.</param>
 		/// <returns>Changes.</returns>
-		public static IEnumerable<QuoteChange> GetDelta(this IEnumerable<QuoteChange> from, IEnumerable<QuoteChange> to, Sides side)
+		public static QuoteChange[] GetDelta(this IEnumerable<QuoteChange> from, IEnumerable<QuoteChange> to, Sides side)
 		{
 			if (from == null)
 				throw new ArgumentNullException(nameof(from));
@@ -1060,7 +1062,7 @@ namespace StockSharp.Algo
 		/// <param name="deltaQuotes">Changes.</param>
 		/// <param name="isBids">The indication of quotes direction.</param>
 		/// <returns>Changed quotes.</returns>
-		public static IEnumerable<QuoteChange> AddDelta(this IEnumerable<QuoteChange> fromQuotes, IEnumerable<QuoteChange> deltaQuotes, bool isBids)
+		public static QuoteChange[] AddDelta(this IEnumerable<QuoteChange> fromQuotes, IEnumerable<QuoteChange> deltaQuotes, bool isBids)
 		{
 			var result = new List<QuoteChange>();
 
@@ -1125,7 +1127,7 @@ namespace StockSharp.Algo
 				}
 			}
 
-			return result;
+			return result.ToArray();
 		}
 
 		/// <summary>
@@ -1178,9 +1180,6 @@ namespace StockSharp.Algo
 			if (order == null)
 				throw new ArgumentNullException(nameof(order));
 
-			if (order.OrderState != OrderStates.Done)	// для ускорения в эмуляторе
-				return false;
-
 			return order.OrderState == OrderStates.Done && order.Balance > 0;
 		}
 
@@ -1224,58 +1223,19 @@ namespace StockSharp.Algo
 		}
 
 		/// <summary>
-		/// To get order trades.
-		/// </summary>
-		/// <param name="order">Orders.</param>
-		/// <param name="connector">The connection of interaction with trade systems.</param>
-		/// <returns>Trades.</returns>
-		public static IEnumerable<MyTrade> GetTrades(this Order order, IConnector connector)
-		{
-			if (order == null)
-				throw new ArgumentNullException(nameof(order));
-
-			if (connector == null)
-				throw new ArgumentNullException(nameof(connector));
-
-			return connector.MyTrades.Filter(order);
-		}
-
-		/// <summary>
 		/// To calculate the implemented part of volume for order.
 		/// </summary>
 		/// <param name="order">The order, for which the implemented part of volume shall be calculated.</param>
-		/// <param name="connector">The connection of interaction with trade systems.</param>
-		/// <param name="byOrder">To check implemented volume by order balance (<see cref="Order.Balance"/>) or by received trades. The default is checked by the order.</param>
 		/// <returns>The implemented part of volume.</returns>
-		public static decimal GetMatchedVolume(this Order order, IConnector connector, bool byOrder)
+		public static decimal GetMatchedVolume(this Order order)
 		{
 			if (order == null)
 				throw new ArgumentNullException(nameof(order));
 
 			if (order.Type == OrderTypes.Conditional)
-			{
-				//throw new ArgumentException("Стоп-заявки не могут иметь реализованный объем.", "order");
-
 				throw new ArgumentException(nameof(order));
 
-				//order = order.DerivedOrder;
-
-				//if (order == null)
-				//	return 0;
-			}
-
-			return byOrder ? order.Volume - order.Balance : order.GetTrades(connector).Sum(o => o.Trade.Volume);
-		}
-
-		/// <summary>
-		/// To get weighted mean price of order matching.
-		/// </summary>
-		/// <param name="order">The order, for which the weighted mean matching price shall be got.</param>
-		/// <param name="connector">The connection of interaction with trade systems.</param>
-		/// <returns>The weighted mean price. If no order exists no trades, 0 is returned.</returns>
-		public static decimal GetAveragePrice(this Order order, IConnector connector)
-		{
-			return order.GetTrades(connector).GetAveragePrice();
+			return order.Volume - order.Balance;
 		}
 
 		/// <summary>
@@ -1343,7 +1303,7 @@ namespace StockSharp.Algo
 			order.LastChangeTime = depth.LastChangeTime = DateTimeOffset.Now;
 			order.LocalTime = depth.LocalTime = DateTime.Now;
 
-			var testPf = new Portfolio { Name = "test account", BeginValue = decimal.MaxValue / 2 };
+			var testPf = Portfolio.CreateSimulator();
 			order.Portfolio = testPf;
 
 			var trades = new List<MyTrade>();
@@ -1485,7 +1445,7 @@ namespace StockSharp.Algo
 				throw new ArgumentNullException(nameof(orders));
 
 			orders = orders
-				.Where(order => order.State != OrderStates.Done && order.State != OrderStates.Failed)
+				.Where(order => !order.State.IsFinal())
 				.Where(order => isStopOrder == null || (order.Type == OrderTypes.Conditional) == isStopOrder.Value)
 				.Where(order => portfolio == null || (order.Portfolio == portfolio))
 				.Where(order => direction == null || order.Direction == direction.Value)
@@ -1496,6 +1456,14 @@ namespace StockSharp.Algo
 
 			orders.ForEach(connector.CancelOrder);
 		}
+
+		/// <summary>
+		/// Is the specified state is final (<see cref="OrderStates.Done"/> or <see cref="OrderStates.Failed"/>).
+		/// </summary>
+		/// <param name="state">Order state.</param>
+		/// <returns>Check result.</returns>
+		public static bool IsFinal(this OrderStates state)
+			=> state == OrderStates.Done || state == OrderStates.Failed;
 
 		/// <summary>
 		/// To check whether specified instrument is used now.
@@ -1788,10 +1756,95 @@ namespace StockSharp.Algo
 		}
 
 		/// <summary>
+		/// Determines the specified security is matched lookup criteria.
+		/// </summary>
+		/// <param name="security">Security.</param>
+		/// <param name="criteria">Message security lookup for specified criteria.</param>
+		/// <param name="secTypes">Securities types.</param>
+		/// <returns>Check result.</returns>
+		public static bool IsMatch(this SecurityMessage security, SecurityLookupMessage criteria, HashSet<SecurityTypes> secTypes)
+		{
+			var secId = criteria.SecurityId;
+
+			if (!secId.SecurityCode.IsEmpty() && !security.SecurityId.SecurityCode.ContainsIgnoreCase(secId.SecurityCode))
+				return false;
+
+			if (!secId.BoardCode.IsEmpty() && !security.SecurityId.BoardCode.CompareIgnoreCase(secId.BoardCode))
+				return false;
+
+			if (secTypes.Count > 0)
+			{
+				if (security.SecurityType == null || !secTypes.Contains(security.SecurityType.Value))
+					return false;
+			}
+
+			if (!criteria.UnderlyingSecurityCode.IsEmpty() && security.UnderlyingSecurityCode != criteria.UnderlyingSecurityCode)
+				return false;
+
+			if (criteria.Strike != null && security.Strike != criteria.Strike)
+				return false;
+
+			if (criteria.OptionType != null && security.OptionType != criteria.OptionType)
+				return false;
+
+			if (criteria.Currency != null && security.Currency != criteria.Currency)
+				return false;
+
+			if (!criteria.Class.IsEmptyOrWhiteSpace() && !security.Class.ContainsIgnoreCase(criteria.Class))
+				return false;
+
+			if (!criteria.Name.IsEmptyOrWhiteSpace() && !security.Name.ContainsIgnoreCase(criteria.Name))
+				return false;
+
+			if (!criteria.ShortName.IsEmptyOrWhiteSpace() && !security.ShortName.ContainsIgnoreCase(criteria.ShortName))
+				return false;
+
+			if (!criteria.CfiCode.IsEmptyOrWhiteSpace() && !security.CfiCode.ContainsIgnoreCase(criteria.CfiCode))
+				return false;
+
+			if (!secId.Bloomberg.IsEmptyOrWhiteSpace() && !security.SecurityId.Bloomberg.ContainsIgnoreCase(secId.Bloomberg))
+				return false;
+
+			if (!secId.Cusip.IsEmptyOrWhiteSpace() && !security.SecurityId.Cusip.ContainsIgnoreCase(secId.Cusip))
+				return false;
+
+			if (!secId.IQFeed.IsEmptyOrWhiteSpace() && !security.SecurityId.IQFeed.ContainsIgnoreCase(secId.IQFeed))
+				return false;
+
+			if (!secId.Isin.IsEmptyOrWhiteSpace() && !security.SecurityId.Isin.ContainsIgnoreCase(secId.Isin))
+				return false;
+
+			if (!secId.Ric.IsEmptyOrWhiteSpace() && !security.SecurityId.Ric.ContainsIgnoreCase(secId.Ric))
+				return false;
+
+			if (!secId.Sedol.IsEmptyOrWhiteSpace() && !security.SecurityId.Sedol.ContainsIgnoreCase(secId.Sedol))
+				return false;
+
+			if (criteria.ExpiryDate != null && security.ExpiryDate != null && security.ExpiryDate != criteria.ExpiryDate)
+				return false;
+
+			if (criteria.ExtensionInfo != null && criteria.ExtensionInfo.Count > 0)
+			{
+				if (security.ExtensionInfo == null)
+					return false;
+
+				foreach (var pair in criteria.ExtensionInfo)
+				{
+					var value = security.ExtensionInfo.TryGetValue(pair.Key);
+
+					if (!pair.Value.Equals(value))
+						return false;
+				}
+			}
+
+			return true;
+		}
+
+		/// <summary>
 		/// To filter instruments by the given criteria.
 		/// </summary>
 		/// <param name="securities">Securities.</param>
-		/// <param name="criteria">The instrument whose fields will be used as a filter.</param>
+		/// <param name="criteria">Message security lookup for specified criteria.</param>
 		/// <returns>Instruments filtered.</returns>
 		public static IEnumerable<SecurityMessage> Filter(this IEnumerable<SecurityMessage> securities, SecurityLookupMessage criteria)
 		{
@@ -1807,95 +1860,7 @@ namespace StockSharp.Algo
 			//if (!criteria.SecurityId.IsDefault())
 			//	return securities.Where(s => s.Id == criteria.Id).ToArray();
 
-			var secId = criteria.SecurityId;
-
-			return securities.Where(s =>
-			{
-				if (!secId.SecurityCode.IsEmpty() && !s.SecurityId.SecurityCode.ContainsIgnoreCase(secId.SecurityCode))
-					return false;
-
-				if (!secId.BoardCode.IsEmpty() && !s.SecurityId.BoardCode.CompareIgnoreCase(secId.BoardCode))
-					return false;
-
-				var secType = criteria.SecurityType;
-
-				if (secType != null && s.SecurityType != secType)
-					return false;
-
-				var secTypes = criteria.SecurityTypes?.ToArray();
-
-				if (secTypes != null && !secTypes.IsEmpty())
-				{
-					if (s.SecurityType == null)
-						return false;
-
-					if (!secTypes.Contains(s.SecurityType.Value))
-						return false;
-				}
-
-				var underSecCode = criteria.UnderlyingSecurityCode;
-
-				if (!underSecCode.IsEmpty() && s.UnderlyingSecurityCode != underSecCode)
-					return false;
-
-				if (criteria.Strike != null && s.Strike != criteria.Strike)
-					return false;
-
-				if (criteria.OptionType != null && s.OptionType != criteria.OptionType)
-					return false;
-
-				if (criteria.Currency != null && s.Currency != criteria.Currency)
-					return false;
-
-				if (!criteria.Class.IsEmptyOrWhiteSpace() && !s.Class.ContainsIgnoreCase(criteria.Class))
-					return false;
-
-				if (!criteria.Name.IsEmptyOrWhiteSpace() && !s.Name.ContainsIgnoreCase(criteria.Name))
-					return false;
-
-				if (!criteria.ShortName.IsEmptyOrWhiteSpace() && !s.ShortName.ContainsIgnoreCase(criteria.ShortName))
-					return false;
-
-				if (!criteria.CfiCode.IsEmptyOrWhiteSpace() && !s.CfiCode.ContainsIgnoreCase(criteria.CfiCode))
-					return false;
-
-				if (!secId.Bloomberg.IsEmptyOrWhiteSpace() && !s.SecurityId.Bloomberg.ContainsIgnoreCase(secId.Bloomberg))
-					return false;
-
-				if (!secId.Cusip.IsEmptyOrWhiteSpace() && !s.SecurityId.Cusip.ContainsIgnoreCase(secId.Cusip))
-					return false;
-
-				if (!secId.IQFeed.IsEmptyOrWhiteSpace() && !s.SecurityId.IQFeed.ContainsIgnoreCase(secId.IQFeed))
-					return false;
-
-				if (!secId.Isin.IsEmptyOrWhiteSpace() && !s.SecurityId.Isin.ContainsIgnoreCase(secId.Isin))
-					return false;
-
-				if (!secId.Ric.IsEmptyOrWhiteSpace() && !s.SecurityId.Ric.ContainsIgnoreCase(secId.Ric))
-					return false;
-
-				if (!secId.Sedol.IsEmptyOrWhiteSpace() && !s.SecurityId.Sedol.ContainsIgnoreCase(secId.Sedol))
-					return false;
-
-				if (criteria.ExpiryDate != null && s.ExpiryDate != null && s.ExpiryDate != criteria.ExpiryDate)
-					return false;
-
-				if (criteria.ExtensionInfo != null && criteria.ExtensionInfo.Count > 0)
-				{
-					if (s.ExtensionInfo == null)
-						return false;
-
-					foreach (var pair in criteria.ExtensionInfo)
-					{
-						var value = s.ExtensionInfo.TryGetValue(pair.Key);
-
-						if (!pair.Value.Equals(value))
-							return false;
-					}
-				}
-
-				return true;
-			}).ToArray();
+			return securities.Where(s => s.IsMatch(criteria, criteria.GetSecurityTypes())).ToArray();
 		}
 
 		/// <summary>
@@ -1906,6 +1871,17 @@ namespace StockSharp.Algo
 		/// <returns>Instruments filtered.</returns>
 		public static IEnumerable<Security> Filter(this IEnumerable<Security> securities, Security criteria)
 		{
+			return securities.Filter(criteria.ToLookupMessage());
+		}
+
+		/// <summary>
+		/// To filter instruments by the given criteria.
+		/// </summary>
+		/// <param name="securities">Securities.</param>
+		/// <param name="criteria">Message security lookup for specified criteria.</param>
+		/// <returns>Instruments filtered.</returns>
+		public static IEnumerable<Security> Filter(this IEnumerable<Security> securities, SecurityLookupMessage criteria)
+		{
 			if (securities == null)
 				throw new ArgumentNullException(nameof(securities));
 
@@ -1915,27 +1891,37 @@ namespace StockSharp.Algo
 			if (criteria.IsLookupAll())
 				return securities.ToArray();
 
-			if (!criteria.Id.IsEmpty())
-				return securities.Where(s => s.Id == criteria.Id).ToArray();
+			var secId = criteria.SecurityId;
+			var secCode = secId.SecurityCode;
+			var boardCode = secId.BoardCode;
+
+			if (!secCode.IsEmpty() && !boardCode.IsEmpty())
+			{
+				var id = secId.ToStringId();
+				return securities.Where(s => s.Id.CompareIgnoreCase(id)).ToArray();
+			}
+
+			var secTypes = criteria.GetSecurityTypes();
+			var underSecCode = criteria.UnderlyingSecurityCode;
 
 			return securities.Where(s =>
 			{
-				if (!criteria.Code.IsEmpty() && !s.Code.ContainsIgnoreCase(criteria.Code))
+				if (!secCode.IsEmpty() && !s.Code.ContainsIgnoreCase(secCode))
 					return false;
 
-				var board = criteria.Board;
+				if (!boardCode.IsEmpty())
+				{
+					if (s.Board != null && !s.Board.Code.CompareIgnoreCase(boardCode))
+						return false;
+				}
 
-				if (board != null && s.Board != board)
-					return false;
+				if (secTypes.Count > 0)
+				{
+					if (s.Type == null || !secTypes.Contains(s.Type.Value))
+						return false;
+				}
 
-				var type = criteria.Type;
-
-				if (type != null && s.Type != type)
-					return false;
-
-				var underSecId = criteria.UnderlyingSecurityId;
-
-				if (!underSecId.IsEmpty() && s.UnderlyingSecurityId != underSecId)
+				if (!underSecCode.IsEmpty() && !s.UnderlyingSecurityId.ContainsIgnoreCase(underSecCode))
 					return false;
 
 				if (criteria.Strike != null && s.Strike != criteria.Strike)
@@ -1959,25 +1945,46 @@ namespace StockSharp.Algo
 				if (!criteria.CfiCode.IsEmptyOrWhiteSpace() && !s.CfiCode.ContainsIgnoreCase(criteria.CfiCode))
 					return false;
 
-				if (!criteria.ExternalId.Bloomberg.IsEmptyOrWhiteSpace() && !s.ExternalId.Bloomberg.ContainsIgnoreCase(criteria.ExternalId.Bloomberg))
+				if (!secId.Bloomberg.IsEmptyOrWhiteSpace() && !s.ExternalId.Bloomberg.ContainsIgnoreCase(secId.Bloomberg))
 					return false;
 
-				if (!criteria.ExternalId.Cusip.IsEmptyOrWhiteSpace() && !s.ExternalId.Cusip.ContainsIgnoreCase(criteria.ExternalId.Cusip))
+				if (!secId.Cusip.IsEmptyOrWhiteSpace() && !s.ExternalId.Cusip.ContainsIgnoreCase(secId.Cusip))
 					return false;
 
-				if (!criteria.ExternalId.IQFeed.IsEmptyOrWhiteSpace() && !s.ExternalId.IQFeed.ContainsIgnoreCase(criteria.ExternalId.IQFeed))
+				if (!secId.IQFeed.IsEmptyOrWhiteSpace() && !s.ExternalId.IQFeed.ContainsIgnoreCase(secId.IQFeed))
 					return false;
 
-				if (!criteria.ExternalId.Isin.IsEmptyOrWhiteSpace() && !s.ExternalId.Isin.ContainsIgnoreCase(criteria.ExternalId.Isin))
+				if (!secId.Isin.IsEmptyOrWhiteSpace() && !s.ExternalId.Isin.ContainsIgnoreCase(secId.Isin))
 					return false;
 
-				if (!criteria.ExternalId.Ric.IsEmptyOrWhiteSpace() && !s.ExternalId.Ric.ContainsIgnoreCase(criteria.ExternalId.Ric))
+				if (!secId.Ric.IsEmptyOrWhiteSpace() && !s.ExternalId.Ric.ContainsIgnoreCase(secId.Ric))
 					return false;
 
-				if (!criteria.ExternalId.Sedol.IsEmptyOrWhiteSpace() && !s.ExternalId.Sedol.ContainsIgnoreCase(criteria.ExternalId.Sedol))
+				if (!secId.Sedol.IsEmptyOrWhiteSpace() && !s.ExternalId.Sedol.ContainsIgnoreCase(secId.Sedol))
 					return false;
 
 				if (criteria.ExpiryDate != null && s.ExpiryDate != null && s.ExpiryDate != criteria.ExpiryDate)
+					return false;
+
+				if (criteria.IssueDate != null && s.IssueDate != null && s.IssueDate != criteria.IssueDate)
+					return false;
+
+				if (criteria.IssueSize != null && s.IssueSize != null && s.IssueSize != criteria.IssueSize)
+					return false;
+
+				if (criteria.UnderlyingSecurityType != null && s.UnderlyingSecurityType != null && s.UnderlyingSecurityType != criteria.UnderlyingSecurityType)
+					return false;
+
+				if (criteria.MinVolume != null && s.MinVolume != null && s.MinVolume != criteria.MinVolume)
+					return false;
+
+				if (criteria.UnderlyingSecurityMinVolume != null && s.UnderlyingSecurityMinVolume != null && s.UnderlyingSecurityMinVolume != criteria.UnderlyingSecurityMinVolume)
+					return false;
+
+				if (criteria.Shortable != null && s.Shortable != null && s.Shortable != criteria.Shortable)
+					return false;
+
+				if (criteria.FaceValue != null && s.FaceValue != null && s.FaceValue != criteria.FaceValue)
 					return false;
 
 				if (criteria.ExtensionInfo != null && criteria.ExtensionInfo.Count > 0)
@@ -2173,7 +2180,7 @@ namespace StockSharp.Algo
 		/// <param name="to">The end of the expiration range.</param>
 		/// <param name="throwIfNotExists">To generate exception, if some of instruments for passed <paramref name="continuousSecurity" /> are not available.</param>
 		/// <returns>Expiration instruments.</returns>
-		public static IEnumerable<Security> GetFortsJumps(this ContinuousSecurity continuousSecurity, ISecurityProvider provider, string baseCode, DateTime from, DateTime to, bool throwIfNotExists = true)
+		public static IEnumerable<Security> GetFortsJumps(this ExpirationContinuousSecurity continuousSecurity, ISecurityProvider provider, string baseCode, DateTime from, DateTime to, bool throwIfNotExists = true)
 		{
 			if (continuousSecurity == null)
 				throw new ArgumentNullException(nameof(continuousSecurity));
@@ -2185,14 +2192,14 @@ namespace StockSharp.Algo
 		}
 
 		/// <summary>
-		/// To fill transitions <see cref="ContinuousSecurity.ExpirationJumps"/>.
+		/// To fill transitions <see cref="ExpirationContinuousSecurity.ExpirationJumps"/>.
 		/// </summary>
 		/// <param name="continuousSecurity">Continuous security.</param>
 		/// <param name="provider">The provider of information about instruments.</param>
 		/// <param name="baseCode">The base part of the instrument code.</param>
 		/// <param name="from">The start of the expiration range.</param>
 		/// <param name="to">The end of the expiration range.</param>
-		public static void FillFortsJumps(this ContinuousSecurity continuousSecurity, ISecurityProvider provider, string baseCode, DateTime from, DateTime to)
+		public static void FillFortsJumps(this ExpirationContinuousSecurity continuousSecurity, ISecurityProvider provider, string baseCode, DateTime from, DateTime to)
 		{
 			var securities = continuousSecurity.GetFortsJumps(provider, baseCode, from, to);
 
@@ -2331,6 +2338,9 @@ namespace StockSharp.Algo
 			if (!message.BoardCode.IsEmpty())
 				portfolio.Board = exchangeInfoProvider.GetOrCreateBoard(message.BoardCode);
 
+			if (!message.ClientCode.IsEmpty())
+				portfolio.ClientCode = message.ClientCode;
+
 			foreach (var change in message.Changes)
 			{
 				switch (change.Key)
@@ -2343,6 +2353,12 @@ namespace StockSharp.Algo
 						break;
 					case PositionChangeTypes.State:
 						portfolio.State = (PortfolioStates)change.Value;
+						break;
+					case PositionChangeTypes.CommissionMaker:
+						portfolio.CommissionMaker = (decimal)change.Value;
+						break;
+					case PositionChangeTypes.CommissionTaker:
+						portfolio.CommissionTaker = (decimal)change.Value;
 						break;
 					default:
 						ApplyChange(portfolio, change);
@@ -2419,6 +2435,12 @@ namespace StockSharp.Algo
 					case PositionChangeTypes.Currency:
 						position.Currency = (CurrencyTypes)change.Value;
 						break;
+					case PositionChangeTypes.ExpirationDate:
+						position.ExpirationDate = (DateTimeOffset)change.Value;
+						break;
+					case PositionChangeTypes.SettlementPrice:
+						position.SettlementPrice = (decimal)change.Value;
+						break;
 					default:
 						throw new ArgumentOutOfRangeException(nameof(change), change.Key, LocalizedStrings.Str1219);
 				}
@@ -2436,7 +2458,8 @@ namespace StockSharp.Algo
 		/// <param name="changes">Changes.</param>
 		/// <param name="serverTime">Change server time.</param>
 		/// <param name="localTime">Local timestamp when a message was received/created.</param>
-		public static void ApplyChanges(this Security security, IEnumerable<KeyValuePair<Level1Fields, object>> changes, DateTimeOffset serverTime, DateTimeOffset localTime)
+		/// <param name="defaultHandler">Default handler.</param>
+		public static void ApplyChanges(this Security security, IEnumerable<KeyValuePair<Level1Fields, object>> changes, DateTimeOffset serverTime, DateTimeOffset localTime, Action<Security, Level1Fields, object> defaultHandler = null)
 		{
 			if (security == null)
 				throw new ArgumentNullException(nameof(security));
@@ -2642,8 +2665,27 @@ namespace StockSharp.Algo
 						case Level1Fields.BuyBackDate:
 							security.BuyBackDate = (DateTimeOffset)value;
 							break;
-						//default:
-						//	throw new ArgumentOutOfRangeException();
+						case Level1Fields.CommissionTaker:
+							security.CommissionTaker = (decimal)value;
+							break;
+						case Level1Fields.CommissionMaker:
+							security.CommissionMaker = (decimal)value;
+							break;
+						case Level1Fields.MinVolume:
+							security.MinVolume = (decimal)value;
+							break;
+						case Level1Fields.UnderlyingMinVolume:
+							security.UnderlyingSecurityMinVolume = (decimal)value;
+							break;
+						case Level1Fields.IssueSize:
+							security.IssueSize = (decimal)value;
+							break;
+						default:
+						{
+							defaultHandler?.Invoke(security, pair.Key, pair.Value);
+							break;
+							//throw new ArgumentOutOfRangeException();
+						}
 					}
 				}
 				catch (Exception ex)
@@ -2738,6 +2780,12 @@ namespace StockSharp.Algo
 					security.VolumeStep = message.VolumeStep.Value;
 			}
 
+			if (message.MinVolume != null)
+			{
+				if (isOverride || security.MinVolume == null)
+					security.MinVolume = message.MinVolume.Value;
+			}
+
 			if (message.Multiplier != null)
 			{
 				if (isOverride || security.Multiplier == null)
@@ -2810,6 +2858,12 @@ namespace StockSharp.Algo
 					security.Type = message.SecurityType.Value;
 			}
 
+			if (message.Shortable != null)
+			{
+				if (isOverride || security.Shortable == null)
+					security.Shortable = message.Shortable.Value;
+			}
+
 			if (!message.CfiCode.IsEmpty())
 			{
 				if (isOverride || security.CfiCode.IsEmpty())
@@ -2855,6 +2909,30 @@ namespace StockSharp.Algo
 			{
 				if (isOverride || security.UnderlyingSecurityType == null)
 					security.UnderlyingSecurityType = message.UnderlyingSecurityType.Value;
+			}
+
+			if (message.UnderlyingSecurityMinVolume != null)
+			{
+				if (isOverride || security.UnderlyingSecurityMinVolume == null)
+					security.UnderlyingSecurityMinVolume = message.UnderlyingSecurityMinVolume.Value;
+			}
+
+			if (!message.BasketCode.IsEmpty())
+			{
+				if (isOverride || security.BasketCode.IsEmpty())
+					security.BasketCode = message.BasketCode;
+			}
+
+			if (!message.BasketExpression.IsEmpty())
+			{
+				if (isOverride || security.BasketExpression.IsEmpty())
+					security.BasketExpression = message.BasketExpression;
+			}
+
+			if (message.FaceValue != null)
+			{
+				if (isOverride || security.FaceValue == null)
+					security.FaceValue = message.FaceValue;
 			}
 
 			message.CopyExtensionInfo(security);
@@ -3301,25 +3379,15 @@ namespace StockSharp.Algo
 					}
 					catch (Exception ex)
 					{
-						errorHandler?.Invoke(ex);
+						if (errorHandler == null)
+							ex.LogError();
+						else
+							errorHandler.Invoke(ex);
+
 						return null;
 					}
 				}
 			}
-		}
-
-		/// <summary>
-		/// Get period for schedule.
-		/// </summary>
-		/// <param name="time">Trading schedule.</param>
-		/// <param name="date">The date in time for search of appropriate period.</param>
-		/// <returns>The schedule period. If no period is appropriate, <see langword="null" /> is returned.</returns>
-		public static WorkingTimePeriod GetPeriod(this WorkingTime time, DateTime date)
-		{
-			if (time == null)
-				throw new ArgumentNullException(nameof(time));
-
-			return time.Periods.FirstOrDefault(p => p.Till >= date);
 		}
 
 		/// <summary>
@@ -3345,6 +3413,9 @@ namespace StockSharp.Algo
 			if (adapter == null)
 				throw new ArgumentNullException(nameof(adapter));
 
+			if (secClass.IsEmpty())
+				throw new ArgumentNullException(nameof(secClass));
+
 			return adapter.SecurityClassInfo.GetSecurityClassInfo(secClass).Item2;
 		}
 
@@ -3355,7 +3426,7 @@ namespace StockSharp.Algo
 		/// <returns>Price step.</returns>
 		public static decimal GetPriceStep(this int decimals)
 		{
-			return 1m / 10.Pow(decimals);
+			return 1m / 10m.Pow(decimals);
 		}
 
 		/// <summary>
@@ -3378,6 +3449,16 @@ namespace StockSharp.Algo
 		/// The delimiter, replacing '|' in the path for instruments with id like AA-CA|SPB@SPBEX. Is equal to '##VBAR##'.
 		/// </summary>
 		public const string SecurityVerticalBarSeparator = "##VBAR##";
+
+		/// <summary>
+		/// The delimiter, replacing first '.' in the path for instruments with id like .AA-CA@SPBEX. Is equal to '##DOT##'.
+		/// </summary>
+		public const string SecurityFirstDot = "##DOT##";
+
+		///// <summary>
+		///// The delimiter, replacing first '..' in the path for instruments with id like ..AA-CA@SPBEX. Is equal to '##DDOT##'.
+		///// </summary>
+		//public const string SecurityFirst2Dots = "##DDOT##";
 
 		private static readonly CachedSynchronizedDictionary<string, string> _securitySeparators = new CachedSynchronizedDictionary<string, string>
 		{
@@ -3410,6 +3491,9 @@ namespace StockSharp.Algo
 			if (_reservedDos.Any(d => folderName.StartsWithIgnoreCase(d)))
 				folderName = "_" + folderName;
 
+			if (folderName.StartsWithIgnoreCase("."))
+				folderName = SecurityFirstDot + folderName.Remove(0, 1);
+
 			return _securitySeparators
 				.CachedPairs
 				.Aggregate(folderName, (current, pair) => current.Replace(pair.Key, pair.Value));
@@ -3430,6 +3514,9 @@ namespace StockSharp.Algo
 			if (id[0] == '_' && _reservedDos.Any(d => id.StartsWithIgnoreCase("_" + d)))
 				id = id.Substring(1);
 
+			if (id.StartsWithIgnoreCase(SecurityFirstDot))
+				id = id.ReplaceIgnoreCase(SecurityFirstDot, ".");
+
 			return _securitySeparators
 				.CachedPairs
 				.Aggregate(id, (current, pair) => current.ReplaceIgnoreCase(pair.Value, pair.Key));
@@ -3442,6 +3529,9 @@ namespace StockSharp.Algo
 		/// <returns>Directory name.</returns>
 		public static string CandleArgToFolderName(object arg)
 		{
+			if (arg is string s)
+				return s;
+
 			switch (arg)
 			{
 				case null:
@@ -3451,6 +3541,25 @@ namespace StockSharp.Algo
 				default:
 					return arg.ToString().Replace(':', '-');
 			}
+		}
+
+		/// <summary>
+		/// Convert <see cref="string"/> to <see cref="MarketDataMessage.Arg"/> value.
+		/// </summary>
+		/// <param name="messageType">Message type.</param>
+		/// <param name="strValue"><see cref="string"/> value.</param>
+		/// <returns><see cref="MarketDataMessage.Arg"/> value.</returns>
+		public static object StringToMessageArg(this Type messageType, string strValue)
+		{
+			if (messageType == null)
+				throw new ArgumentNullException(nameof(messageType));
+
+			if (messageType == typeof(ExecutionMessage))
+				return strValue.To<ExecutionTypes>();
+			else if (messageType.IsCandleMessage())
+				return messageType.ToCandleArg(strValue);
+			else
+				return strValue;
 		}
 
 		/// <summary>
@@ -3465,6 +3574,20 @@ namespace StockSharp.Algo
 		}
 
 		/// <summary>
+		/// Lookup securities by criteria <paramref name="criteria" />.
+		/// </summary>
+		/// <param name="provider">The provider of information about instruments.</param>
+		/// <param name="criteria">The instrument whose fields will be used as a filter.</param>
+		/// <returns>Found instruments.</returns>
+		public static IEnumerable<Security> Lookup(this ISecurityProvider provider, Security criteria)
+		{
+			if (provider == null)
+				throw new ArgumentNullException(nameof(provider));
+
+			return provider.Lookup(criteria.ToLookupMessage());
+		}
+
+		/// <summary>
 		/// To get the instrument by the identifier.
 		/// </summary>
 		/// <param name="provider">The provider of information about instruments.</param>
@@ -3472,9 +3595,6 @@ namespace StockSharp.Algo
 		/// <returns>The got instrument. If there is no instrument by given criteria, <see langword="null" /> is returned.</returns>
 		public static Security LookupById(this ISecurityProvider provider, string id)
 		{
-			if (provider == null)
-				throw new ArgumentNullException(nameof(provider));
-
 			if (id.IsEmpty())
 				throw new ArgumentNullException(nameof(id));
 
@@ -3495,7 +3615,7 @@ namespace StockSharp.Algo
 			if (id.IsEmpty())
 				throw new ArgumentNullException(nameof(id));
 
-			return provider.Portfolios.SingleOrDefault(s => s.Name.CompareIgnoreCase(id));
+			return provider.Portfolios.SingleOrDefault(pf => pf.IsSame(id));
 		}
 
 		/// <summary>
@@ -3527,16 +3647,16 @@ namespace StockSharp.Algo
 		/// </summary>
 		/// <param name="provider">The provider of information about instruments.</param>
 		/// <param name="code">Security code.</param>
+		/// <param name="type">Security type.</param>
 		/// <returns>The got instrument. If there is no instrument by given criteria, <see langword="null" /> is returned.</returns>
-		public static IEnumerable<Security> LookupByCode(this ISecurityProvider provider, string code)
+		public static IEnumerable<Security> LookupByCode(this ISecurityProvider provider, string code, SecurityTypes? type = null)
 		{
 			if (provider == null)
 				throw new ArgumentNullException(nameof(provider));
 
-			if (code.IsEmpty())
-				throw new ArgumentNullException(nameof(code));
-
-			return provider.Lookup(new Security { Code = code });
+			return code.IsEmpty() && type == null
+				? provider.LookupAll()
+				: provider.Lookup(new Security { Code = code, Type = type });
 		}
 
 		/// <summary>
@@ -3562,22 +3682,7 @@ namespace StockSharp.Algo
 			if (criteria == LookupAllCriteria)
 				return true;
 
-			return
-				criteria.Id.IsEmpty() &&
-				criteria.Code.IsEmpty() &&
-				criteria.Board == null &&
-				criteria.ExpiryDate == null &&
-				criteria.Type == null &&
-				criteria.OptionType == null &&
-				criteria.Strike == null &&
-				criteria.CfiCode.IsEmpty() &&
-				criteria.Class.IsEmpty() &&
-				criteria.Currency == null &&
-				criteria.Decimals == null &&
-				criteria.Name.IsEmpty() &&
-				criteria.UnderlyingSecurityType == null &&
-				criteria.UnderlyingSecurityId.IsEmpty() &&
-				criteria.BinaryOptionType.IsEmpty();
+			return criteria.ToLookupMessage().IsLookupAll();
 		}
 
 		/// <summary>
@@ -3595,7 +3700,22 @@ namespace StockSharp.Algo
 
 			return
 				criteria.SecurityId.IsDefault() &&
-				criteria.SecurityType == null;
+				criteria.GetSecurityTypes().Count == 0 &&
+				criteria.Name.IsEmpty() &&
+				criteria.ShortName.IsEmpty() &&
+				criteria.UnderlyingSecurityCode.IsEmpty() &&
+				criteria.UnderlyingSecurityType == null &&
+				criteria.ExpiryDate == null &&
+				criteria.OptionType == null &&
+				criteria.Strike == null &&
+				criteria.Currency == null &&
+				criteria.Decimals == null &&
+				criteria.Multiplier == null &&
+				criteria.PriceStep == null &&
+				criteria.VolumeStep == null &&
+				criteria.IssueDate == null &&
+				criteria.IssueSize == null &&
+				criteria.BinaryOptionType.IsEmpty();
 		}
 
 		/// <summary>
@@ -3801,11 +3921,16 @@ namespace StockSharp.Algo
 		public static SecurityTypes? Iso10962ToSecurityType(this string cfi)
 		{
 			if (cfi.IsEmpty())
-				throw new ArgumentNullException(nameof(cfi));
+			{
+				return null;
+				//throw new ArgumentNullException(nameof(cfi));
+			}
 
 			if (cfi.Length != 6)
+			{
 				return null;
 				//throw new ArgumentOutOfRangeException(nameof(cfi), cfi, LocalizedStrings.Str2117);
+			}
 
 			switch (cfi[0])
 			{
@@ -3848,6 +3973,9 @@ namespace StockSharp.Algo
 									return SecurityTypes.Index;
 
 								case 'C':
+									return SecurityTypes.Currency;
+
+								case 'R':
 									return SecurityTypes.Currency;
 
 								case 'T':
@@ -4116,8 +4244,8 @@ namespace StockSharp.Algo
 							SecurityId = level1.SecurityId,
 							LocalTime = level1.LocalTime,
 							ServerTime = level1.ServerTime,
-							Bids = _prevBidPrice == null ? Enumerable.Empty<QuoteChange>() : new[] { new QuoteChange(Sides.Buy, _prevBidPrice.Value, _prevBidVolume ?? 0) },
-							Asks = _prevAskPrice == null ? Enumerable.Empty<QuoteChange>() : new[] { new QuoteChange(Sides.Sell, _prevAskPrice.Value, _prevAskVolume ?? 0) },
+							Bids = _prevBidPrice == null ? ArrayHelper.Empty<QuoteChange>() : new[] { new QuoteChange(Sides.Buy, _prevBidPrice.Value, _prevBidVolume ?? 0) },
+							Asks = _prevAskPrice == null ? ArrayHelper.Empty<QuoteChange>() : new[] { new QuoteChange(Sides.Sell, _prevAskPrice.Value, _prevAskVolume ?? 0) },
 						};
 
 						return true;
@@ -4267,11 +4395,26 @@ namespace StockSharp.Algo
 		/// <returns>Exchange board.</returns>
 		public static ExchangeBoard GetOrCreateBoard(this IExchangeInfoProvider exchangeInfoProvider, string code, Func<string, ExchangeBoard> createBoard = null)
 		{
+			return exchangeInfoProvider.GetOrCreateBoard(code, out _, createBoard);
+		}
+
+		/// <summary>
+		/// To get a board by its code. If board with the passed name does not exist, then it will be created.
+		/// </summary>
+		/// <param name="exchangeInfoProvider">Exchanges and trading boards provider.</param>
+		/// <param name="code">Board code.</param>
+		/// <param name="isNew">Is newly created.</param>
+		/// <param name="createBoard">The handler creating a board, if it is not found. If the value is <see langword="null" />, then the board is created by default initialization.</param>
+		/// <returns>Exchange board.</returns>
+		public static ExchangeBoard GetOrCreateBoard(this IExchangeInfoProvider exchangeInfoProvider, string code, out bool isNew, Func<string, ExchangeBoard> createBoard = null)
+		{
 			if (exchangeInfoProvider == null)
 				throw new ArgumentNullException(nameof(exchangeInfoProvider));
 
 			if (code.IsEmpty())
 				throw new ArgumentNullException(nameof(code));
+
+			isNew = false;
 
 			//if (code.CompareIgnoreCase("RTS"))
 			//	return ExchangeBoard.Forts;
@@ -4280,6 +4423,8 @@ namespace StockSharp.Algo
 
 			if (board != null)
 				return board;
+
+			isNew = true;
 
 			if (createBoard == null)
 			{
@@ -4340,6 +4485,11 @@ namespace StockSharp.Algo
 		/// Identifier of <see cref="AllSecurity"/>.
 		/// </summary>
 		public const string AllSecurityId = "ALL@ALL";
+
+		/// <summary>
+		/// Identifier of <see cref="AllSecurity"/>.
+		/// </summary>
+		public static readonly SecurityId AllSecurityId2 = AllSecurityId.ToSecurityId();
 
 		/// <summary>
 		/// "All securities" instance.
@@ -4457,6 +4607,7 @@ namespace StockSharp.Algo
 				case Level1Fields.BestBidTime:
 				case Level1Fields.LastTradeTime:
 				case Level1Fields.BuyBackDate:
+				case Level1Fields.CouponDate:
 					return typeof(DateTimeOffset);
 
 				case Level1Fields.LastTradeUpDown:
@@ -4471,6 +4622,29 @@ namespace StockSharp.Algo
 
 				default:
 					return field.IsObsolete() ? null : typeof(decimal);
+			}
+		}
+
+		/// <summary>
+		/// Convert <see cref="PositionChangeTypes"/> to <see cref="Type"/> value.
+		/// </summary>
+		/// <param name="type"><see cref="PositionChangeTypes"/> value.</param>
+		/// <returns><see cref="Type"/> value.</returns>
+		public static Type ToType(this PositionChangeTypes type)
+		{
+			switch (type)
+			{
+				case PositionChangeTypes.ExpirationDate:
+					return typeof(DateTimeOffset);
+
+				case PositionChangeTypes.State:
+					return typeof(PortfolioStates);
+
+				case PositionChangeTypes.Currency:
+					return typeof(Currency);
+
+				default:
+					return type.IsObsolete() ? null : typeof(decimal);
 			}
 		}
 
@@ -4562,11 +4736,11 @@ namespace StockSharp.Algo
 		}
 
 		/// <summary>
-		/// Is specified security id asssociated with the board.
+		/// Is specified security id associated with the board.
 		/// </summary>
 		/// <param name="securityId">Security ID.</param>
 		/// <param name="board">Board info.</param>
-		/// <returns><see langword="true" />, if asssociated, otherwise, <see langword="false"/>.</returns>
+		/// <returns><see langword="true" />, if associated, otherwise, <see langword="false"/>.</returns>
 		public static bool IsAssociated(this SecurityId securityId, ExchangeBoard board)
 		{
 			if (board == null)
@@ -4579,14 +4753,16 @@ namespace StockSharp.Algo
 		/// Lookup securities, portfolios and orders.
 		/// </summary>
 		/// <param name="connector">The connection of interaction with trade systems.</param>
-		public static void LookupAll(this IConnector connector)
+		/// <param name="offlineMode">Offline mode handling message.</param>
+		public static void LookupAll(this IConnector connector, MessageOfflineModes offlineMode = MessageOfflineModes.Cancel)
 		{
 			if (connector == null)
 				throw new ArgumentNullException(nameof(connector));
 
-			connector.LookupSecurities(LookupAllCriteria);
-			connector.LookupPortfolios(new Portfolio());
-			connector.LookupOrders(new Order());
+			connector.LookupBoards(new ExchangeBoard(), offlineMode: offlineMode);
+			connector.LookupSecurities(LookupAllCriteria, offlineMode: offlineMode);
+			connector.LookupPortfolios(new Portfolio(), offlineMode: offlineMode);
+			connector.LookupOrders(new Order(), offlineMode: offlineMode);
 		}
 
 		/// <summary>
@@ -4608,18 +4784,581 @@ namespace StockSharp.Algo
 		/// <summary>
 		/// Get adapter by portfolio.
 		/// </summary>
-		/// <param name="provider">The message adapter's provider.</param>
+		/// <param name="portfolioProvider">The portfolio based message adapter's provider.</param>
+		/// <param name="adapterProvider">The message adapter's provider.</param>
 		/// <param name="portfolio">Portfolio.</param>
-		/// <returns>The found adapter.</returns>
-		public static IMessageAdapter GetAdapter(this IPortfolioMessageAdapterProvider provider, Portfolio portfolio)
+		/// <returns>Found adapter or <see langword="null"/>.</returns>
+		public static IMessageAdapter TryGetAdapter(this IPortfolioMessageAdapterProvider portfolioProvider, IMessageAdapterProvider adapterProvider, Portfolio portfolio)
 		{
-			if (provider == null)
-				throw new ArgumentNullException(nameof(provider));
+			if (portfolioProvider == null)
+				throw new ArgumentNullException(nameof(portfolioProvider));
+
+			if (adapterProvider == null)
+				throw new ArgumentNullException(nameof(adapterProvider));
 
 			if (portfolio == null)
 				throw new ArgumentNullException(nameof(portfolio));
 
-			return provider.GetAdapter(portfolio.Name);
+			return portfolioProvider.TryGetAdapter(adapterProvider.CurrentAdapters, portfolio);
+		}
+
+		/// <summary>
+		/// Get adapter by portfolio.
+		/// </summary>
+		/// <param name="portfolioProvider">The portfolio based message adapter's provider.</param>
+		/// <param name="adapters">All available adapters.</param>
+		/// <param name="portfolio">Portfolio.</param>
+		/// <returns>Found adapter or <see langword="null"/>.</returns>
+		public static IMessageAdapter TryGetAdapter(this IPortfolioMessageAdapterProvider portfolioProvider, IEnumerable<IMessageAdapter> adapters, Portfolio portfolio)
+		{
+			if (portfolioProvider == null)
+				throw new ArgumentNullException(nameof(portfolioProvider));
+
+			if (adapters == null)
+				throw new ArgumentNullException(nameof(adapters));
+
+			if (portfolio == null)
+				throw new ArgumentNullException(nameof(portfolio));
+
+			var id = portfolioProvider.TryGetAdapter(portfolio.Name);
+
+			if (id == null)
+				return null;
+
+			return adapters.FindById(id.Value);
+		}
+
+		/// <summary>
+		/// Convert inner securities messages to basket.
+		/// </summary>
+		/// <typeparam name="TMessage">Message type.</typeparam>
+		/// <param name="innerSecMessages">Inner securities messages.</param>
+		/// <param name="security">Basket security.</param>
+		/// <param name="processorProvider">Basket security processors provider.</param>
+		/// <returns>Messages of basket securities.</returns>
+		public static IEnumerable<TMessage> ToBasket<TMessage>(this IEnumerable<TMessage> innerSecMessages, Security security, IBasketSecurityProcessorProvider processorProvider)
+			where TMessage : Message
+		{
+			var processor = processorProvider.CreateProcessor(security);
+
+			return innerSecMessages.SelectMany(processor.Process).Cast<TMessage>();
+		}
+
+		/// <summary>
+		/// Create market data processor for basket securities.
+		/// </summary>
+		/// <param name="processorProvider">Basket security processors provider.</param>
+		/// <param name="security">Basket security.</param>
+		/// <returns>Market data processor for basket securities.</returns>
+		public static IBasketSecurityProcessor CreateProcessor(this IBasketSecurityProcessorProvider processorProvider, Security security)
+		{
+			if (processorProvider == null)
+				throw new ArgumentNullException(nameof(processorProvider));
+
+			if (security == null)
+				throw new ArgumentNullException(nameof(security));
+
+			return processorProvider.GetProcessorType(security.BasketCode).CreateInstance<IBasketSecurityProcessor>(security);
+		}
+
+		/// <summary>
+		/// Is specified security is basket.
+		/// </summary>
+		/// <param name="security">Security.</param>
+		/// <returns>Check result.</returns>
+		public static bool IsBasket(this Security security)
+		{
+			if (security == null)
+				throw new ArgumentNullException(nameof(security));
+
+			return !security.BasketCode.IsEmpty();
+		}
+
+		/// <summary>
+		/// Is specified security is basket.
+		/// </summary>
+		/// <param name="security">Security.</param>
+		/// <returns>Check result.</returns>
+		public static bool IsBasket(this SecurityMessage security)
+		{
+			if (security == null)
+				throw new ArgumentNullException(nameof(security));
+
+			return !security.BasketCode.IsEmpty();
+		}
+		
+		/// <summary>
+		/// Is specified security is index.
+		/// </summary>
+		/// <param name="security">Security.</param>
+		/// <returns>Check result.</returns>
+		public static bool IsIndex(this Security security)
+		{
+			if (security == null)
+				throw new ArgumentNullException(nameof(security));
+
+			return security.BasketCode == "WI" || security.BasketCode == "EI";
+		}
+
+		/// <summary>
+		/// Is specified security is index.
+		/// </summary>
+		/// <param name="security">Security.</param>
+		/// <returns>Check result.</returns>
+		public static bool IsIndex(this SecurityMessage security)
+		{
+			if (security == null)
+				throw new ArgumentNullException(nameof(security));
+
+			return security.BasketCode == "WI" || security.BasketCode == "EI";
+		}
+
+		/// <summary>
+		/// Is specified security is continuous.
+		/// </summary>
+		/// <param name="security">Security.</param>
+		/// <returns>Check result.</returns>
+		public static bool IsContinuous(this Security security)
+		{
+			if (security == null)
+				throw new ArgumentNullException(nameof(security));
+
+			return security.BasketCode == "CE" || security.BasketCode == "CV";
+		}
+
+		/// <summary>
+		/// Is specified security is continuous.
+		/// </summary>
+		/// <param name="security">Security.</param>
+		/// <returns>Check result.</returns>
+		public static bool IsContinuous(this SecurityMessage security)
+		{
+			if (security == null)
+				throw new ArgumentNullException(nameof(security));
+
+			return security.BasketCode == "CE" || security.BasketCode == "CV";
+		}
+
+		/// <summary>
+		/// Convert <see cref="Security"/> to <see cref="BasketSecurity"/> value.
+		/// </summary>
+		/// <param name="security">Security.</param>
+		/// <param name="processorProvider">Basket security processors provider.</param>
+		/// <returns>Instruments basket.</returns>
+		public static BasketSecurity ToBasket(this Security security, IBasketSecurityProcessorProvider processorProvider)
+		{
+			if (security == null)
+				throw new ArgumentNullException(nameof(security));
+
+			if (processorProvider == null)
+				throw new ArgumentNullException(nameof(processorProvider));
+
+			var type = processorProvider.GetSecurityType(security.BasketCode);
+			var basketSec = type.CreateInstance<BasketSecurity>();
+			security.CopyTo(basketSec);
+			return basketSec;
+		}
+
+		/// <summary>
+		/// Convert <see cref="Security"/> to <see cref="BasketSecurity"/> value.
+		/// </summary>
+		/// <param name="security">Security.</param>
+		/// <returns>Instruments basket.</returns>
+		/// <typeparam name="TBasketSecurity">Basket security type.</typeparam>
+		public static TBasketSecurity ToBasket<TBasketSecurity>(this Security security)
+			where TBasketSecurity : BasketSecurity, new()
+		{
+			if (security == null)
+				throw new ArgumentNullException(nameof(security));
+
+			var basketSec = new TBasketSecurity();
+			security.CopyTo(basketSec);
+			return basketSec;
+		}
+
+		/// <summary>
+		/// Filter boards by code criteria.
+		/// </summary>
+		/// <param name="provider">The exchange boards provider.</param>
+		/// <param name="like">Criteria.</param>
+		/// <returns>Found boards.</returns>
+		public static IEnumerable<ExchangeBoard> LookupBoards(this IExchangeInfoProvider provider, string like)
+		{
+			if (provider == null)
+				throw new ArgumentNullException(nameof(provider));
+
+			return provider.Boards.Filter(like);
+		}
+
+		/// <summary>
+		/// Filter boards by code criteria.
+		/// </summary>
+		/// <param name="boards">All boards.</param>
+		/// <param name="like">Criteria.</param>
+		/// <returns>Found boards.</returns>
+		public static IEnumerable<ExchangeBoard> Filter(this IEnumerable<ExchangeBoard> boards, string like)
+		{
+			if (boards == null)
+				throw new ArgumentNullException(nameof(boards));
+
+			if (!like.IsEmpty())
+				boards = boards.Where(b => b.Code.ContainsIgnoreCase(like));
+
+			return boards;
+		}
+
+		/// <summary>
+		/// Filter portfolios by the specified criteria.
+		/// </summary>
+		/// <param name="portfolios">All portfolios.</param>
+		/// <param name="criteria">Criteria.</param>
+		/// <returns>Found portfolios.</returns>
+		public static IEnumerable<Portfolio> Filter(this IEnumerable<Portfolio> portfolios, PortfolioLookupMessage criteria)
+		{
+			if (portfolios == null)
+				throw new ArgumentNullException(nameof(portfolios));
+
+			if (criteria == null)
+				throw new ArgumentNullException(nameof(criteria));
+
+			if (!criteria.PortfolioName.IsEmpty())
+				portfolios = portfolios.Where(p => p.Name.ContainsIgnoreCase(criteria.PortfolioName));
+
+			if (criteria.Currency != null)
+				portfolios = portfolios.Where(p => p.Currency == criteria.Currency);
+
+			if (!criteria.BoardCode.IsEmpty())
+				portfolios = portfolios.Where(p => p.Board?.Code.ContainsIgnoreCase(criteria.BoardCode) == true);
+
+			return portfolios;
+		}
+
+		/// <summary>
+		/// Filter positions the specified criteria.
+		/// </summary>
+		/// <param name="positions">All positions.</param>
+		/// <param name="criteria">Criteria.</param>
+		/// <returns>Found positions.</returns>
+		public static IEnumerable<Position> Filter(this IEnumerable<Position> positions, PortfolioLookupMessage criteria)
+		{
+			if (positions == null)
+				throw new ArgumentNullException(nameof(positions));
+
+			if (criteria == null)
+				throw new ArgumentNullException(nameof(criteria));
+
+			if (!criteria.PortfolioName.IsEmpty())
+				positions = positions.Where(p => p.Portfolio.Name.ContainsIgnoreCase(criteria.PortfolioName));
+
+			if (criteria.Currency != null)
+				positions = positions.Where(p => p.Currency == criteria.Currency);
+
+			if (!criteria.BoardCode.IsEmpty())
+				positions = positions.Where(p => p.Security.ToSecurityId().BoardCode.ContainsIgnoreCase(criteria.BoardCode));
+
+			return positions;
+		}
+
+		/// <summary>
+		/// Reregister the order.
+		/// </summary>
+		/// <param name="provider">The transactional provider.</param>
+		/// <param name="oldOrder">Changing order.</param>
+		/// <param name="price">Price of the new order.</param>
+		/// <param name="volume">Volume of the new order.</param>
+		/// <returns>New order.</returns>
+		public static Order ReRegisterOrder(this ITransactionProvider provider, Order oldOrder, decimal price, decimal volume)
+		{
+			if (provider == null)
+				throw new ArgumentNullException(nameof(provider));
+
+			var newOrder = oldOrder.ReRegisterClone(price, volume);
+			provider.ReRegisterOrder(oldOrder, newOrder);
+			return newOrder;
+		}
+
+		/// <summary>
+		/// Download data.
+		/// </summary>
+		/// <typeparam name="TResult">Result message.</typeparam>
+		/// <typeparam name="TRequest">Request type.</typeparam>
+		/// <param name="adapter">Adapter.</param>
+		/// <param name="request">Request.</param>
+		/// <param name="secId">Security ID.</param>
+		/// <returns>Downloaded data.</returns>
+		public static IEnumerable<TResult> Download<TResult, TRequest>(this IMessageAdapter adapter, TRequest request, SecurityId? secId)
+			where TResult : Message
+			where TRequest : Message
+		{
+			if (adapter == null)
+				throw new ArgumentNullException(nameof(adapter));
+
+			var retVal = new List<TResult>();
+
+			Exception error = null;
+
+			var sync = new SyncObject();
+			var responseReceived = false;
+			
+			adapter.NewOutMessage += msg =>
+			{
+				if (msg is TResult typedMsg)
+					retVal.Add(typedMsg);
+				else if (msg is MarketDataMessage mdMsg)
+				{
+					lock (sync)
+					{
+						responseReceived = true;
+						error = mdMsg.Error;
+
+						if (error != null)
+							sync.PulseSignal();
+					}
+				}
+				else if (msg is MarketDataFinishedMessage)
+				{
+					lock (sync)
+					{
+						responseReceived = true;
+
+						sync.PulseSignal();
+					}
+				}
+				else if (msg is SecurityLookupResultMessage resMsg)
+				{
+					lock (sync)
+					{
+						responseReceived = true;
+						error = resMsg.Error;
+
+						sync.PulseSignal();
+					}
+				}
+				else if (msg is ConnectMessage conMsg)
+				{
+					lock (sync)
+					{
+						responseReceived = true;
+						error = conMsg.Error;
+
+						sync.PulseSignal();
+					}
+				}
+			};
+
+			if (request is ITransactionIdMessage transMsg)
+				transMsg.TransactionId = adapter.TransactionIdGenerator.GetNextId();
+
+			if (secId != null && adapter.IsNativeIdentifiers && !adapter.StorageName.IsEmpty() && request is SecurityMessage secMsg)
+			{
+				var nativeIdAdapter = adapter.FindAdapter<SecurityNativeIdMessageAdapter>();
+				
+				if (nativeIdAdapter != null)
+				{
+					var native = nativeIdAdapter.Storage.TryGetBySecurityId(adapter.StorageName, secId.Value);
+					secMsg.SetNativeId(native);
+				}
+			}
+
+			CultureInfo.InvariantCulture.DoInCulture(() =>
+			{
+				adapter.SendInMessage(new ConnectMessage());
+
+				lock (sync)
+				{
+					if (!responseReceived)
+						sync.WaitSignal();
+
+					if (error != null)
+						throw error;
+
+					responseReceived = false;
+				}
+
+				adapter.SendInMessage(request);
+
+				lock (sync)
+				{
+					if (!responseReceived)
+						sync.WaitSignal();
+
+					if (error != null)
+						throw error;
+
+					responseReceived = false;
+				}
+
+				adapter.SendInMessage(new DisconnectMessage());
+			});
+
+			return retVal;
+		}
+
+		/// <summary>
+		/// To get level1 market data.
+		/// </summary>
+		/// <param name="adapter">Adapter.</param>
+		/// <param name="securityId">Security ID.</param>
+		/// <param name="beginDate">Start date.</param>
+		/// <param name="endDate">End date.</param>
+		/// <param name="fields">Market data fields.</param>
+		/// <returns>Level1 market data.</returns>
+		public static IEnumerable<Level1ChangeMessage> GetLevel1(this IMessageAdapter adapter, SecurityId securityId, DateTime beginDate, DateTime endDate, IEnumerable<Level1Fields> fields = null)
+		{
+			var mdMsg = new MarketDataMessage
+			{
+				SecurityId = securityId,
+				IsSubscribe = true,
+				DataType = MarketDataTypes.Level1,
+				From = beginDate,
+				To = endDate,
+				BuildField = fields?.FirstOr(),
+			};
+			
+			return adapter.Download<Level1ChangeMessage, MarketDataMessage>(mdMsg, mdMsg.SecurityId);
+		}
+
+		/// <summary>
+		/// To get tick data.
+		/// </summary>
+		/// <param name="adapter">Adapter.</param>
+		/// <param name="securityId">Security ID.</param>
+		/// <param name="beginDate">Start date.</param>
+		/// <param name="endDate">End date.</param>
+		/// <returns>Tick data.</returns>
+		public static IEnumerable<ExecutionMessage> GetTicks(this IMessageAdapter adapter, SecurityId securityId, DateTime beginDate, DateTime endDate)
+		{
+			var mdMsg = new MarketDataMessage
+			{
+				SecurityId = securityId,
+				IsSubscribe = true,
+				DataType = MarketDataTypes.Trades,
+				From = beginDate,
+				To = endDate,
+			};
+			
+			return adapter.Download<ExecutionMessage, MarketDataMessage>(mdMsg, mdMsg.SecurityId);
+		}
+
+		/// <summary>
+		/// To get order log.
+		/// </summary>
+		/// <param name="adapter">Adapter.</param>
+		/// <param name="securityId">Security ID.</param>
+		/// <param name="beginDate">Start date.</param>
+		/// <param name="endDate">End date.</param>
+		/// <returns>Order log.</returns>
+		public static IEnumerable<ExecutionMessage> GetOrderLog(this IMessageAdapter adapter, SecurityId securityId, DateTime beginDate, DateTime endDate)
+		{
+			var mdMsg = new MarketDataMessage
+			{
+				SecurityId = securityId,
+				IsSubscribe = true,
+				DataType = MarketDataTypes.OrderLog,
+				From = beginDate,
+				To = endDate,
+			};
+			
+			return adapter.Download<ExecutionMessage, MarketDataMessage>(mdMsg, mdMsg.SecurityId);
+		}
+
+		/// <summary>
+		/// Download all securities.
+		/// </summary>
+		/// <param name="adapter">Adapter.</param>
+		/// <param name="lookupMsg">Message security lookup for specified criteria.</param>
+		/// <returns>All securities.</returns>
+		public static IEnumerable<SecurityMessage> GetSecurities(this IMessageAdapter adapter, SecurityLookupMessage lookupMsg)
+		{
+			return adapter.Download<SecurityMessage, SecurityLookupMessage>(lookupMsg, null);
+		}
+
+		/// <summary>
+		/// To download candles.
+		/// </summary>
+		/// <param name="adapter">Adapter.</param>
+		/// <param name="securityId">Security ID.</param>
+		/// <param name="timeFrame">Time-frame.</param>
+		/// <param name="from">Begin period.</param>
+		/// <param name="to">End period.</param>
+		/// <param name="count">Candles count.</param>
+		/// <param name="buildField">Extra info for the <see cref="MarketDataMessage.BuildFrom"/>.</param>
+		/// <returns>Downloaded candles.</returns>
+		public static IEnumerable<TimeFrameCandleMessage> GetCandles(this IMessageAdapter adapter, SecurityId securityId, TimeSpan timeFrame, DateTimeOffset from, DateTimeOffset to, long? count = null, Level1Fields? buildField = null)
+		{
+			var mdMsg = new MarketDataMessage
+			{
+				SecurityId = securityId,
+				IsSubscribe = true,
+				DataType = MarketDataTypes.CandleTimeFrame,
+				Arg = timeFrame,
+				From = from,
+				To = to,
+				Count = count,
+				BuildField = buildField,
+			};
+
+			return adapter.Download<TimeFrameCandleMessage, MarketDataMessage>(mdMsg, mdMsg.SecurityId);
+		}
+
+		/// <summary>
+		/// Get portfolio identifier.
+		/// </summary>
+		/// <param name="portfolio">Portfolio.</param>
+		/// <returns>Portfolio identifier.</returns>
+		public static string GetUniqueId(this Portfolio portfolio)
+		{
+			if (portfolio == null)
+				throw new ArgumentNullException(nameof(portfolio));
+
+			return portfolio.InternalId?.To<string>() ?? portfolio.Name;
+		}
+
+		/// <summary>
+		/// Determines the specified portfolio is required.
+		/// </summary>
+		/// <param name="portfolio">Portfolio.</param>
+		/// <param name="uniqueId">Portfolio identifier.</param>
+		/// <returns>Check result.</returns>
+		public static bool IsSame(this Portfolio portfolio, string uniqueId)
+		{
+			if (portfolio == null)
+				throw new ArgumentNullException(nameof(portfolio));
+
+			return portfolio.Name.CompareIgnoreCase(uniqueId) || (portfolio.InternalId != null && Guid.TryParse(uniqueId, out var indernalId) && portfolio.InternalId == indernalId);
+		}
+
+		/// <summary>
+		/// Compile mathematical formula.
+		/// </summary>
+		/// <param name="expression">Text expression.</param>
+		/// <param name="useIds">Use ids as variables.</param>
+		/// <returns>Compiled mathematical formula.</returns>
+		public static ExpressionFormula Compile(this string expression, bool useIds = true)
+		{
+			return ServicesRegistry.CompilerService.Compile(expression, useIds);
+		}
+
+		/// <summary>
+		/// Create <see cref="IMessageAdapter"/>.
+		/// </summary>
+		/// <typeparam name="TAdapter">Adapter type.</typeparam>
+		/// <param name="connector">The class to create connections to trading systems.</param>
+		/// <param name="init">Initialize <typeparamref name="TAdapter"/>.</param>
+		/// <returns>The class to create connections to trading systems.</returns>
+		public static Connector AddAdapter<TAdapter>(this Connector connector, Action<TAdapter> init)
+			where TAdapter : IMessageAdapter
+		{
+			if (connector == null)
+				throw new ArgumentNullException(nameof(connector));
+
+			if (init == null)
+				throw new ArgumentNullException(nameof(init));
+
+			var adapter = (TAdapter)typeof(TAdapter).CreateAdapter(connector.TransactionIdGenerator);
+			init(adapter);
+			connector.Adapter.InnerAdapters.Add(adapter);
+			return connector;
 		}
 	}
 }

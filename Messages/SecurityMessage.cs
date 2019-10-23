@@ -17,8 +17,10 @@ namespace StockSharp.Messages
 {
 	using System;
 	using System.ComponentModel;
+	using System.ComponentModel.DataAnnotations;
 	using System.Runtime.Serialization;
 
+	using Ecng.Common;
 	using Ecng.Serialization;
 
 	using StockSharp.Localization;
@@ -28,11 +30,9 @@ namespace StockSharp.Messages
 	/// </summary>
 	[System.Runtime.Serialization.DataContract]
 	[Serializable]
-	public class SecurityMessage : Message
+	public class SecurityMessage : BaseSubscriptionIdMessage, ISecurityIdMessage
 	{
-		/// <summary>
-		/// Security ID.
-		/// </summary>
+		/// <inheritdoc />
 		[DataMember]
 		[DisplayNameLoc(LocalizedStrings.Str361Key)]
 		[DescriptionLoc(LocalizedStrings.SecurityIdKey, true)]
@@ -67,6 +67,16 @@ namespace StockSharp.Messages
 		[MainCategory]
 		[Nullable]
 		public decimal? VolumeStep { get; set; }
+
+		/// <summary>
+		/// Minimum volume allowed in order.
+		/// </summary>
+		[DataMember]
+		[DisplayNameLoc(LocalizedStrings.MinVolumeKey)]
+		[DescriptionLoc(LocalizedStrings.MinVolumeDescKey)]
+		[MainCategory]
+		[Nullable]
+		public decimal? MinVolume { get; set; }
 
 		/// <summary>
 		/// Lot multiplier.
@@ -146,6 +156,16 @@ namespace StockSharp.Messages
 		public string UnderlyingSecurityCode { get; set; }
 
 		/// <summary>
+		/// Minimum volume allowed in order for underlying security.
+		/// </summary>
+		[DataMember]
+		[DisplayNameLoc(LocalizedStrings.UnderlyingMinVolumeKey)]
+		[DescriptionLoc(LocalizedStrings.UnderlyingMinVolumeDescKey)]
+		[MainCategory]
+		[Nullable]
+		public decimal? UnderlyingSecurityMinVolume { get; set; }
+
+		/// <summary>
 		/// Option strike price.
 		/// </summary>
 		[DataMember]
@@ -182,12 +202,6 @@ namespace StockSharp.Messages
 		public CurrencyTypes? Currency { get; set; }
 
 		/// <summary>
-		/// ID of the original message <see cref="SecurityLookupMessage.TransactionId"/> for which this message is a response.
-		/// </summary>
-		[DataMember]
-		public long OriginalTransactionId { get; set; }
-
-		/// <summary>
 		/// Security class.
 		/// </summary>
 		[DataMember]
@@ -214,6 +228,43 @@ namespace StockSharp.Messages
 		[DataMember]
 		[MainCategory]
 		public SecurityTypes? UnderlyingSecurityType { get; set; }
+
+		/// <summary>
+		/// Can have short positions.
+		/// </summary>
+		[DataMember]
+		[MainCategory]
+		public bool? Shortable { get; set; }
+
+		/// <summary>
+		/// Basket security type. Can be <see langword="null"/> in case of regular security.
+		/// </summary>
+		[DataMember]
+		[Display(
+			ResourceType = typeof(LocalizedStrings),
+			Name = LocalizedStrings.CodeKey,
+			Description = LocalizedStrings.BasketCodeKey,
+			GroupName = LocalizedStrings.BasketKey,
+			Order = 200)]
+		public string BasketCode { get; set; }
+
+		/// <summary>
+		/// Basket security expression. Can be <see langword="null"/> in case of regular security.
+		/// </summary>
+		[DataMember]
+		[Display(
+			ResourceType = typeof(LocalizedStrings),
+			Name = LocalizedStrings.ExpressionKey,
+			Description = LocalizedStrings.ExpressionDescKey,
+			GroupName = LocalizedStrings.BasketKey,
+			Order = 201)]
+		public string BasketExpression { get; set; }
+
+		/// <summary>
+		/// Face value.
+		/// </summary>
+		[DataMember]
+		public decimal? FaceValue { get; set; }
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="SecurityMessage"/>.
@@ -247,11 +298,14 @@ namespace StockSharp.Messages
 		/// Copy the message into the <paramref name="destination" />.
 		/// </summary>
 		/// <param name="destination">The object, to which copied information.</param>
-		/// <param name="copyOriginalTransactionId">Copy <see cref="OriginalTransactionId"/>.</param>
+		/// <param name="copyOriginalTransactionId">Copy <see cref="ISubscriptionIdMessage.OriginalTransactionId"/>.</param>
 		public void CopyTo(SecurityMessage destination, bool copyOriginalTransactionId = true)
 		{
-			if (destination == null)
-				throw new ArgumentNullException(nameof(destination));
+			var originTransId = destination.OriginalTransactionId;
+
+			base.CopyTo(destination);
+
+			destination.OriginalTransactionId = copyOriginalTransactionId ? OriginalTransactionId : originTransId;
 
 			destination.SecurityId = SecurityId;
 			destination.Name = Name;
@@ -267,25 +321,86 @@ namespace StockSharp.Messages
 			destination.Strike = Strike;
 			destination.UnderlyingSecurityCode = UnderlyingSecurityCode;
 			destination.VolumeStep = VolumeStep;
+			destination.MinVolume = MinVolume;
 			destination.Multiplier = Multiplier;
 			destination.Class = Class;
 			destination.BinaryOptionType = BinaryOptionType;
-			destination.LocalTime = LocalTime;
 			destination.IssueSize = IssueSize;
 			destination.IssueDate = IssueDate;
 			destination.UnderlyingSecurityType = UnderlyingSecurityType;
-
-			if (copyOriginalTransactionId)
-				destination.OriginalTransactionId = OriginalTransactionId;
+			destination.UnderlyingSecurityMinVolume = UnderlyingSecurityMinVolume;
+			destination.Shortable = Shortable;
+			destination.BasketCode = BasketCode;
+			destination.BasketExpression = BasketExpression;
+			destination.FaceValue = FaceValue;
 		}
 
-		/// <summary>
-		/// Returns a string that represents the current object.
-		/// </summary>
-		/// <returns>A string that represents the current object.</returns>
+		/// <inheritdoc />
 		public override string ToString()
 		{
-			return base.ToString() + $",Sec={SecurityId}";
+			var str = base.ToString() + $",Sec={SecurityId}";
+
+			if (SecurityType != null)
+				str += $",SecType={SecurityType}";
+
+			if (!Name.IsEmpty())
+				str += $",Name={Name}";
+
+			if (!ShortName.IsEmpty())
+				str += $",Short={ShortName}";
+
+			if (ExpiryDate != null)
+				str += $",Exp={ExpiryDate}";
+
+			if (PriceStep != null)
+				str += $",Price={PriceStep}";
+
+			if (VolumeStep != null)
+				str += $",Vol={VolumeStep}";
+
+			if (MinVolume != null)
+				str += $",MinVol={MinVolume}";
+
+			if (Decimals != null)
+				str += $",Dec={Decimals}";
+
+			if (Multiplier != null)
+				str += $",Mult={Multiplier}";
+
+			if (SettlementDate != null)
+				str += $",Sett={SettlementDate}";
+
+			if (Currency != null)
+				str += $",Cur={Currency}";
+
+			if (OptionType != null)
+				str += $",Opt={OptionType}";
+
+			if (Strike != null)
+				str += $",Strike={Strike}";
+
+			if (CfiCode != null)
+				str += $",CFI={CfiCode}";
+
+			if (UnderlyingSecurityCode != null)
+				str += $",Under={UnderlyingSecurityCode}";
+
+			if (Class != null)
+				str += $",Class={Class}";
+
+			if (BinaryOptionType != null)
+				str += $",Bin={BinaryOptionType}";
+			
+			if (Shortable != null)
+				str += $",Strike={Shortable}";
+
+			if (BasketCode != null)
+				str += $",Basket={BasketCode}/{BasketExpression}";
+
+			if (FaceValue != null)
+				str += $",FaceValue={FaceValue}";
+
+			return str;
 		}
 	}
 }

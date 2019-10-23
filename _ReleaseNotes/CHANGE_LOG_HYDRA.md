@@ -1,5 +1,86 @@
 StockSharp Data (Hydra) Change log
 ========================
+## v4.4.17:
+* (feature) Plugins refactoring. Hydra now uses IMessageAdapter directly.
+* (feature) Task pane redesign.
+* (feature) CandlesBuildFrom separated for each candles series.
+* (bug) DukasCopy source. CandlesBuildFrom fix.
+* (feature) Tradier source.
+* (feature) Bitmex. Testnet supported.
+* (feature) Finam. Reset cached ids.
+* (bug) Analytics. Fix histogram chart.
+* (feature) File format preview for multiples securities export. https://stocksharp.ru/posts/m/47202/
+* (feature) Backup and HydraServer tasks implemented connect Verify
+* (feature) Added default option for txt export. https://stocksharp.ru/posts/m/47207/
+* (feature) OpenECry. Certification passed.
+* (bug) Highest, Lowest, Vidya, Envelope, MACD indicators fix.
+* (feature) Sterling. Updated to 11.7 version.
+* (feature) Oanda. Level1 support removed.
+* (feature) QUIK DDE, QUIK Trans2Quik excluded.
+* (feature) CSV connector.
+* (feature) Security. MinVolume, Shortable, UnderlyingSecuityMinVolume and FaceValue properties added.
+* (feature) Deribit. V2 protocol supported.
+* (feature) BitStamp. V2 web sockets supported.
+* (feature) Plaza. Spectra 6.2.20 supported.
+* (feature) InteractiveBrokers. V9.76.01
+* (feature) Micex TEAP. Stock32, Stock33, Stock34, Currency32, Currency33, Currency34 interfaces added.
+* (feature) QUIK. 64 bit support.
+* (feature) QUIK. Candles BuildFrom mode supported.
+* (feature) QUIK. Terminal connection lost notification supported.
+
+## v4.4.16:
+* (feature) SQLite->CSV migrated.
+* (feature) Bithumb. Prime service supported.
+* (feature) OKEX. Support turn on/off sections.
+* (bug) IQFeed. Candles request fixes.
+* (feature) Process non persistable basket securities.
+* (bug) Storage adapter. Fix boards lookup and update.
+* (feature) Digifinex, Idax, TradeOgre, CoinCap, Coinigy, LBank, BitMax, BW, Bibox, CoinBene, BitZ, ZB connectors.
+* (feature) News. Priority property added.
+* (feature) FIX connector. IBKR dialect supported algo orders.
+* (feature) OKEx. Web sockets v3 supported.
+* (feature) Plaza CGate. Spectra 6.2 supported.
+* (feature) TWIME. Spectra 6.2 supported.
+* (feature) Micex TEAP. Interface 31 supported.
+* (feature) Wait flushing data fix.
+* (bug) Statistics parameters. Fix reset state.
+* (bug) MarketDepth. Fix processing quote msgs with empty instrument info.
+* (bug) RSS fixes.
+* (feature) OpenECry. More order types supported.
+* (feature) OKEX. Position and account swap and margin supported.
+* (bug) Candles compression. Fix for non TF candles compression.
+* (feature) AlphaVantage. Lookup instruments supported.
+* (bug) Quik. Fix hands while instruments lookup https://stocksharp.ru/forum/9238/zavisaet-quik-pri-podklyuchenii/
+* (feature) Board editor redesign.
+* (feature) Finam. Reset cached ids. Fix https://stocksharp.ru/forum/10395/skachivanie-tikovyh-i-svechnyh-istoricheskih-dannyh-gidroi-s-finama/
+
+## v4.4.15:
+* (feature) LiveCoin. Candles support.
+* (feature) OKEx. V3 protocol supported.
+* (feature) OpenECry. v3.5.14.53
+* (bug) Candles. Fix duplicate candles subscription.
+* (bug) Market depth. Fix build depths from OL and L1.
+* (feature) MT4, MT5 connectors.
+* (feature) Quandl. Lookup securities. Support newest protocol changes.
+* (feature) MFD. Filter for options lookup.
+* (feature) Hydra server. Board lookup support.
+* (feature) AlfaDirect. v4 by default.
+* (feature) LMAX. Download securities from several places.
+* (feature) Server supported SecurityMapping requests.
+
+## v4.4.14:
+* (feature) MFD. Filter for options lookup.
+* (feature) Quandl. Lookup securities. Support newest protocol changes.
+* (feature) Erase data. All dates options.
+* (feature) Basket security refactoring.
+* (bug) Build candles from bid/ask fix.
+* (feature) FixServer mode. User lookup support.
+* (feature) Hydra server. Board lookup support.
+* (feature) Status bar redesign.
+* (bug) Fix From date for Connector's based tasks.
+* (feature) Level1. CommissionMaker, CommissionTaker columns added.
+* (bug) Minor sources fix.
+
 ## v4.4.12:
 * (bug) Fix cross-thread UI issues.
 * (bug) Fix spashscreen info.

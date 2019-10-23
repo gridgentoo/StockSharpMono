@@ -29,124 +29,105 @@
             The list of selected fields.
             </summary>
     </member>
-    <member name="T:StockSharp.IQFeed.IQFeedMarketDataMessageAdapter">
+    <member name="T:StockSharp.IQFeed.IQFeedMessageAdapter">
       <summary>
             The messages adapter for IQFeed.
             </summary>
     </member>
-    <member name="P:StockSharp.IQFeed.IQFeedMarketDataMessageAdapter.Level1Address">
+    <member name="P:StockSharp.IQFeed.IQFeedMessageAdapter.Level1Address">
       <summary>
             Address for obtaining data on Level1.
             </summary>
     </member>
-    <member name="P:StockSharp.IQFeed.IQFeedMarketDataMessageAdapter.Level2Address">
+    <member name="P:StockSharp.IQFeed.IQFeedMessageAdapter.Level2Address">
       <summary>
             Address for obtaining data on Level2.
             </summary>
     </member>
-    <member name="P:StockSharp.IQFeed.IQFeedMarketDataMessageAdapter.LookupAddress">
+    <member name="P:StockSharp.IQFeed.IQFeedMessageAdapter.LookupAddress">
       <summary>
             Address for obtaining history data.
             </summary>
     </member>
-    <member name="P:StockSharp.IQFeed.IQFeedMarketDataMessageAdapter.AdminAddress">
+    <member name="P:StockSharp.IQFeed.IQFeedMessageAdapter.AdminAddress">
       <summary>
             Address for obtaining service data.
             </summary>
     </member>
-    <member name="P:StockSharp.IQFeed.IQFeedMarketDataMessageAdapter.DerivativeAddress">
+    <member name="P:StockSharp.IQFeed.IQFeedMessageAdapter.DerivativeAddress">
       <summary>
             Address for obtaining derivative data.
             </summary>
     </member>
-    <member name="P:StockSharp.IQFeed.IQFeedMarketDataMessageAdapter.Level1Columns">
+    <member name="P:StockSharp.IQFeed.IQFeedMessageAdapter.Level1Columns">
       <summary>
             All <see cref="T:StockSharp.IQFeed.IQFeedLevel1Column" /> to be transmit.
             </summary>
     </member>
-    <member name="P:StockSharp.IQFeed.IQFeedMarketDataMessageAdapter.SecurityTypesFilter">
+    <member name="P:StockSharp.IQFeed.IQFeedMessageAdapter.SecurityTypesFilter">
       <summary>
             Securities types, for which data must be received.
             </summary>
     </member>
-    <member name="P:StockSharp.IQFeed.IQFeedMarketDataMessageAdapter.IsDownloadSecurityFromSite">
+    <member name="P:StockSharp.IQFeed.IQFeedMessageAdapter.IsDownloadSecurityFromSite">
       <summary>
             Whether to load instruments from the archive of the IQFeed site. The default is off.
             </summary>
     </member>
-    <member name="P:StockSharp.IQFeed.IQFeedMarketDataMessageAdapter.SecuritiesFile">
+    <member name="P:StockSharp.IQFeed.IQFeedMessageAdapter.SecuritiesFile">
       <summary>
             Path to file with IQFeed list of securities, downloaded from the website. If path is specified, then secondary download from website does not occur, and only the local copy gets parsed.
             </summary>
     </member>
-    <member name="F:StockSharp.IQFeed.IQFeedMarketDataMessageAdapter.DefaultVersion">
+    <member name="F:StockSharp.IQFeed.IQFeedMessageAdapter.DefaultVersion">
       <summary>
-            Default value for <see cref="P:StockSharp.IQFeed.IQFeedMarketDataMessageAdapter.Version" />.
+            Default value for <see cref="P:StockSharp.IQFeed.IQFeedMessageAdapter.Version" />.
             </summary>
     </member>
-    <member name="P:StockSharp.IQFeed.IQFeedMarketDataMessageAdapter.Version">
+    <member name="P:StockSharp.IQFeed.IQFeedMessageAdapter.Version">
       <summary>
             Protocol version.
             </summary>
     </member>
-    <member name="P:StockSharp.IQFeed.IQFeedMarketDataMessageAdapter.Level1ColumnRegistry">
+    <member name="P:StockSharp.IQFeed.IQFeedMessageAdapter.Level1ColumnRegistry">
       <summary>
             The list of all available <see cref="T:StockSharp.IQFeed.IQFeedLevel1Column" />.
             </summary>
     </member>
-    <member name="P:StockSharp.IQFeed.IQFeedMarketDataMessageAdapter.AllTimeFrames">
+    <member name="P:StockSharp.IQFeed.IQFeedMessageAdapter.AllTimeFrames">
       <summary>
             Possible time-frames.
             </summary>
     </member>
-    <member name="P:StockSharp.IQFeed.IQFeedMarketDataMessageAdapter.TimeFrames">
+    <member name="M:StockSharp.IQFeed.IQFeedMessageAdapter.GetTimeFrames(StockSharp.Messages.SecurityId,System.Nullable{System.DateTimeOffset},System.Nullable{System.DateTimeOffset})">
       <inheritdoc />
     </member>
-    <member name="M:StockSharp.IQFeed.IQFeedMarketDataMessageAdapter.Load(Ecng.Serialization.SettingsStorage)">
-      <summary>
-            Load settings.
-            </summary>
-      <param name="storage">Settings storage.</param>
+    <member name="M:StockSharp.IQFeed.IQFeedMessageAdapter.Load(Ecng.Serialization.SettingsStorage)">
+      <inheritdoc />
     </member>
-    <member name="M:StockSharp.IQFeed.IQFeedMarketDataMessageAdapter.Save(Ecng.Serialization.SettingsStorage)">
-      <summary>
-            Save settings.
-            </summary>
-      <param name="storage">Settings storage.</param>
+    <member name="M:StockSharp.IQFeed.IQFeedMessageAdapter.Save(Ecng.Serialization.SettingsStorage)">
+      <inheritdoc />
     </member>
-    <member name="M:StockSharp.IQFeed.IQFeedMarketDataMessageAdapter.ToString">
-      <summary>
-            Returns a string that represents the current object.
-            </summary>
-      <returns>A string that represents the current object.</returns>
+    <member name="M:StockSharp.IQFeed.IQFeedMessageAdapter.ToString">
+      <inheritdoc />
     </member>
-    <member name="M:StockSharp.IQFeed.IQFeedMarketDataMessageAdapter.#ctor(Ecng.Common.IdGenerator)">
+    <member name="M:StockSharp.IQFeed.IQFeedMessageAdapter.#ctor(Ecng.Common.IdGenerator)">
       <summary>
-            Initializes a new instance of the <see cref="T:StockSharp.IQFeed.IQFeedMarketDataMessageAdapter" />.
+            Initializes a new instance of the <see cref="T:StockSharp.IQFeed.IQFeedMessageAdapter" />.
             </summary>
       <param name="transactionIdGenerator">Transaction id generator.</param>
     </member>
-    <member name="P:StockSharp.IQFeed.IQFeedMarketDataMessageAdapter.IsSupportNativeSecurityLookup">
-      <summary>
-            Gets a value indicating whether the connector supports security lookup.
-            </summary>
-    </member>
-    <member name="P:StockSharp.IQFeed.IQFeedMarketDataMessageAdapter.SecurityLookupRequired">
-      <summary>
-        <see cref="T:StockSharp.Messages.SecurityLookupMessage" /> required to get securities.
-            </summary>
-    </member>
-    <member name="P:StockSharp.IQFeed.IQFeedMarketDataMessageAdapter.IsSupportSecuritiesLookupAll">
+    <member name="P:StockSharp.IQFeed.IQFeedMessageAdapter.IsSupportSecurityLookupResult">
       <inheritdoc />
     </member>
-    <member name="P:StockSharp.IQFeed.IQFeedMarketDataMessageAdapter.IsSupportCandlesUpdates">
+    <member name="P:StockSharp.IQFeed.IQFeedMessageAdapter.IsSupportSecuritiesLookupAll">
       <inheritdoc />
     </member>
-    <member name="M:StockSharp.IQFeed.IQFeedMarketDataMessageAdapter.OnSendInMessage(StockSharp.Messages.Message)">
-      <summary>
-            Send message.
-            </summary>
-      <param name="message">Message.</param>
+    <member name="P:StockSharp.IQFeed.IQFeedMessageAdapter.IsSupportCandlesUpdates">
+      <inheritdoc />
+    </member>
+    <member name="M:StockSharp.IQFeed.IQFeedMessageAdapter.OnSendInMessage(StockSharp.Messages.Message)">
+      <inheritdoc />
     </member>
     <member name="T:StockSharp.IQFeed.IQFeedAddresses">
       <summary>
@@ -199,10 +180,7 @@
             </summary>
     </member>
     <member name="M:StockSharp.IQFeed.IQFeedLevel1Column.ToString">
-      <summary>
-            Returns a string that represents the current object.
-            </summary>
-      <returns>A string that represents the current object.</returns>
+      <inheritdoc />
     </member>
     <member name="T:StockSharp.IQFeed.IQFeedLevel1ColumnRegistry">
       <summary>
